@@ -1,0 +1,95 @@
+@import './variables';
+
+body {
+    background: $body-bg;
+    color: $body-color;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: -10%;
+        left: -10%;
+        width: 50%;
+        height: 50%;
+        background: radial-gradient(circle, $primary-color 0%, transparent 60%);
+        opacity: 0.2;
+        filter: blur(80px);
+        z-index: -1;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -10%;
+        right: -10%;
+        width: 50%;
+        height: 50%;
+        background: radial-gradient(circle, $accent-color 0%, transparent 60%);
+        opacity: 0.2;
+        filter: blur(80px);
+        z-index: -1;
+    }
+}
+
+.glass-card {
+    @include glass-effect;
+    padding: 2rem;
+    transition: transform 0.3s ease;
+
+    &:hover {
+        transform: translateY(-5px);
+    }
+}
+
+// Navbar specific glass effect with less padding
+.glass-nav {
+    @include glass-effect;
+    padding: 0.5rem 1.5rem; // Reduced vertical padding, standard horizontal
+    transition: all 0.3s ease;
+}
+
+// Import separate responsive styles
+@import 'responsive';
+
+.btn-premium {
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+        color: white;
+    }
+}
+
+// Custom Scrollbar
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: $dark-bg;
+}
+
+::-webkit-scrollbar-thumb {
+    background: $glass-border;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: $secondary-color;
+}
+
+.subtext {
+    color: #e5d7d7;
+}

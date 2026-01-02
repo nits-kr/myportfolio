@@ -1,0 +1,34 @@
+// Premium Color Palette
+$primary-color: #6366f1; // Indigo
+$secondary-color: #a855f7; // Purple
+$accent-color: #ec4899; // Pink
+$dark-bg: #0f172a; // Slate 900
+$glass-bg: rgba(255, 255, 255, 0.1);
+$glass-border: rgba(255, 255, 255, 0.2);
+$text-light: #f8fafc;
+$text-muted: #94a3b8;
+
+// Bootstrap Grid Breakpoints (Copied to avoid importing full bootstrap variables)
+$grid-breakpoints: (
+    xs: 0,
+    sm: 576px,
+    md: 768px,
+    lg: 992px,
+    xl: 1200px,
+    xxl: 1400px
+);
+
+// Glassmorphism Mixin
+@mixin glass-effect {
+    background: $glass-bg;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid $glass-border;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    border-radius: 16px;
+}
+
+// Bootstrap Overrides
+$body-bg: $dark-bg;
+$body-color: $text-light;
+$primary: $primary-color;
