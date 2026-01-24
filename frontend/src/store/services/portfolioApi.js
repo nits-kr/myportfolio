@@ -34,10 +34,6 @@ export const portfolioApi = createApi({
         getMe: builder.query({
             query: () => 'auth/me',
         }),
-        // can add more endpoints here, e.g., getAbout, submitContact etc.
     }),
 });
-
-// Export hooks for usage in functional components, which are
-// auto-generated based on the defined endpoints
 export const { useGetProjectsQuery, useRegisterMutation, useLoginMutation, useGetMeQuery } = portfolioApi;

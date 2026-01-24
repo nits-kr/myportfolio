@@ -40,3 +40,8 @@ a {
     color-scheme: dark;
   }
 }
+
+.highlight-project {
+  background-color: rgba(69, 149, 213, 0.2) !important;
+  transition: background-color 0.5s ease;
+}

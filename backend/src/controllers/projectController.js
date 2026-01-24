@@ -1,8 +1,5 @@
 import Project from '../models/Project.js';
 
-// @desc    Get all projects
-// @route   GET /api/projects
-// @access  Public
 export const getProjects = async (req, res, next) => {
     try {
         const projects = await Project.find().sort({ createdAt: -1 });
@@ -17,9 +14,24 @@ export const getProjects = async (req, res, next) => {
     }
 };
 
-// @desc    Create new project
-// @route   POST /api/projects
-// @access  Private (To be implemented with auth middleware if needed)
+
+export const getProject = async (req, res, next) => {
+    try {
+        const project = await Project.findById(req.params.id);
+
+        if (!project) {
+            return res.status(404).json({ success: false, error: 'Project not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: project
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: 'Server Error' });
+    }
+};
+
 export const createProject = async (req, res, next) => {
     try {
         const project = await Project.create(req.body);
@@ -38,9 +50,6 @@ export const createProject = async (req, res, next) => {
     }
 };
 
-// @desc    Update project
-// @route   PUT /api/projects/:id
-// @access  Private
 export const updateProject = async (req, res, next) => {
     try {
         let project = await Project.findById(req.params.id);
@@ -63,9 +72,6 @@ export const updateProject = async (req, res, next) => {
     }
 };
 
-// @desc    Delete project
-// @route   DELETE /api/projects/:id
-// @access  Private
 export const deleteProject = async (req, res, next) => {
     try {
         const project = await Project.findById(req.params.id);

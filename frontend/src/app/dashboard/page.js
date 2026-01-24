@@ -1,22 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import RichTextEditor from './RichTextEditor';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useSelector, useDispatch } from 'react-redux';
 import moment from 'moment';
 import { useForm } from 'react-hook-form';
 import { updateProfile } from '@/store/slices/contentSlice';
-import { useGetProjectsQuery, useAddProjectMutation, useDeleteProjectMutation } from '@/store/services/projectsApi';
+import { useGetProjectsQuery, useGetProjectQuery, useAddProjectMutation, useDeleteProjectMutation, useUpdateProjectMutation } from '@/store/services/projectsApi';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
     const { user } = useSelector((state) => state.auth);
     const { profile } = useSelector((state) => state.content);
     const dispatch = useDispatch();
+    const searchParams = useSearchParams();
+    const router = useRouter();
 
     // API Hooks
     const { data: projectsData, isLoading } = useGetProjectsQuery();
     const [addProject, { isLoading: isAdding }] = useAddProjectMutation();
+    const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
     const [deleteProject] = useDeleteProjectMutation();
 
     const projects = projectsData?.data || [];
@@ -30,31 +34,85 @@ export default function DashboardPage() {
     const { register: registerProject, handleSubmit: handleSubmitProject, reset: resetProject, setValue: setProjectValue, watch: watchProject } = useForm();
     const [showProjectEditor, setShowProjectEditor] = useState(false);
     const projectBody = watchProject('body');
+    const [editingProject, setEditingProject] = useState(null);
+
+    // Check for edit/view params
+    const editId = searchParams.get('edit');
+    const viewId = searchParams.get('view');
+    const targetId = editId || viewId;
+
+    const { data: projectToEditData } = useGetProjectQuery(targetId, {
+        skip: !targetId
+    });
+
+    useEffect(() => {
+        if (targetId && projectToEditData?.data) {
+            const projectToEdit = projectToEditData.data;
+            setEditingProject(projectToEdit);
+            setProjectValue('title', projectToEdit.title);
+            setProjectValue('status', projectToEdit.status);
+            setProjectValue('body', projectToEdit.body);
+            setProjectValue('description', projectToEdit.description);
+            setShowProjectEditor(true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, [targetId, projectToEditData, setProjectValue]);
 
     const onUpdateProfile = (data) => {
         dispatch(updateProfile(data));
         alert('Profile Updated!');
     };
 
-    const onAddProject = async (data) => {
+    const onSubmitProject = async (data) => {
         try {
-            await addProject(data).unwrap();
+            if (editingProject) {
+                await updateProject({ id: editingProject._id, ...data }).unwrap();
+                alert('Project Updated!');
+                setEditingProject(null);
+                router.push('/projects');
+            } else {
+                await addProject(data).unwrap();
+                alert('Project Added!');
+                router.push('/projects');
+            }
             resetProject();
-            alert('Project Added!');
+            setShowProjectEditor(false);
         } catch (err) {
-            console.error('Failed to add project:', err);
-            alert('Failed to add project');
+            console.error('Failed to save project:', err);
+            const errorMessage = err?.data?.error
+                ? (Array.isArray(err.data.error) ? err.data.error.join('\n') : err.data.error)
+                : 'Failed to save project';
+            alert(errorMessage);
         }
+    };
+
+    const handleCancelEdit = () => {
+        setEditingProject(null);
+        resetProject();
+        setShowProjectEditor(false);
+        router.push('/projects');
     };
 
     const handleDeleteProject = async (id) => {
         if (window.confirm('Are you sure you want to delete this project?')) {
             try {
                 await deleteProject(id).unwrap();
+                if (editingProject?._id === id) {
+                    handleCancelEdit();
+                }
             } catch (err) {
                 console.error('Failed to delete project:', err);
             }
         }
+    };
+
+    const handleEditClick = (project) => {
+        setEditingProject(project);
+        setProjectValue('title', project.title);
+        setProjectValue('status', project.status);
+        setProjectValue('body', project.body);
+        setShowProjectEditor(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     return (
@@ -88,8 +146,13 @@ export default function DashboardPage() {
                                 </div>
 
                                 <div className="glass-card mt-4 p-4">
-                                    <h4 className="mb-3">Add New Project</h4>
-                                    <form onSubmit={handleSubmitProject(onAddProject)}>
+                                    <div className="d-flex justify-content-between align-items-center mb-3">
+                                        <h4 className="mb-0">{editingProject ? 'Edit Project' : 'Add New Project'}</h4>
+                                        {editingProject && (
+                                            <button onClick={handleCancelEdit} className="btn btn-outline-light btn-sm">Cancel Edit</button>
+                                        )}
+                                    </div>
+                                    <form onSubmit={handleSubmitProject(onSubmitProject)}>
                                         <div className="row g-3">
                                             <div className="col-md-6">
                                                 <input {...registerProject('title')} className="form-control bg-transparent text-white" placeholder="Project Title" required />
@@ -123,8 +186,8 @@ export default function DashboardPage() {
                                                 />
                                             )}
                                             <div className="col-12">
-                                                <button type="submit" className="btn btn-success btn-sm" disabled={isAdding}>
-                                                    {isAdding ? 'Adding...' : 'Add Project'}
+                                                <button type="submit" className="btn btn-success btn-sm" disabled={isAdding || isUpdating}>
+                                                    {isAdding || isUpdating ? (editingProject ? 'Updating...' : 'Adding...') : (editingProject ? 'Update Project' : 'Add Project')}
                                                 </button>
                                             </div>
                                         </div>
@@ -171,7 +234,7 @@ export default function DashboardPage() {
                                         <tr><td colSpan="4" className="text-center py-3 text-white">No projects found</td></tr>
                                     ) : (
                                         projects.map((project) => (
-                                            <tr key={project._id}>
+                                            <tr key={project._id} id={`project-${project._id}`}>
                                                 <td>{project.title}</td>
                                                 <td>
                                                     <span className={`badge bg-${project.status === 'Completed' ? 'success' : project.status === 'In Progress' ? 'warning' : 'primary'}`}>
@@ -180,6 +243,9 @@ export default function DashboardPage() {
                                                 </td>
                                                 <td>{moment(project.createdAt).format('MMM D, YYYY')}</td>
                                                 <td>
+                                                    <button onClick={() => handleEditClick(project)} className="btn btn-outline-info btn-sm py-0 px-2 me-2">
+                                                        Edit
+                                                    </button>
                                                     <button onClick={() => handleDeleteProject(project._id)} className="btn btn-outline-danger btn-sm py-0 px-2">
                                                         &times;
                                                     </button>

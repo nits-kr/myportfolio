@@ -6,6 +6,10 @@ export const projectsApi = apiSlice.injectEndpoints({
             query: () => '/projects',
             providesTags: ['Project']
         }),
+        getProject: builder.query({
+            query: (id) => `/projects/${id}`,
+            providesTags: (result, error, id) => [{ type: 'Project', id }]
+        }),
         addProject: builder.mutation({
             query: (project) => ({
                 url: '/projects',
@@ -34,6 +38,7 @@ export const projectsApi = apiSlice.injectEndpoints({
 
 export const {
     useGetProjectsQuery,
+    useGetProjectQuery,
     useAddProjectMutation,
     useUpdateProjectMutation,
     useDeleteProjectMutation
