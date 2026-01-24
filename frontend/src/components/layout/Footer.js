@@ -20,7 +20,7 @@ export default function Footer() {
                     <div className="mb-4">
                         <a href="mailto:nits.kr99@gmail.com" className="text-white text-decoration-none">nits.kr99@gmail.com</a>
                     </div>
-                    <p className="mb-0 text-muted small">
+                    <p className="mb-0 text-white small">
                         © {moment().year()} Nitish Kumar. All rights reserved.
                     </p>
                 </div>

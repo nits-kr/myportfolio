@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '@/store/slices/authSlice';
@@ -10,6 +11,11 @@ export default function Navbar() {
     const pathname = usePathname();
     const dispatch = useDispatch();
     const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const navLinks = [
         { name: 'Home', path: '/' },
@@ -47,7 +53,7 @@ export default function Navbar() {
                             </li>
                         ))}
 
-                        {isAuthenticated ? (
+                        {isMounted && isAuthenticated ? (
                             <li className="nav-item dropdown">
                                 <a className="nav-link dropdown-toggle text-white d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
                                     <FaUserCircle size={24} />

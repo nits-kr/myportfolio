@@ -1,15 +1,25 @@
 'use client';
 
+import React, { useState } from 'react';
+import RichTextEditor from './RichTextEditor';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useSelector, useDispatch } from 'react-redux';
 import moment from 'moment';
 import { useForm } from 'react-hook-form';
-import { updateProfile, addProject } from '@/store/slices/contentSlice';
+import { updateProfile } from '@/store/slices/contentSlice';
+import { useGetProjectsQuery, useAddProjectMutation, useDeleteProjectMutation } from '@/store/services/projectsApi';
 
 export default function DashboardPage() {
     const { user } = useSelector((state) => state.auth);
     const { profile } = useSelector((state) => state.content);
     const dispatch = useDispatch();
+
+    // API Hooks
+    const { data: projectsData, isLoading } = useGetProjectsQuery();
+    const [addProject, { isLoading: isAdding }] = useAddProjectMutation();
+    const [deleteProject] = useDeleteProjectMutation();
+
+    const projects = projectsData?.data || [];
 
     // Profile Form
     const { register: registerProfile, handleSubmit: handleSubmitProfile } = useForm({
@@ -17,17 +27,34 @@ export default function DashboardPage() {
     });
 
     // Project Form
-    const { register: registerProject, handleSubmit: handleSubmitProject, reset: resetProject } = useForm();
+    const { register: registerProject, handleSubmit: handleSubmitProject, reset: resetProject, setValue: setProjectValue, watch: watchProject } = useForm();
+    const [showProjectEditor, setShowProjectEditor] = useState(false);
+    const projectBody = watchProject('body');
 
     const onUpdateProfile = (data) => {
         dispatch(updateProfile(data));
         alert('Profile Updated!');
     };
 
-    const onAddProject = (data) => {
-        dispatch(addProject({ ...data, id: Date.now(), date: moment().format('YYYY-MM-DD') }));
-        resetProject();
-        alert('Project Added!');
+    const onAddProject = async (data) => {
+        try {
+            await addProject(data).unwrap();
+            resetProject();
+            alert('Project Added!');
+        } catch (err) {
+            console.error('Failed to add project:', err);
+            alert('Failed to add project');
+        }
+    };
+
+    const handleDeleteProject = async (id) => {
+        if (window.confirm('Are you sure you want to delete this project?')) {
+            try {
+                await deleteProject(id).unwrap();
+            } catch (err) {
+                console.error('Failed to delete project:', err);
+            }
+        }
     };
 
     return (
@@ -74,7 +101,31 @@ export default function DashboardPage() {
                                                 </select>
                                             </div>
                                             <div className="col-12">
-                                                <button type="submit" className="btn btn-success btn-sm">Add Project</button>
+                                                <label className="form-label text-white">Description</label>
+                                                <div
+                                                    className="form-control bg-transparent text-white"
+                                                    style={{ minHeight: '100px', cursor: 'pointer', border: '1px solid #444' }}
+                                                    onClick={() => setShowProjectEditor(true)}
+                                                >
+                                                    {projectBody ? (
+                                                        <div dangerouslySetInnerHTML={{ __html: projectBody }} />
+                                                    ) : (
+                                                        <span className="text-gray-400 text-opacity-75">Click to add description...</span>
+                                                    )}
+                                                </div>
+                                                <input type="hidden" {...registerProject('body')} />
+                                            </div>
+                                            {showProjectEditor && (
+                                                <RichTextEditor
+                                                    value={projectBody}
+                                                    onChange={(content) => setProjectValue('body', content)}
+                                                    onClose={() => setShowProjectEditor(false)}
+                                                />
+                                            )}
+                                            <div className="col-12">
+                                                <button type="submit" className="btn btn-success btn-sm" disabled={isAdding}>
+                                                    {isAdding ? 'Adding...' : 'Add Project'}
+                                                </button>
                                             </div>
                                         </div>
                                     </form>
@@ -86,11 +137,11 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                <div className="row g-4">
+                <div className="row g-4 text-white">
                     {['Views', 'Projects', 'Messages'].map((stat, idx) => (
                         <div key={idx} className="col-md-4">
                             <div className="glass-card">
-                                <h5 className="text-muted mb-2">{stat}</h5>
+                                <h5 className="text-white mb-2">{stat}</h5>
                                 <div className="d-flex align-items-end justify-content-between">
                                     <span className="display-4 fw-bold">{Math.floor(Math.random() * 1000)}</span>
                                     <span className="text-success small">+12%</span>
@@ -110,24 +161,32 @@ export default function DashboardPage() {
                                         <th>Project</th>
                                         <th>Status</th>
                                         <th>Date</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>E-Commerce Redesign</td>
-                                        <td><span className="badge bg-success">Completed</span></td>
-                                        <td>{moment('2023-10-24').format('MMM D, YYYY')}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Portfolio V2</td>
-                                        <td><span className="badge bg-warning">In Progress</span></td>
-                                        <td>{moment().subtract(2, 'days').format('MMM D, YYYY')}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Banking App</td>
-                                        <td><span className="badge bg-primary">Review</span></td>
-                                        <td>{moment().add(5, 'days').format('MMM D, YYYY')}</td>
-                                    </tr>
+                                    {isLoading ? (
+                                        <tr><td colSpan="4" className="text-center py-3 text-white">Loading projects...</td></tr>
+                                    ) : projects.length === 0 ? (
+                                        <tr><td colSpan="4" className="text-center py-3 text-white">No projects found</td></tr>
+                                    ) : (
+                                        projects.map((project) => (
+                                            <tr key={project._id}>
+                                                <td>{project.title}</td>
+                                                <td>
+                                                    <span className={`badge bg-${project.status === 'Completed' ? 'success' : project.status === 'In Progress' ? 'warning' : 'primary'}`}>
+                                                        {project.status}
+                                                    </span>
+                                                </td>
+                                                <td>{moment(project.createdAt).format('MMM D, YYYY')}</td>
+                                                <td>
+                                                    <button onClick={() => handleDeleteProject(project._id)} className="btn btn-outline-danger btn-sm py-0 px-2">
+                                                        &times;
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>

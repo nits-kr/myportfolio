@@ -12,6 +12,7 @@ connectDB();
 
 // Route files
 import authRoutes from './src/routes/authRoutes.js';
+import projectRoutes from './src/routes/projectRoutes.js';
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use(cors({
 
 // Mount routers
 app.use('/api/auth', authRoutes);
+app.use('/api/projects', projectRoutes);
 
 const PORT = process.env.PORT || 5000;
 
