@@ -29,7 +29,7 @@ body, [data-bs-theme] body {
     background: var(--body-bg);
     color: var(--body-color);
     transition: background-color 0.3s ease, color 0.3s ease;
-    font-family: 'Inter', sans-serif;
+    font-family: -apple-system, system-ui, sans-serif !important;
     overflow-x: hidden;
     min-height: 100vh;
     position: relative;
