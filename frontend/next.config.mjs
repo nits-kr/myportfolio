@@ -12,7 +12,13 @@ const nextConfig = {
       path.join(__dirname, "node_modules"),
       path.join(__dirname, "node_modules/bootstrap/scss"),
     ],
-    silenceDeprecations: ["legacy-js-api"],
+    silenceDeprecations: [
+      "legacy-js-api",
+      "import",
+      "global-builtin",
+      "color-functions",
+      "mixed-decls",
+    ],
   },
 };
 
