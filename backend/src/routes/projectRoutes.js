@@ -11,11 +11,11 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.route("/").get(protect, getProjects).post(protect, createProject);
+router.route("/").get(getProjects).post(protect, createProject);
 
 router
   .route("/:id")
-  .get(protect, getProject)
+  .get(getProject)
   .put(protect, updateProject)
   .delete(protect, deleteProject);
 
