@@ -16,7 +16,12 @@ router.get("/", protect, authorize("admin"), getAllSubUsers);
 router.put("/:id", protect, authorize("admin"), updateSubUser);
 router.delete("/:id", protect, authorize("admin"), deleteSubUser);
 router.get("/:id", protect, authorize("admin"), getSubUserById);
-router.put("/:id", protect, authorize("admin"), changeSubUserStatus);
-router.put("/:id", protect, authorize("admin"), subuserDeleteStatus);
+router.patch("/:id/status", protect, authorize("admin"), changeSubUserStatus);
+router.patch(
+  "/:id/delete-status",
+  protect,
+  authorize("admin"),
+  subuserDeleteStatus,
+);
 
 module.exports = router;
