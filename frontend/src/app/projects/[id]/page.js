@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useGetProjectQuery } from "@/store/services/projectsApi";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { IoArrowBack } from "react-icons/io5";
 
 export default function ProjectDetailsPage() {
   const { id } = useParams();
@@ -56,10 +57,15 @@ export default function ProjectDetailsPage() {
           <div>
             <Link
               href="/projects"
-              className="btn btn-outline-primary me-2"
-              style={{ width: "5vw" }}
+              className="btn btn-outline-primary rounded-circle d-flex align-items-center justify-content-center p-0"
+              style={{
+                width: "40px",
+                height: "40px",
+                transition: "all 0.3s ease",
+              }}
+              title="Back to Projects"
             >
-              &larr; Back
+              <IoArrowBack size={20} />
             </Link>
           </div>
         </div>

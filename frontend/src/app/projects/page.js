@@ -119,7 +119,7 @@ export default function ProjectsPage() {
                         e.stopPropagation();
                         handleView(project._id);
                       }}
-                      className="btn btn-sm btn-outline-light me-2"
+                      className="btn btn-sm btn-outline-primary me-2"
                       title="View Details"
                     >
                       <i className="bi bi-eye"></i> View

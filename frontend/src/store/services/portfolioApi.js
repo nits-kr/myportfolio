@@ -5,11 +5,20 @@ export const portfolioApi = createApi({
   reducerPath: "portfolioApi",
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
-    prepareHeaders: (headers) => {
+    prepareHeaders: (headers, { getState }) => {
       const token =
         typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      if (token) {
-        headers.set("authorization", `Bearer ${token}`);
+      const user =
+        typeof window !== "undefined"
+          ? JSON.parse(localStorage.getItem("user"))
+          : null;
+
+      if (token && user) {
+        if (user.role === "admin") {
+          headers.set("x-auth-token-admin", token);
+        } else {
+          headers.set("x-auth-token-user", token);
+        }
       }
       return headers;
     },

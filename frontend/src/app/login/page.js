@@ -91,7 +91,7 @@ export default function LoginPage() {
                   <input
                     type="text"
                     suppressHydrationWarning
-                    className={`form-control bg-transparent text-white border-secondary ${errors.name ? "is-invalid" : ""}`}
+                    className={`form-control bg-transparent border-secondary ${errors.name ? "is-invalid" : ""}`}
                     placeholder="John Doe"
                     {...register("name", {
                       required: !isLogin ? "Name is required" : false,
@@ -115,7 +115,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 suppressHydrationWarning
-                className={`form-control bg-transparent text-white border-secondary ${errors.email ? "is-invalid" : ""}`}
+                className={`form-control bg-transparent border-secondary ${errors.email ? "is-invalid" : ""}`}
                 placeholder="admin@example.com"
                 {...register("email", {
                   required: "Email is required",
@@ -135,7 +135,7 @@ export default function LoginPage() {
               <input
                 type="password"
                 suppressHydrationWarning
-                className={`form-control bg-transparent text-white border-secondary ${errors.password ? "is-invalid" : ""}`}
+                className={`form-control bg-transparent border-secondary ${errors.password ? "is-invalid" : ""}`}
                 placeholder="••••••••"
                 {...register("password", {
                   required: "Password is required",
@@ -162,7 +162,7 @@ export default function LoginPage() {
                 >
                   <label className="form-label text-muted">Role</label>
                   <select
-                    className="form-select bg-transparent text-white border-secondary"
+                    className="form-select bg-transparent border-secondary"
                     suppressHydrationWarning
                     {...register("role")}
                   >

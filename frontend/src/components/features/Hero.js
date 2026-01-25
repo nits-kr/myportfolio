@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useSelector } from "react-redux";
 
+import { GoVerified } from "react-icons/go";
+
 export default function Hero() {
   const { profile } = useSelector((state) => state.content);
 
@@ -34,8 +36,10 @@ export default function Hero() {
               </span>{" "}
               That Matter.
             </h1>
-            <p className="lead mb-5">
-              I&apos;m {profile.name}, a {profile.title}. {profile.bio}
+            <p className="lead mb-5 d-flex align-items-center gap-2">
+              <strong>I&apos;m {profile.name}</strong>{" "}
+              <GoVerified className="text-primary" /> a {profile.title}.{" "}
+              {profile.bio}
             </p>
             <div className="d-flex gap-3">
               <Link href="/projects" className="btn btn-premium btn-lg">

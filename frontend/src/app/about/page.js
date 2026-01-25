@@ -18,15 +18,11 @@ export default function AboutPage() {
             <div className="glass-card p-5 position-relative z-1">
               <h2 className="display-5 fw-bold mb-4">About Me</h2>
               <p className="lead subtext mb-4">
-                I&apos;m {profile.name}, a passionate {profile.title}. I love
-                building things that live on the internet.
+                I&apos;m {profile.name}, a passionate {profile.title}.
               </p>
               <p className="subtext opacity-75">
-                My interest in web development started with a curiosity for how
-                things work, leading me to master the MERN stack and modern
-                frameworks.
+                {profile.longBio || profile.bio}
               </p>
-              <p className="subtext opacity-75 mt-3">{profile.bio}</p>
             </div>
 
             {/* Decorative background elements */}
@@ -60,21 +56,29 @@ export default function AboutPage() {
             transition={{ delay: 0.2 }}
           >
             <h3 className="h4 fw-bold mb-4">Tech Stack</h3>
-            <div className="row g-3">
-              {[
-                "JavaScript (ES6+)",
-                "React / Next.js",
-                "Node.js / Express",
-                "MongoDB",
-                "Redux Toolkit",
-                "Bootstrap / Tailwind",
-              ].map((tech, idx) => (
-                <div key={idx} className="col-6">
-                  <div className="glass-card py-2 px-3 d-flex align-items-center gap-2">
-                    <span className="text-success">▹</span> {tech}
+            <div className="d-flex flex-column gap-4">
+              {profile.skills &&
+                Object.entries(profile.skills).map(([category, skills]) => (
+                  <div key={category}>
+                    <h4
+                      className="h6 text-uppercase text-muted mb-2 ls-1"
+                      style={{ letterSpacing: "1px", fontSize: "0.875rem" }}
+                    >
+                      {category}
+                    </h4>
+                    <div className="d-flex flex-wrap gap-2">
+                      {skills.map((tech, idx) => (
+                        <div
+                          key={idx}
+                          className="glass-card py-2 px-3 d-flex align-items-center gap-2"
+                          style={{ fontSize: "0.9rem" }}
+                        >
+                          <span className="text-success small">▹</span> {tech}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </motion.div>
         </div>
