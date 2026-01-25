@@ -25,7 +25,7 @@
 }
 
 
-body {
+body, [data-bs-theme] body {
     background: var(--body-bg);
     color: var(--body-color);
     transition: background-color 0.3s ease, color 0.3s ease;
