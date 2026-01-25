@@ -21,7 +21,7 @@ body {
 body {
   color: var(--bs-body-color);
   background-color: var(--bs-body-bg);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Arial, Helvetica, sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
