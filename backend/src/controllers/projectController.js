@@ -11,7 +11,12 @@ export const getProjects = async (req, res, next) => {
       data: projects,
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: "Server Error" });
+    res.status(500).json({
+      error: true,
+      success: false,
+      message: "Server Error",
+      error: "Server Error",
+    });
   }
 };
 
