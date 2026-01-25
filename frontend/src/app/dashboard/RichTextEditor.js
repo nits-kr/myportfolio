@@ -38,42 +38,71 @@ const RichTextEditor = ({ value, onChange, onClose }) => {
   const [sourceCode, setSourceCode] = useState(value || "");
   const [mounted, setMounted] = useState(false);
 
+  // Refs to track state without triggering re-renders or dependency loops
+  const lastValueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
+  const iframeInitializedRef = useRef(false);
+
+  // Keep onChangeRef up to date
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     return () => setMounted(false);
   }, []);
 
+  // Reset initialization state when switching to source view so it re-inits when switching back
+  useEffect(() => {
+    if (viewSource) {
+      iframeInitializedRef.current = false;
+      lastValueRef.current = null;
+    }
+  }, [viewSource]);
+
   // Initialize iframe content
   useEffect(() => {
     const iframe = iframeRef.current;
-    if (iframe && !viewSource) {
+    if (iframe && !viewSource && mounted) {
       const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-      doc.designMode = "on";
-      doc.open();
-      doc.write(value || "");
-      doc.close();
+      // Only update content if it's the first run or if value changed externally
+      // We check against lastValueRef to avoid re-writing what we just typed
+      if (!iframeInitializedRef.current || value !== lastValueRef.current) {
+        doc.designMode = "on";
+        doc.open();
+        doc.write(value || "");
+        doc.close();
 
-      // Ensure decent default styling for the editable area so it doesn't look broken
-      if (!doc.querySelector("style")) {
-        const style = doc.createElement("style");
-        style.textContent = `
+        // Ensure decent default styling for the editable area so it doesn't look broken
+        if (!doc.querySelector("style")) {
+          const style = doc.createElement("style");
+          style.textContent = `
           body { font-family: -apple-system, system-ui, sans-serif; padding: 1rem; color: #333; line-height: 1.5; }
           a { color: #2563eb; text-decoration: underline; }
           ul, ol { margin-left: 20px; }
           img { max-width: 100%; height: auto; }
           blockquote { border-left: 4px solid #ccc; padding-left: 10px; margin-left: 0; color: #666; }
 `;
-        doc.head.appendChild(style);
+          doc.head.appendChild(style);
+        }
+
+        iframeInitializedRef.current = true;
+        lastValueRef.current = value;
       }
 
       const handleInput = () => {
         const content = doc.documentElement.outerHTML;
-        onChange(content);
+        lastValueRef.current = content; // Update our tracker
+        if (onChangeRef.current) {
+          onChangeRef.current(content);
+        }
         setSourceCode(content); // Keep sync
       };
 
+      // Always re-attach listeners because cleanup form previous run removes them (or they need to be fresh)
       doc.body.addEventListener("input", handleInput);
       doc.body.addEventListener("keyup", handleInput);
       doc.body.addEventListener("click", handleInput);
@@ -86,7 +115,7 @@ const RichTextEditor = ({ value, onChange, onClose }) => {
         }
       };
     }
-  }, [viewSource, mounted, onChange, value]); // Re-init when switching back from source view
+  }, [viewSource, mounted, value]); // onChange removed to prevent loop
 
   const execCmd = (command, value = null) => {
     const iframe = iframeRef.current;
