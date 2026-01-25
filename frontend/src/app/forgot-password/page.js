@@ -106,6 +106,7 @@ export default function ForgotPasswordPage() {
     if (timeLeft > 0) return;
     try {
       await sendOtp({ email }).unwrap();
+      setOtp(new Array(6).fill("")); // Clear OTP boxes
       startTimer();
     } catch (err) {
       console.error("Resend failed", err);
