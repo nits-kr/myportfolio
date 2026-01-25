@@ -15,6 +15,7 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") || "dark";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(savedTheme);
     document.documentElement.setAttribute("data-bs-theme", savedTheme);
     setMounted(true);

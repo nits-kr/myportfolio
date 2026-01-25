@@ -26,6 +26,7 @@ export default function ProjectsPage() {
   console.log("user", user);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
   }, []);
 

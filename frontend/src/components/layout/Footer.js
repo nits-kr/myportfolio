@@ -10,7 +10,7 @@ export default function Footer() {
       <div className="container">
         <div className="glass-card text-center">
           <div className="mb-4">
-            <h3 className="fw-bold mb-3">Let's Connect</h3>
+            <h3 className="fw-bold mb-3">Let&apos;s Connect</h3>
             <div className="d-flex justify-content-center gap-4">
               <a href="#" className="fs-4 hover-scale">
                 <FaGithub />

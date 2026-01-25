@@ -1,0 +1,92 @@
+﻿
+> mynextportfolio@0.1.0 lint
+> eslint
+
+
+D:\myPortfolio\MyPortfolio\myportfolio\frontend\src\app\dashboard\RichTextEditor.js
+  37:9  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  35 |
+  36 |     useEffect(() => {
+> 37 |         setMounted(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  38 |         return () => setMounted(false);
+  39 |     }, []);
+  40 |  react-hooks/set-state-in-effect
+  83:8  warning  React Hook useEffect has missing dependencies: 'onChange' and 'value'. Either include them or remove the dependency array. If 'onChange' changes too often, find the parent component that defines it and wrap that definition in useCallback                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/exhaustive-deps
+
+D:\myPortfolio\MyPortfolio\myportfolio\frontend\src\app\dashboard\page.js
+  50:23  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+  48 |   } = useForm();
+  49 |   const [showProjectEditor, setShowProjectEditor] = useState(false);
+> 50 |   const projectBody = watchProject("body");
+     |                       ^^^^^^^^^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  51 |   const [editingProject, setEditingProject] = useState(null);
+  52 |
+  53 |   // Check for edit/view params  react-hooks/incompatible-library
+
+D:\myPortfolio\MyPortfolio\myportfolio\frontend\src\app\projects\page.js
+  29:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  27 |
+  28 |   useEffect(() => {
+> 29 |     setIsMounted(true);
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  30 |   }, []);
+  31 |
+  32 |   console.log("projects", projectsData);  react-hooks/set-state-in-effect
+
+D:\myPortfolio\MyPortfolio\myportfolio\frontend\src\components\layout\Footer.js
+  13:45  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\myPortfolio\MyPortfolio\myportfolio\frontend\src\components\layout\Navbar.js
+  19:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  17 |
+  18 |   useEffect(() => {
+> 19 |     setIsMounted(true);
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  20 |   }, []);
+  21 |
+  22 |   const navLinks = [  react-hooks/set-state-in-effect
+
+D:\myPortfolio\MyPortfolio\myportfolio\frontend\src\context\ThemeContext.js
+  18:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  16 |   useEffect(() => {
+  17 |     const savedTheme = localStorage.getItem("theme") || "dark";
+> 18 |     setTheme(savedTheme);
+     |     ^^^^^^^^ Avoid calling setState() directly within an effect
+  19 |     document.documentElement.setAttribute("data-bs-theme", savedTheme);
+  20 |     setMounted(true);
+  21 |   }, []);  react-hooks/set-state-in-effect
+
+Γ£û 7 problems (5 errors, 2 warnings)
+
