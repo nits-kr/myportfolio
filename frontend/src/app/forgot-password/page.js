@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,13 +10,19 @@ import {
   useResetPasswordMutation,
 } from "@/store/services/portfolioApi";
 import Link from "next/link";
-import { FaArrowLeft, FaEnvelope, FaLock, FaKey } from "react-icons/fa";
+import { FaArrowLeft, FaEnvelope, FaLock } from "react-icons/fa";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const [step, setStep] = useState(1); // 1: Send OTP, 2: Verify OTP, 3: Reset Password
   const [email, setEmail] = useState("");
-  const [resetToken, setResetToken] = useState(null); // Could be used if backend returns a token, otherwise we use email/otp
+
+  // Timer State
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  // OTP Input State (6 digits)
+  const [otp, setOtp] = useState(new Array(6).fill(""));
+  const inputRefs = useRef([]);
 
   // API Mutations
   const [sendOtp, { isLoading: isSendingOtp, error: sendOtpError }] =
@@ -34,33 +40,89 @@ export default function ForgotPasswordPage() {
   } = useForm();
 
   const {
-    register: registerOtp,
-    handleSubmit: handleSubmitOtp,
-    formState: { errors: otpErrors },
-  } = useForm();
-
-  const {
     register: registerReset,
     handleSubmit: handleSubmitReset,
     watch,
     formState: { errors: resetErrors },
   } = useForm();
 
-  // Handlers
+  // --- Timer Logic ---
+  const startTimer = () => {
+    const expiry = Date.now() + 120 * 1000; // 2 minutes
+    localStorage.setItem("otpExpiry", expiry);
+    setTimeLeft(120);
+  };
+
+  useEffect(() => {
+    // Check for existing timer in localStorage
+    const savedExpiry = localStorage.getItem("otpExpiry");
+    if (savedExpiry) {
+      const remaining = Math.ceil((parseInt(savedExpiry) - Date.now()) / 1000);
+      if (remaining > 0) {
+        setTimeLeft(remaining);
+      } else {
+        localStorage.removeItem("otpExpiry");
+        setTimeLeft(0);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          localStorage.removeItem("otpExpiry");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [timeLeft]);
+
+  const formatTime = () => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+  };
+
+  // --- Handlers ---
   const onSendOtp = async (data) => {
     try {
       await sendOtp({ email: data.email }).unwrap();
       setEmail(data.email);
+      startTimer();
       setStep(2);
     } catch (err) {
       console.error("Failed to send OTP", err);
     }
   };
 
-  const onVerifyOtp = async (data) => {
+  const handleResendOtp = async () => {
+    if (timeLeft > 0) return;
     try {
-      await verifyOtp({ email, otp: data.otp }).unwrap();
+      await sendOtp({ email }).unwrap();
+      startTimer();
+    } catch (err) {
+      console.error("Resend failed", err);
+    }
+  };
+
+  const onVerifyOtp = async (e) => {
+    e.preventDefault();
+    const otpCode = otp.join("");
+    if (otpCode.length !== 6) return;
+
+    try {
+      await verifyOtp({ email, otp: otpCode }).unwrap();
       // If verification is successful, move to reset password
+      // Clear timer on success
+      localStorage.removeItem("otpExpiry");
+      setTimeLeft(0);
       setStep(3);
     } catch (err) {
       console.error("Failed to verify OTP", err);
@@ -70,11 +132,49 @@ export default function ForgotPasswordPage() {
   const onResetPassword = async (data) => {
     try {
       await resetPassword({ email, password: data.newPassword }).unwrap();
-      // Redirect to login or show success message
-      // For now, let's redirect to login for simplicity
       router.push("/login?reset=success");
     } catch (err) {
       console.error("Failed to reset password", err);
+    }
+  };
+
+  // --- OTP Input Handlers ---
+  const handleOtpChange = (element, index) => {
+    if (isNaN(element.value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = element.value;
+    setOtp(newOtp);
+
+    // Focus next input
+    if (element.value && index < 5) {
+      inputRefs.current[index + 1].focus();
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace") {
+      if (!otp[index] && index > 0) {
+        inputRefs.current[index - 1].focus();
+      } else if (otp[index]) {
+        const newOtp = [...otp];
+        newOtp[index] = "";
+        setOtp(newOtp);
+      }
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const val = e.clipboardData.getData("text").slice(0, 6);
+    if (/^[0-9]+$/.test(val)) {
+      const newOtp = [...otp];
+      val.split("").forEach((char, i) => {
+        newOtp[i] = char;
+      });
+      setOtp(newOtp);
+      // Focus proper input
+      const nextFocus = Math.min(val.length, 5);
+      inputRefs.current[nextFocus].focus();
     }
   };
 
@@ -98,9 +198,9 @@ export default function ForgotPasswordPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="col-md-5 col-lg-4"
+        className="col-md-5 col-lg-5"
       >
-        <div className="glass-card p-5 position-relative overflow-hidden">
+        <div className="glass-card p-5 position-relative z-3">
           {/* Header */}
           <div className="text-center mb-4">
             <h2 className="fw-bold mb-1">
@@ -110,7 +210,7 @@ export default function ForgotPasswordPage() {
             </h2>
             <p className="text-muted small">
               {step === 1 && "Enter your email to receive a verification code."}
-              {step === 2 && `Enter the code sent to ${email}`}
+              {step === 2 && `Enter the 6-digit code sent to ${email}`}
               {step === 3 && "Create a strong new password."}
             </p>
           </div>
@@ -124,6 +224,7 @@ export default function ForgotPasswordPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 onSubmit={handleSubmitEmail(onSendOtp)}
+                suppressHydrationWarning
               >
                 {sendOtpError && renderError(sendOtpError)}
 
@@ -134,6 +235,7 @@ export default function ForgotPasswordPage() {
                     </span>
                     <input
                       type="email"
+                      suppressHydrationWarning
                       className={`form-control bg-transparent border-start-0 border-secondary ${emailErrors.email ? "is-invalid" : ""}`}
                       placeholder="name@example.com"
                       {...registerEmail("email", {
@@ -156,6 +258,7 @@ export default function ForgotPasswordPage() {
                   type="submit"
                   className="btn btn-premium w-100 mb-3"
                   disabled={isSendingOtp}
+                  suppressHydrationWarning
                 >
                   {isSendingOtp ? (
                     <>
@@ -176,44 +279,59 @@ export default function ForgotPasswordPage() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                onSubmit={handleSubmitOtp(onVerifyOtp)}
+                onSubmit={onVerifyOtp}
+                suppressHydrationWarning
               >
                 {verifyOtpError && renderError(verifyOtpError)}
 
-                <div className="mb-4">
-                  <div className="input-group">
-                    <span className="input-group-text bg-transparent border-end-0 border-secondary text-muted">
-                      <FaKey />
-                    </span>
+                <div
+                  className="d-flex justify-content-center gap-2 mb-4"
+                  onPaste={handlePaste}
+                >
+                  {otp.map((data, index) => (
                     <input
+                      key={index}
                       type="text"
-                      className={`form-control bg-transparent border-start-0 border-secondary ${otpErrors.otp ? "is-invalid" : ""}`}
-                      placeholder="Enter 6-digit code"
-                      maxLength={6}
-                      {...registerOtp("otp", {
-                        required: "OTP is required",
-                        minLength: {
-                          value: 6,
-                          message: "OTP must be 6 digits",
-                        },
-                        maxLength: {
-                          value: 6,
-                          message: "OTP must be 6 digits",
-                        },
-                      })}
+                      className="form-control bg-transparent border-secondary text-center fw-bold fs-4"
+                      name="otp"
+                      maxLength="1"
+                      ref={(el) => (inputRefs.current[index] = el)}
+                      value={data}
+                      onChange={(e) => handleOtpChange(e.target, index)}
+                      onKeyDown={(e) => handleKeyDown(e, index)}
+                      onFocus={(e) => e.target.select()}
+                      style={{ width: "50px", height: "60px" }}
+                      suppressHydrationWarning
                     />
-                  </div>
-                  {otpErrors.otp && (
-                    <div className="text-danger small mt-1 ps-1">
-                      {otpErrors.otp.message}
-                    </div>
+                  ))}
+                </div>
+
+                {/* Timer Section */}
+                <div className="text-center mb-4">
+                  {timeLeft > 0 ? (
+                    <p className="text-muted small mb-0">
+                      Resend code in{" "}
+                      <span className="fw-bold text-primary">
+                        {formatTime()}
+                      </span>
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-link text-primary text-decoration-none small"
+                      onClick={handleResendOtp}
+                      disabled={isSendingOtp}
+                    >
+                      {isSendingOtp ? "Resending..." : "Resend Code"}
+                    </button>
                   )}
                 </div>
 
                 <button
                   type="submit"
                   className="btn btn-premium w-100 mb-3"
-                  disabled={isVerifyingOtp}
+                  disabled={isVerifyingOtp || otp.join("").length !== 6}
+                  suppressHydrationWarning
                 >
                   {isVerifyingOtp ? (
                     <>
@@ -231,7 +349,7 @@ export default function ForgotPasswordPage() {
                     className="btn btn-link text-muted text-decoration-none small"
                     onClick={() => setStep(1)}
                   >
-                    Resend Code?
+                    Change Email
                   </button>
                 </div>
               </motion.form>
@@ -245,6 +363,7 @@ export default function ForgotPasswordPage() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 onSubmit={handleSubmitReset(onResetPassword)}
+                suppressHydrationWarning
               >
                 {resetError && renderError(resetError)}
 
@@ -255,6 +374,7 @@ export default function ForgotPasswordPage() {
                     </span>
                     <input
                       type="password"
+                      suppressHydrationWarning
                       className={`form-control bg-transparent border-start-0 border-secondary ${resetErrors.newPassword ? "is-invalid" : ""}`}
                       placeholder="New Password"
                       {...registerReset("newPassword", {
@@ -280,6 +400,7 @@ export default function ForgotPasswordPage() {
                     </span>
                     <input
                       type="password"
+                      suppressHydrationWarning
                       className={`form-control bg-transparent border-start-0 border-secondary ${resetErrors.confirmPassword ? "is-invalid" : ""}`}
                       placeholder="Confirm Password"
                       {...registerReset("confirmPassword", {
@@ -302,6 +423,7 @@ export default function ForgotPasswordPage() {
                   type="submit"
                   className="btn btn-premium w-100 mb-3"
                   disabled={isResetting}
+                  suppressHydrationWarning
                 >
                   {isResetting ? (
                     <>

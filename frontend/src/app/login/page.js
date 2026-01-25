@@ -68,7 +68,7 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="col-md-5"
       >
-        <div className="glass-card p-5">
+        <div className="glass-card p-5 position-relative z-3">
           <h2 className="text-center fw-bold mb-4">
             {isLogin ? "Welcome Back" : "Create Account"}
           </h2>
@@ -79,7 +79,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmit(onSubmit)} suppressHydrationWarning>
             <AnimatePresence mode="popLayout">
               {!isLogin && (
                 <motion.div
