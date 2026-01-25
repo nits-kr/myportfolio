@@ -41,6 +41,27 @@ export const portfolioApi = createApi({
         body: userData,
       }),
     }),
+    sendOtp: builder.mutation({
+      query: (data) => ({
+        url: "auth/send-otp",
+        method: "POST",
+        body: data,
+      }),
+    }),
+    verifyOtp: builder.mutation({
+      query: (data) => ({
+        url: "auth/verify-otp",
+        method: "POST",
+        body: data,
+      }),
+    }),
+    resetPassword: builder.mutation({
+      query: (data) => ({
+        url: "auth/reset-password",
+        method: "POST",
+        body: data,
+      }),
+    }),
     getMe: builder.query({
       query: () => "auth/me",
     }),
@@ -51,4 +72,7 @@ export const {
   useRegisterMutation,
   useLoginMutation,
   useGetMeQuery,
+  useSendOtpMutation,
+  useVerifyOtpMutation,
+  useResetPasswordMutation,
 } = portfolioApi;

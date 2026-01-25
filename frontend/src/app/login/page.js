@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/store/slices/authSlice";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   useLoginMutation,
@@ -152,6 +153,17 @@ export default function LoginPage() {
               )}
             </div>
 
+            {isLogin && (
+              <div className="d-flex justify-content-end mb-4">
+                <Link
+                  href="/forgot-password"
+                  className="text-muted small text-decoration-none hover-primary transition"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
+            )}
+
             <AnimatePresence mode="popLayout">
               {!isLogin && (
                 <motion.div
@@ -197,7 +209,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="text-center mt-4">
+          <div className="text-center mt-4 d-none">
             <p className="mb-0 text-muted">
               {isLogin
                 ? "Don't have an account? "

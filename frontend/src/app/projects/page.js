@@ -112,7 +112,7 @@ export default function ProjectsPage() {
                 whileHover={{ y: -10 }}
                 className="glass-card h-100 p-4 position-relative"
               >
-                {isMounted && role === "admin" && (
+                {isMounted && (
                   <div className="position-absolute top-0 end-0 p-3">
                     <button
                       onClick={(e) => {
@@ -124,26 +124,30 @@ export default function ProjectsPage() {
                     >
                       <i className="bi bi-eye"></i> View
                     </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(project._id);
-                      }}
-                      className="btn btn-sm btn-outline-info me-2"
-                      title="Edit Project"
-                    >
-                      <i className="bi bi-pencil"></i> Edit
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(project._id);
-                      }}
-                      className="btn btn-sm btn-outline-danger"
-                      title="Delete Project"
-                    >
-                      <i className="bi bi-trash"></i> Delete
-                    </button>
+                    {role === "admin" && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(project._id);
+                          }}
+                          className="btn btn-sm btn-outline-info me-2"
+                          title="Edit Project"
+                        >
+                          <i className="bi bi-pencil"></i> Edit
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(project._id);
+                          }}
+                          className="btn btn-sm btn-outline-danger"
+                          title="Delete Project"
+                        >
+                          <i className="bi bi-trash"></i> Delete
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
 
