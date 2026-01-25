@@ -7,16 +7,19 @@ import {
   deleteProject,
 } from "../controllers/projectController.js";
 
-import { protect } from "../middleware/authMiddleware.js";
+import { authorize, protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.route("/").get(getProjects).post(protect, createProject);
+router
+  .route("/")
+  .get(getProjects)
+  .post(protect, authorize("admin"), createProject);
 
 router
   .route("/:id")
   .get(getProject)
-  .put(protect, updateProject)
-  .delete(protect, deleteProject);
+  .put(protect, authorize("admin"), updateProject)
+  .delete(protect, authorize("admin"), deleteProject);
 
 export default router;
