@@ -13,43 +13,16 @@ connectDB();
 // Route files
 import authRoutes from "./src/routes/authRoutes.js";
 import projectRoutes from "./src/routes/projectRoutes.js";
+import subUserRoutes from "./src/routes/subUser.routes.js"; // Import SubUser routes
 
 const app = express();
 
-// Body parser
-app.use(express.json());
-
-// Cookie parser
-app.use(cookieParser());
-
-// Enable CORS
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",")
-  : ["http://localhost:3000"];
-
-// Add localhost:3000 explicitly if not present (for failsafe dev)
-if (!allowedOrigins.includes("http://localhost:3000")) {
-  allowedOrigins.push("http://localhost:3000");
-}
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true, // Allow cookies
-  }),
-);
+// ...
 
 // Mount routers
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/sub-users", subUserRoutes); // Mount SubUser routes
 
 const PORT = process.env.PORT || 5000;
 
