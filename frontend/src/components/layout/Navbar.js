@@ -92,6 +92,16 @@ export default function Navbar() {
                       Dashboard
                     </Link>
                   </li>
+                  {user?.role === "admin" && (
+                    <li>
+                      <Link
+                        className="dropdown-item text-white"
+                        href="/dashboard/sub-users"
+                      >
+                        Manage Sub-Users
+                      </Link>
+                    </li>
+                  )}
                   <li>
                     <hr className="dropdown-divider bg-white" />
                   </li>

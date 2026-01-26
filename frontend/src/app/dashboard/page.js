@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import RichTextEditor from "./RichTextEditor";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useSelector, useDispatch } from "react-redux";
@@ -146,6 +147,14 @@ function DashboardContent() {
             <p className="text-muted">
               Welcome, {user?.name} ({user?.role})
             </p>
+
+            {user?.role === "admin" && (
+              <div className="mb-4">
+                <Link href="/dashboard/sub-users" className="btn btn-primary">
+                  Manage Sub-Users
+                </Link>
+              </div>
+            )}
 
             {user?.role === "admin" && (
               <>
