@@ -1,5 +1,5 @@
 import SubUser from "../models/subUser.modal.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 const createSubUser = async (subUserData, parentUserId) => {
   const { name, email, password, role, permissions } = subUserData;
