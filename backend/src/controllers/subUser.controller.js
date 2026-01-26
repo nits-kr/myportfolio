@@ -84,7 +84,7 @@ export const changeSubUserStatus = catchAsync(async (req, res) => {
       error: false,
       success: true,
       message: "Subuser status changed successfully",
-      subuser,
+      subuser: { status: subuser.status },
     });
   } catch (error) {
     throw error; // Let the global error handler handle other errors
