@@ -1,5 +1,5 @@
-const SubUser = require("../models/subUser.modal");
-const bcrypt = require("bcrypt");
+import SubUser from "../models/subUser.modal.js";
+import bcrypt from "bcrypt";
 
 const createSubUser = async (subUserData, parentUserId) => {
   const { name, email, password, role, permissions } = subUserData;
@@ -61,7 +61,7 @@ const subuserDeleteStatus = async (subUserId, status) => {
   return subuser;
 };
 
-module.exports = {
+export {
   createSubUser,
   getAllSubUsers,
   updateSubUser,

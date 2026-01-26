@@ -1,7 +1,7 @@
-const subUserService = require("../services/subUser.services");
-const catchAsync = require("../utils/catchAsync");
+import * as subUserService from "../services/subUser.services.js";
+import catchAsync from "../utils/catchAsync.js";
 
-exports.createSubUser = catchAsync(async (req, res) => {
+export const createSubUser = catchAsync(async (req, res) => {
   try {
     const subuser = await subUserService.createSubUser(req.body, req.user._id);
     res.status(201).json({
@@ -22,7 +22,7 @@ exports.createSubUser = catchAsync(async (req, res) => {
   }
 });
 
-exports.getAllSubUsers = catchAsync(async (req, res) => {
+export const getAllSubUsers = catchAsync(async (req, res) => {
   try {
     const subusers = await subUserService.getAllSubUsers(req.user._id);
     res.status(200).json({
@@ -35,7 +35,7 @@ exports.getAllSubUsers = catchAsync(async (req, res) => {
     throw error; // Let the global error handler handle other errors
   }
 });
-exports.updateSubUser = catchAsync(async (req, res) => {
+export const updateSubUser = catchAsync(async (req, res) => {
   try {
     const subuser = await subUserService.updateSubUser(req.params.id, req.body);
     res.status(200).json({
@@ -48,7 +48,7 @@ exports.updateSubUser = catchAsync(async (req, res) => {
     throw error; // Let the global error handler handle other errors
   }
 });
-exports.deleteSubUser = catchAsync(async (req, res) => {
+export const deleteSubUser = catchAsync(async (req, res) => {
   try {
     const subuser = await subUserService.deleteSubUser(req.params.id);
     res.status(200).json({
@@ -61,7 +61,7 @@ exports.deleteSubUser = catchAsync(async (req, res) => {
     throw error; // Let the global error handler handle other errors
   }
 });
-exports.getSubUserById = catchAsync(async (req, res) => {
+export const getSubUserById = catchAsync(async (req, res) => {
   try {
     const subuser = await subUserService.getSubUserById(req.params.id);
     res.status(200).json({
@@ -74,7 +74,7 @@ exports.getSubUserById = catchAsync(async (req, res) => {
     throw error; // Let the global error handler handle other errors
   }
 });
-exports.changeSubUserStatus = catchAsync(async (req, res) => {
+export const changeSubUserStatus = catchAsync(async (req, res) => {
   try {
     const subuser = await subUserService.changeSubUserStatus(
       req.params.id,
@@ -90,7 +90,7 @@ exports.changeSubUserStatus = catchAsync(async (req, res) => {
     throw error; // Let the global error handler handle other errors
   }
 });
-exports.subuserDeleteStatus = catchAsync(async (req, res) => {
+export const subuserDeleteStatus = catchAsync(async (req, res) => {
   try {
     const subuser = await subUserService.subuserDeleteStatus(
       req.params.id,

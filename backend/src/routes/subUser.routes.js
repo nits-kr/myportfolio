@@ -1,7 +1,6 @@
-const express = require("express");
-const router = express.Router();
-const { protect, authorize } = require("../middleware/authMiddleware");
-const {
+import express from "express";
+import { protect, authorize } from "../middleware/authMiddleware.js";
+import {
   createSubUser,
   getAllSubUsers,
   updateSubUser,
@@ -9,7 +8,9 @@ const {
   getSubUserById,
   changeSubUserStatus,
   subuserDeleteStatus,
-} = require("../controllers/subUser.controller");
+} from "../controllers/subUser.controller.js";
+
+const router = express.Router();
 
 router.post("/", protect, authorize("admin"), createSubUser);
 router.get("/", protect, authorize("admin"), getAllSubUsers);
@@ -24,4 +25,4 @@ router.patch(
   subuserDeleteStatus,
 );
 
-module.exports = router;
+export default router;
