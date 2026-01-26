@@ -14,6 +14,7 @@ connectDB();
 import authRoutes from "./src/routes/authRoutes.js";
 import projectRoutes from "./src/routes/projectRoutes.js";
 import subUserRoutes from "./src/routes/subUser.routes.js"; // Import SubUser routes
+import errorHandler from "./src/middleware/errorMiddleware.js"; // Import Error Handler
 
 const app = express();
 
@@ -52,6 +53,8 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/sub-users", subUserRoutes); // Mount SubUser routes
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
