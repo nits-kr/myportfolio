@@ -1,5 +1,5 @@
 import SubUser from "../models/subUser.modal.js";
-import bcrypt from "bcryptjs";
+// import bcrypt from "bcryptjs"; // Removed as hashing is done in model
 
 const createSubUser = async (subUserData, parentUserId) => {
   const { name, email, password, role, permissions } = subUserData;
@@ -8,13 +8,13 @@ const createSubUser = async (subUserData, parentUserId) => {
   if (existSubUser) {
     throw new Error("Subuser already exists");
   }
-  const hashPassword = await bcrypt.hash(password, 10);
+  // Password hashing is now handled in the model pre-save hook
 
   const subuser = await SubUser.create({
     parentUser: parentUserId,
     name,
     email,
-    password: hashPassword,
+    password, // Pass plain password
     role,
     permissions,
   });

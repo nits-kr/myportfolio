@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
 const subUserSchema = new mongoose.Schema({
   name: {
@@ -71,6 +72,14 @@ const subUserSchema = new mongoose.Schema({
     default: Date.now,
     message: (props) => `${props.value} is not a valid updated at!`,
   },
+});
+
+subUserSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 export default mongoose.model("SubUser", subUserSchema);
