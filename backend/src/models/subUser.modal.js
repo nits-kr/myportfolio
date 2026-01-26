@@ -62,6 +62,11 @@ const subUserSchema = new mongoose.Schema({
     default: Date.now,
     message: (props) => `${props.value} is not a valid timestamp!`,
   },
+  status: {
+    type: Boolean,
+    default: true,
+    message: (props) => `${props.value} is not a valid status!`,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
