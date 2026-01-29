@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "@/store/slices/authSlice";
 import { useTheme } from "@/context/ThemeContext";
+import { useScrollDirection } from "@/hooks/useScrollDirection";
 import { FaUserCircle, FaSun, FaMoon } from "react-icons/fa";
 
 export default function Navbar() {
@@ -13,6 +14,7 @@ export default function Navbar() {
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { theme, toggleTheme } = useTheme();
+  const scrollDirection = useScrollDirection();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -32,20 +34,43 @@ export default function Navbar() {
       style={{ padding: "1rem 0" }}
     >
       <div className="container glass-nav custom-nav-mobile d-flex justify-content-between align-items-center rounded-4">
-        <Link href="/" className="navbar-brand fw-bold text-reset fs-4">
+        <Link
+          href="/"
+          className="navbar-brand fw-bold text-reset fs-4 d-none d-lg-block"
+        >
           Port<span style={{ color: "#a855f7" }}>folio</span>.
         </Link>
-
-        <button
-          className="navbar-toggler border-0"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-label="Toggle navigation"
+        <Link
+          href="/"
+          className="navbar-brand fw-bold text-reset fs-5 d-lg-none"
         >
-          <span className="navbar-toggler-icon"></span>
-        </button>
+          P<span style={{ color: "#a855f7" }}>.</span>
+        </Link>
 
+        {/* Mobile Header Actions */}
+        <div className="d-lg-none d-flex align-items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="btn btn-link nav-link p-0 text-reset"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <FaSun size={20} /> : <FaMoon size={20} />}
+          </button>
+
+          <button
+            className="navbar-toggler border-0 p-0"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span className="navbar-toggler-icon"></span>
+          </button>
+        </div>
+
+        {/* Navigation links & Actions */}
         <div
           className="collapse navbar-collapse justify-content-end"
           id="navbarNav"
@@ -62,7 +87,8 @@ export default function Navbar() {
               </li>
             ))}
 
-            <li className="nav-item">
+            {/* Desktop only theme toggle */}
+            <li className="nav-item d-none d-lg-block">
               <button
                 onClick={toggleTheme}
                 className="btn btn-link nav-link p-0"

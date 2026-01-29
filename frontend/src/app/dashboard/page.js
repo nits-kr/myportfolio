@@ -290,30 +290,90 @@ function DashboardContent() {
 
         <div className="row g-4">
           <div className="col-md-4">
-            <div className="glass-card">
-              <h5 className="mb-2">Views</h5>
-              <div className="d-flex align-items-end justify-content-between">
-                <span className="display-4 fw-bold">{stats.views}</span>
-                <span className="text-success small">+12%</span>
+            <div className="glass-card h-100 p-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="icon-box bg-primary bg-opacity-10 p-3 rounded-4">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-primary"
+                  >
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </div>
+                <span className="badge bg-success bg-opacity-10 text-success border-0 px-3 py-2 rounded-pill">
+                  +12%
+                </span>
               </div>
+              <h5 className="text-muted fw-medium mb-1">Total Views</h5>
+              <h2 className="display-6 fw-bold mb-0">
+                {stats.views.toLocaleString()}
+              </h2>
             </div>
           </div>
           <div className="col-md-4">
-            <div className="glass-card">
-              <h5 className="mb-2">Projects</h5>
-              <div className="d-flex align-items-end justify-content-between">
-                <span className="display-4 fw-bold">{stats.projects}</span>
-                <span className="text-success small">+5%</span>
+            <div className="glass-card h-100 p-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <div
+                  className="icon-box bg-purple bg-opacity-10 p-3 rounded-4"
+                  style={{ backgroundColor: "rgba(124, 58, 237, 0.1)" }}
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#7c3aed"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
+                    <path d="m12 12 8-4.5" />
+                    <path d="M12 12v9" />
+                    <path d="m12 12-8-4.5" />
+                    <path d="m16 5.25-8 4.5" />
+                  </svg>
+                </div>
+                <span className="badge bg-success bg-opacity-10 text-success border-0 px-3 py-2 rounded-pill">
+                  +5%
+                </span>
               </div>
+              <h5 className="text-muted fw-medium mb-1">Projects</h5>
+              <h2 className="display-6 fw-bold mb-0">{stats.projects}</h2>
             </div>
           </div>
           <div className="col-md-4">
-            <div className="glass-card">
-              <h5 className="mb-2">Messages</h5>
-              <div className="d-flex align-items-end justify-content-between">
-                <span className="display-4 fw-bold">{stats.messages}</span>
-                <span className="text-success small">+8%</span>
+            <div className="glass-card h-100 p-4">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <div className="icon-box bg-info bg-opacity-10 p-3 rounded-4">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-info"
+                  >
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                </div>
+                <span className="badge bg-success bg-opacity-10 text-success border-0 px-3 py-2 rounded-pill">
+                  +8%
+                </span>
               </div>
+              <h5 className="text-muted fw-medium mb-1">Messages</h5>
+              <h2 className="display-6 fw-bold mb-0">{stats.messages}</h2>
             </div>
           </div>
         </div>
@@ -321,7 +381,8 @@ function DashboardContent() {
         <div className="mt-5">
           <div className="glass-card">
             <h3 className="mb-4">Recent Activity</h3>
-            <div className="table-responsive">
+            {/* Desktop Table View */}
+            <div className="table-responsive d-none d-md-block">
               <table
                 className="table table-hover bg-transparent mb-0"
                 style={{ "--bs-table-bg": "transparent" }}
@@ -380,6 +441,60 @@ function DashboardContent() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="d-md-none">
+              {isLoading ? (
+                <div className="text-center py-3">Loading projects...</div>
+              ) : projects.length === 0 ? (
+                <div className="text-center py-3">No projects found</div>
+              ) : (
+                <div className="d-flex flex-column gap-3">
+                  {projects.map((project) => (
+                    <div
+                      key={project._id}
+                      className="glass-card p-3 border-start border-4"
+                      style={{
+                        borderColor:
+                          project.status === "Completed"
+                            ? "#10b981"
+                            : project.status === "In Progress"
+                              ? "#f59e0b"
+                              : "#7c3aed",
+                      }}
+                    >
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <h6 className="fw-bold mb-0">{project.title}</h6>
+                        <span
+                          className={`badge bg-${project.status === "Completed" ? "success" : project.status === "In Progress" ? "warning" : "primary"} border-0`}
+                        >
+                          {project.status}
+                        </span>
+                      </div>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <small className="text-muted">
+                          {moment(project.createdAt).format("MMM D, YYYY")}
+                        </small>
+                        <div className="d-flex gap-2">
+                          <button
+                            onClick={() => handleEditClick(project)}
+                            className="btn btn-premium btn-sm py-1 px-3"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProject(project._id)}
+                            className="btn btn-outline-danger btn-sm py-1"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

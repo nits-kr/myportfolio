@@ -1,12 +1,15 @@
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/mixins/breakpoints";
+
 // Premium Color Palette
-$primary-color: #6366f1; // Indigo
-$secondary-color: #a855f7; // Purple
-$accent-color: #ec4899; // Pink
-$dark-bg: #0f172a; // Slate 900
-$glass-bg: rgba(255, 255, 255, 0.1);
-$glass-border: rgba(255, 255, 255, 0.2);
+$primary-color: #7c3aed; // Violet 600
+$secondary-color: #8b5cf6; // Violet 500
+$accent-color: #f472b6; // Pink 400
+$dark-bg: #020617; // Slate 950
+$glass-bg: rgba(15, 23, 42, 0.6);
+$glass-border: rgba(255, 255, 255, 0.1);
 $text-light: #f8fafc;
-$text-muted: #94a3b8;
+$text-muted: #64748b;
 
 $grid-breakpoints: (
     xs: 0,

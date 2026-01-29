@@ -10,8 +10,11 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
+    "@serwist/next": "^9.5.0",
     "bootstrap": "^5.3.8",
     "clsx": "^2.1.1",
+    "dexie": "^4.2.1",
+    "dexie-react-hooks": "^4.2.0",
     "force": "^0.0.3",
     "framer-motion": "^12.23.26",
     "moment": "^2.30.1",
@@ -22,6 +25,7 @@
     "react-icons": "^5.5.0",
     "react-redux": "^9.2.0",
     "sass": "^1.97.1",
+    "serwist": "^9.5.0",
     "sweetalert2": "^11.26.17"
   },
   "devDependencies": {

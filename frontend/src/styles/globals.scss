@@ -3,21 +3,35 @@
 :root {
     --body-bg: #{$dark-bg};
     --body-color: #{$text-light};
-    --glass-bg: #{$glass-bg};
-    --glass-border: #{$glass-border};
-    --text-muted: #e5d7d7;
-    --scrollbar-track: #{$dark-bg};
-    --scrollbar-thumb: #{$glass-border};
-    --scrollbar-thumb-hover: #{$secondary-color};
-    --mobile-menu-bg: rgba(10, 10, 20, 0.98);
+    --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-blur: 25px;
+    --text-muted: #94a3b8;
+    --primary-gradient: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    --scrollbar-track: #020617;
+    --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+    --scrollbar-thumb-hover: #7c3aed;
+    --mobile-menu-bg: rgba(2, 6, 23, 0.85);
+}
+
+.main-content {
+    padding-top: 100px;
+    min-height: 100vh;
+    padding-bottom: 50px;
+    
+    @media (max-width: 991.98px) {
+        width: var(--mobile-app-width);
+        margin: 0 var(--mobile-side-margin);
+        padding: 1rem 0;
+    }
 }
 
 [data-bs-theme="light"] {
     --body-bg: #f8fafc;
-    --body-color: #1e293b;
+    --body-color: #0f172a;
     --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(0, 0, 0, 0.1);
-    --text-muted: #64748b;
+    --glass-border: rgba(0, 0, 0, 0.05);
+    --text-muted: #475569;
     --scrollbar-track: #f1f5f9;
     --scrollbar-thumb: #cbd5e1;
     --scrollbar-thumb-hover: #{$primary-color};
@@ -30,9 +44,9 @@ html, body, [data-bs-theme] body {
     color: var(--body-color);
     transition: background-color 0.3s ease, color 0.3s ease;
     font-family: -apple-system, system-ui, sans-serif !important;
-    overflow-x: hidden;
     min-height: 100vh;
-    position: relative;
+    // position: relative;
+    overflow-x: hidden;
 
     &::before {
         content: '';
