@@ -13,7 +13,6 @@ export const metadata = {
   description:
     "Portfolio of Nitish Kumar - Full Stack Developer (React, Next.js, Node.js, MongoDB).",
   manifest: "/manifest.json",
-  themeColor: "#000000",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
