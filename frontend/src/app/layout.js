@@ -7,6 +7,8 @@ import Footer from "@/components/layout/Footer";
 import OnlineStatus from "@/components/common/OnlineStatus";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import ServiceWorkerRegistration from "@/components/common/ServiceWorkerRegistration";
+import GlobalLoader from "@/components/common/GlobalLoader";
+import LogoLoader from "@/components/common/LogoLoader";
 
 export const metadata = {
   title: "Nitish Kumar | Full Stack Developer",
@@ -35,6 +37,8 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning={true}>
         <Providers>
+          {/* <LogoLoader /> */}
+          <GlobalLoader />
           <ServiceWorkerRegistration />
           <OnlineStatus />
           <BootstrapClient />
