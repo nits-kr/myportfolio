@@ -99,7 +99,8 @@ export default function Home() {
       {
         breakpoint: 480,
         settings: {
-          centerPadding: "10%",
+          centerPadding: "24px",
+          slidesToShow: 1,
         },
       },
     ],
