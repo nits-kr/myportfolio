@@ -10,10 +10,17 @@ import {
 } from "@/store/services/projectsApi";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
+import {
+  FiEye,
+  FiEdit2,
+  FiTrash2,
+  FiPlus,
+  FiClock,
+  FiCheckCircle,
+} from "react-icons/fi";
 
 export default function ProjectsPage() {
   const { user } = useSelector((state) => state.auth);
-  const { profile } = useSelector((state) => state.content);
   const { data: projectsData, error, isLoading } = useGetProjectsQuery();
   const [deleteProject] = useDeleteProjectMutation();
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -23,13 +30,9 @@ export default function ProjectsPage() {
   const projects = projectsData?.data || [];
   const role = user?.role;
 
-  console.log("user", user);
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  console.log("projects", projectsData);
 
   const handleEdit = (id) => {
     router.push(`/dashboard?edit=${id}`);
@@ -42,18 +45,33 @@ export default function ProjectsPage() {
   const handleDelete = async (id) => {
     try {
       const result = await Swal.fire({
-        title: "Are you sure?",
-        text: "You won't be able to revert this!",
+        title: "Delete Project?",
+        text: "This action cannot be undone.",
         icon: "warning",
         showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
+        background: "var(--glass-bg)",
+        color: "var(--text-color)",
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "transparent",
         confirmButtonText: "Yes, delete it!",
+        customClass: {
+          popup: "glass-card border-0",
+          confirmButton: "btn btn-danger px-4 rounded-pill",
+          cancelButton: "btn btn-outline-light px-4 rounded-pill",
+        },
       });
 
       if (result.isConfirmed) {
         await deleteProject(id).unwrap();
-        Swal.fire("Deleted!", "Your project has been deleted.", "success");
+        Swal.fire({
+          title: "Deleted!",
+          text: "Project has been removed.",
+          icon: "success",
+          background: "var(--glass-bg)",
+          color: "var(--text-color)",
+          timer: 2000,
+          showConfirmButton: false,
+        });
       }
     } catch (error) {
       console.error("Failed to delete project:", error);
@@ -62,145 +80,208 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="container py-5">
+    <div className="container py-5 mt-4">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
         className="mb-5"
       >
-        <div className="d-flex justify-content-between align-items-end gap-3">
-          <div className="text-start">
-            <h1 className="fw-bold display-4 mb-2">Featured Projects</h1>
-            <p className="lead mb-0">
-              A selection of projects that demonstrate my passion for building
-              high-quality digital products.
+        <div className="row align-items-center g-4">
+          <div className="col-lg-8 text-center text-lg-start">
+            <h1 className="fw-bold display-4 mb-3">
+              Featured <span className="text-primary">Projects</span>
+            </h1>
+            <p className="lead text-muted max-w-2xl mx-auto mx-lg-0">
+              A curated selection of digital solutions built with passion and
+              precision.
             </p>
           </div>
 
-          {isMounted && isAuthenticated && (
-            <div className="mb-1">
+          <div className="col-lg-4 text-center text-lg-end">
+            {isMounted && isAuthenticated && (
               <Link
                 href="/dashboard"
-                className="btn btn-primary rounded-pill px-4 text-nowrap"
+                className="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow-lg hover-lift d-inline-flex align-items-center gap-2"
               >
-                + Add New Project
+                <FiPlus /> Add New Project
               </Link>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </motion.div>
 
       {isLoading && (
-        <div className="d-flex justify-content-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
+        <div className="d-flex flex-column align-items-center justify-content-center py-5">
+          <div
+            className="spinner-border text-primary mb-3"
+            style={{ width: "3rem", height: "3rem" }}
+            role="status"
+          />
+          <p className="text-muted">Loading your projects...</p>
         </div>
       )}
 
       {error && (
-        <div className="alert alert-danger text-center glass-card">
-          Error loading projects. Please try again later.
+        <div className="glass-card p-5 text-center border-danger border-opacity-25">
+          <FiTrash2 size={48} className="text-danger mb-3 opacity-50" />
+          <h3 className="h5 fw-bold">Connection Issue</h3>
+          <p className="text-muted small">
+            Unable to load projects at the moment. Please try again soon.
+          </p>
         </div>
       )}
 
-      {projects.length > 0 ? (
-        <div className="row g-4">
-          {projects.map((project) => (
-            <div key={project._id} className="col-lg-4 col-md-6">
-              <motion.div
-                whileHover={{ y: -10 }}
-                className="glass-card h-100 p-4 position-relative"
-              >
-                {isMounted && (
-                  <div className="position-absolute top-0 end-0 p-3">
+      {!isLoading && projects.length === 0 && !error && (
+        <div className="glass-card p-5 text-center border-opacity-10">
+          <FiPlus size={48} className="text-muted mb-3 opacity-25" />
+          <h3 className="h5 fw-bold">No Projects Yet</h3>
+          <p className="text-muted small">
+            The portfolio is growing. Check back soon for updates!
+          </p>
+        </div>
+      )}
+
+      {projects.length > 0 && (
+        <div className="row g-4 lg:g-5">
+          {projects.map((project, index) => (
+            <motion.div
+              key={project._id}
+              className="col-lg-4 col-md-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <div className="glass-card h-100 p-4 d-flex flex-column group hover-lift border-1 border-white border-opacity-5">
+                {/* Header Actions */}
+                <div className="d-flex justify-content-between align-items-start mb-4">
+                  <span
+                    className={`badge d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill ${
+                      project.status === "Completed"
+                        ? "bg-success bg-opacity-10 text-success"
+                        : "bg-warning bg-opacity-10 text-warning"
+                    }`}
+                  >
+                    {project.status === "Completed" ? (
+                      <FiCheckCircle />
+                    ) : (
+                      <FiClock />
+                    )}
+                    {project.status}
+                  </span>
+
+                  <div className="d-flex gap-2">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleView(project._id);
-                      }}
-                      className="btn btn-sm btn-outline-primary me-2"
-                      title="View Details"
+                      onClick={() => handleView(project._id)}
+                      className="btn btn-glass btn-icon-round"
+                      title="View Project"
                     >
-                      <i className="bi bi-eye"></i> View
+                      <FiEye size={18} />
                     </button>
                     {role === "admin" && (
                       <>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(project._id);
-                          }}
-                          className="btn btn-sm btn-outline-info me-2"
-                          title="Edit Project"
+                          onClick={() => handleEdit(project._id)}
+                          className="btn btn-glass btn-icon-round text-info"
+                          title="Edit"
                         >
-                          <i className="bi bi-pencil"></i> Edit
+                          <FiEdit2 size={16} />
                         </button>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(project._id);
-                          }}
-                          className="btn btn-sm btn-outline-danger"
-                          title="Delete Project"
+                          onClick={() => handleDelete(project._id)}
+                          className="btn btn-glass btn-icon-round text-danger"
+                          title="Delete"
                         >
-                          <i className="bi bi-trash"></i> Delete
+                          <FiTrash2 size={16} />
                         </button>
                       </>
                     )}
                   </div>
-                )}
+                </div>
 
-                <span className="badge bg-info text-dark text-uppercase mb-2">
-                  {project.status}
-                </span>
+                <div className="flex-grow-1">
+                  <h3 className="h4 fw-bold mb-3 project-title-hover">
+                    {project.title}
+                  </h3>
 
-                <h3
-                  className="h4 fw-bold mt-2 mb-3"
-                  style={{
-                    whiteSpace: "nowrap",
-                    overflowX: "auto",
-                    scrollbarWidth: "none", // For Firefox
-                    msOverflowStyle: "none", // For IE/Edge
-                  }}
-                >
-                  {/* Hide scrollbar for Chrome/Safari/Opera */}
-                  <style jsx>{`
-                    h3::-webkit-scrollbar {
-                      display: none;
-                    }
-                  `}</style>
-                  {project.title}
-                </h3>
+                  <div
+                    className="small text-muted mb-4 line-clamp-3"
+                    dangerouslySetInnerHTML={{ __html: project.body }}
+                  />
+                </div>
 
-                <div
-                  className="small mb-4"
-                  style={{
-                    display: "-webkit-box",
-                    WebkitLineClamp: "3",
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                  dangerouslySetInnerHTML={{ __html: project.body }}
-                />
-
-                <small className="text-muted">
-                  Created on {new Date(project.createdAt).toLocaleDateString()}
-                </small>
-              </motion.div>
-            </div>
+                <div className="mt-auto pt-4 border-top border-white border-opacity-5 d-flex justify-content-between align-items-center">
+                  <small className="text-muted opacity-75">
+                    {new Date(project.createdAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </small>
+                  <button
+                    onClick={() => handleView(project._id)}
+                    className="btn btn-link btn-sm text-primary text-decoration-none fw-bold p-0"
+                  >
+                    Details →
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           ))}
         </div>
-      ) : (
-        !isLoading &&
-        !error && (
-          <div className="text-center py-5 glass-card">
-            <h3 className="h5 text-white">No projects found</h3>
-            <p className="text-white small">Check back later for updates!</p>
-          </div>
-        )
       )}
+
+      <style jsx>{`
+        .line-clamp-3 {
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        .hover-lift {
+          transition:
+            transform 0.3s ease,
+            box-shadow 0.3s ease;
+        }
+        .hover-lift:hover {
+          transform: translateY(-8px);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        .btn-glass {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(4px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: inherit;
+        }
+        .btn-glass:hover {
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+        .btn-icon-round {
+          width: 38px;
+          height: 38px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          padding: 0;
+        }
+        .project-title-hover {
+          background: linear-gradient(
+            to right,
+            var(--primary-color, #7000ff),
+            var(--primary-color, #7000ff)
+          );
+          background-repeat: no-repeat;
+          background-size: 0% 2px;
+          background-position: left bottom;
+          transition: background-size 0.3s ease;
+          display: inline-block;
+        }
+        .group:hover .project-title-hover {
+          background-size: 100% 2px;
+        }
+      `}</style>
     </div>
   );
 }
