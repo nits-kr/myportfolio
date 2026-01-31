@@ -9,15 +9,27 @@ import {
   resetPassword,
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import validateRequest from "../middleware/validateRequest.js";
+import {
+  registerSchema,
+  loginSchema,
+  sendOTPSchema,
+  verifyOTPSchema,
+  resetPasswordSchema,
+} from "../validation/auth.schema.js";
 
 const router = express.Router();
 
-router.post("/register", register);
-router.post("/login", login);
+router.post("/register", validateRequest(registerSchema), register);
+router.post("/login", validateRequest(loginSchema), login);
 router.get("/me", protect, getMe);
 router.get("/logout", logout);
-router.post("/send-otp", sendOTP);
-router.post("/verify-otp", verifyOTP);
-router.post("/reset-password", resetPassword);
+router.post("/send-otp", validateRequest(sendOTPSchema), sendOTP);
+router.post("/verify-otp", validateRequest(verifyOTPSchema), verifyOTP);
+router.post(
+  "/reset-password",
+  validateRequest(resetPasswordSchema),
+  resetPassword,
+);
 
 export default router;

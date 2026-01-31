@@ -2,7 +2,12 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import helmet from "helmet";
+import hpp from "hpp";
+import rateLimit from "express-rate-limit";
+import morgan from "morgan";
 import connectDB from "./src/config/db.js";
+import logger from "./src/utils/logger.js";
 
 // Load env vars
 dotenv.config();
@@ -17,6 +22,38 @@ import subUserRoutes from "./src/routes/subUser.routes.js"; // Import SubUser ro
 import errorHandler from "./src/middleware/errorMiddleware.js"; // Import Error Handler
 
 const app = express();
+
+// Security Headers
+app.use(helmet());
+
+// Prevent Parameter Pollution
+app.use(hpp());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 100, // Limit each IP to 100 requests per 10 mins
+  message: "Too many requests from this IP, please try again after 10 minutes",
+});
+app.use(limiter);
+
+// Logging
+const morganFormat = ":method :url :status :response-time ms";
+app.use(
+  morgan(morganFormat, {
+    stream: {
+      write: (message) => {
+        const logObject = {
+          method: message.split(" ")[0],
+          url: message.split(" ")[1],
+          status: message.split(" ")[2],
+          responseTime: message.split(" ")[3],
+        };
+        logger.info(JSON.stringify(logObject));
+      },
+    },
+  }),
+);
 
 // Body parser
 app.use(express.json());
@@ -59,12 +96,12 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err, promise) => {
-  console.log(`Error: ${err.message}`);
+  logger.error(`Error: ${err.message}`);
   // Close server & exit process
   server.close(() => process.exit(1));
 });
