@@ -21,6 +21,14 @@ const projectSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  deletedAt: {
+    type: Date,
+    default: null,
+  },
+  deleteStatus: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 export default mongoose.model("Project", projectSchema);

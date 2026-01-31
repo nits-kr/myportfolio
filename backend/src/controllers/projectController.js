@@ -2,7 +2,9 @@ import Project from "../models/Project.js";
 
 export const getProjects = async (req, res, next) => {
   try {
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const projects = await Project.find({ deleteStatus: { $ne: true } }).sort({
+      createdAt: -1,
+    });
 
     res.status(200).json({
       success: true,
@@ -112,6 +114,37 @@ export const deleteProject = async (req, res, next) => {
       success: true,
       message: "Project deleted successfully",
       data: {},
+    });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ success: false, message: "Server Error", error: "Server Error" });
+  }
+};
+
+export const deleteStatus = async (req, res, next) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res
+        .status(404)
+        .json({
+          message: "Project not found",
+          success: false,
+          error: "Project not found",
+        });
+    }
+
+    // Perform soft delete
+    project.deleteStatus = true;
+    project.deletedAt = Date.now();
+    await project.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Project soft-deleted successfully",
+      data: project,
     });
   } catch (err) {
     res
