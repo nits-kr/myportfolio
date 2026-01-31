@@ -13,7 +13,7 @@ import {
   useGetProjectsQuery,
   useGetProjectQuery,
   useAddProjectMutation,
-  useDeleteProjectMutation,
+  useUpdateDeleteStatusMutation,
   useUpdateProjectMutation,
 } from "@/store/services/projectsApi";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -29,7 +29,7 @@ function DashboardContent() {
   const { data: projectsData, isLoading } = useGetProjectsQuery();
   const [addProject, { isLoading: isAdding }] = useAddProjectMutation();
   const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
-  const [deleteProject] = useDeleteProjectMutation();
+  const [deleteProject] = useUpdateDeleteStatusMutation();
 
   const projects = projectsData?.data || [];
 

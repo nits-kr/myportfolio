@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import {
   useGetProjectsQuery,
-  useDeleteProjectMutation,
+  useUpdateDeleteStatusMutation,
 } from "@/store/services/projectsApi";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
@@ -22,7 +22,7 @@ import {
 export default function ProjectsPage() {
   const { user } = useSelector((state) => state.auth);
   const { data: projectsData, error, isLoading } = useGetProjectsQuery();
-  const [deleteProject] = useDeleteProjectMutation();
+  const [deleteProject] = useUpdateDeleteStatusMutation();
   const { isAuthenticated } = useSelector((state) => state.auth);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
