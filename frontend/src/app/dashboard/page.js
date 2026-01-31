@@ -141,15 +141,15 @@ function DashboardContent() {
   return (
     <ProtectedRoute>
       <div className="container py-5">
-        <div className="row mb-4">
+        <div className="row mb-5">
           <div className="col">
             <h1 className="fw-bold">Admin Dashboard</h1>
-            <p className="text-muted">
+            <p className="text-muted mb-4">
               Welcome, {user?.name} ({user?.role})
             </p>
 
             {user?.role === "admin" && (
-              <div className="mb-4">
+              <div className="mb-5">
                 <Link href="/dashboard/sub-users" className="btn btn-primary">
                   Manage Sub-Users
                 </Link>
@@ -157,8 +157,8 @@ function DashboardContent() {
             )}
 
             {user?.role === "admin" && (
-              <>
-                <div className="glass-card mt-4 p-4">
+              <div className="d-flex flex-column gap-5">
+                <div className="glass-card p-4">
                   <h4 className="mb-3">Edit Profile</h4>
                   <form onSubmit={handleSubmitProfile(onUpdateProfile)}>
                     <div className="row g-3">
@@ -184,11 +184,8 @@ function DashboardContent() {
                           rows="3"
                         ></textarea>
                       </div>
-                      <div className="col-12">
-                        <button
-                          type="submit"
-                          className="btn btn-primary btn-sm"
-                        >
+                      <div className="col-12 text-end">
+                        <button type="submit" className="btn btn-primary">
                           Update Profile
                         </button>
                       </div>
@@ -196,7 +193,7 @@ function DashboardContent() {
                   </form>
                 </div>
 
-                <div className="glass-card mt-4 p-4">
+                <div className="glass-card p-4">
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <h4 className="mb-0">
                       {editingProject ? "Edit Project" : "Add New Project"}
@@ -240,7 +237,8 @@ function DashboardContent() {
                           style={{
                             minHeight: "100px",
                             cursor: "pointer",
-                            border: "1px solid #444",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                            background: "rgba(0,0,0,0.1) !important",
                           }}
                           onClick={() => setShowProjectEditor(true)}
                         >
@@ -249,7 +247,7 @@ function DashboardContent() {
                               dangerouslySetInnerHTML={{ __html: projectBody }}
                             />
                           ) : (
-                            <span className="text-gray-400 text-opacity-75">
+                            <span className="text-secondary opacity-50">
                               Click to add description...
                             </span>
                           )}
@@ -265,10 +263,10 @@ function DashboardContent() {
                           onClose={() => setShowProjectEditor(false)}
                         />
                       )}
-                      <div className="col-12">
+                      <div className="col-12 text-end">
                         <button
                           type="submit"
-                          className="btn btn-success btn-sm"
+                          className="btn btn-success"
                           disabled={isAdding || isUpdating}
                         >
                           {isAdding || isUpdating
@@ -283,12 +281,12 @@ function DashboardContent() {
                     </div>
                   </form>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
 
-        <div className="row g-4">
+        <div className="row g-4 mb-5">
           <div className="col-md-4">
             <div className="glass-card h-100 p-4">
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -379,7 +377,7 @@ function DashboardContent() {
         </div>
 
         <div className="mt-5">
-          <div className="glass-card">
+          <div className="glass-card p-4">
             <h3 className="mb-4">Recent Activity</h3>
             {/* Desktop Table View */}
             <div className="table-responsive d-none d-md-block">
