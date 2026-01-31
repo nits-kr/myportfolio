@@ -2,8 +2,6 @@
 
 import { FaGithub, FaLinkedin, FaTwitter, FaHeart } from "react-icons/fa";
 
-import moment from "moment";
-
 export default function Footer() {
   return (
     <footer className="footer-main mt-auto">
@@ -32,7 +30,7 @@ export default function Footer() {
             </a>
           </div>
           <p className="mb-0 small">
-            © {moment().year()} Nitish Kumar. All rights reserved.
+            © {new Date().getFullYear()} Nitish Kumar. All rights reserved.
           </p>
         </div>
       </div>

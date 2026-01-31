@@ -2,8 +2,10 @@
 
 import Hero from "@/components/features/Hero";
 import { useSelector } from "react-redux";
+import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
-import Slider from "react-slick";
+// import Slider from "react-slick"; // Replaced with dynamic import
+const Slider = dynamic(() => import("react-slick"), { ssr: false });
 import { useTheme } from "@/context/ThemeContext";
 
 // Import slick-carousel css

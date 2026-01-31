@@ -1,6 +1,9 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/globals.scss";
+import { Inter } from "next/font/google";
 import { Providers } from "@/store/Providers";
+
+const inter = Inter({ subsets: ["latin"] });
 import BootstrapClient from "@/components/common/BootstrapClient";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -35,7 +38,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning={true}>
+      <body suppressHydrationWarning={true} className={inter.className}>
         <Providers>
           {/* <LogoLoader /> */}
           <GlobalLoader />

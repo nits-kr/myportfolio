@@ -11,7 +11,7 @@ import {
   useChangeSubUserStatusMutation,
   useSubuserDeleteStatusMutation,
 } from "@/store/services/subUserApi";
-import moment from "moment";
+// import moment from "moment";
 import { useSelector } from "react-redux";
 
 export default function SubUsersPage() {
@@ -191,7 +191,12 @@ export default function SubUsersPage() {
                           <span className="text-muted small">None</span>
                         )}
                       </td>
-                      <td>{moment(subUser.createdAt).format("MMM D, YYYY")}</td>
+                      <td>
+                        {new Date(subUser.createdAt).toLocaleDateString(
+                          "en-US",
+                          { year: "numeric", month: "short", day: "numeric" },
+                        )}
+                      </td>
                       <td>
                         <button
                           className="btn btn-sm btn-outline-info me-2"

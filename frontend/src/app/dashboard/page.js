@@ -6,7 +6,7 @@ import Link from "next/link";
 import RichTextEditor from "./RichTextEditor";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useSelector, useDispatch } from "react-redux";
-import moment from "moment";
+// import moment from "moment";
 import { useForm } from "react-hook-form";
 import { updateProfile } from "@/store/slices/contentSlice";
 import {
@@ -418,7 +418,10 @@ function DashboardContent() {
                           </span>
                         </td>
                         <td>
-                          {moment(project.createdAt).format("MMM D, YYYY")}
+                          {new Date(project.createdAt).toLocaleDateString(
+                            "en-US",
+                            { year: "numeric", month: "short", day: "numeric" },
+                          )}
                         </td>
                         <td>
                           <button
@@ -472,7 +475,10 @@ function DashboardContent() {
                       </div>
                       <div className="d-flex justify-content-between align-items-center">
                         <small className="text-muted">
-                          {moment(project.createdAt).format("MMM D, YYYY")}
+                          {new Date(project.createdAt).toLocaleDateString(
+                            "en-US",
+                            { year: "numeric", month: "short", day: "numeric" },
+                          )}
                         </small>
                         <div className="d-flex gap-2">
                           <button
