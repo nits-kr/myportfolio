@@ -24,9 +24,12 @@
     "react-hook-form": "^7.69.0",
     "react-icons": "^5.5.0",
     "react-redux": "^9.2.0",
+    "react-slick": "^0.31.0",
     "sass": "^1.97.1",
     "serwist": "^9.5.0",
-    "sweetalert2": "^11.26.17"
+    "slick-carousel": "^1.8.1",
+    "sweetalert2": "^11.26.17",
+    "typewriter-effect": "^2.22.0"
   },
   "devDependencies": {
     "eslint": "^9",

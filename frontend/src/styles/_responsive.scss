@@ -1,8 +1,8 @@
 @import "variables";
 
 :root {
-    --mobile-side-margin: 12px;
-    --mobile-app-width: calc(100% - (var(--mobile-side-margin) * 2));
+    --mobile-edge-space: 16px;
+    --app-content-pad: 1.25rem; // 20px
 }
 
 @media (max-width: 991.98px) {
@@ -11,15 +11,61 @@
         margin: 0;
     }
 
-    .navbar.fixed-top {
-        transition: transform 0.3s ease-in-out;
-        &.nav-hidden {
-            transform: translateY(-100%);
+    .container {
+        padding-left: var(--mobile-edge-space) !important;
+        padding-right: var(--mobile-edge-space) !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+    }
+
+    .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        
+        > [class*="col-"] {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
         }
-        left: var(--mobile-side-margin) !important;
-        right: var(--mobile-side-margin) !important;
-        width: var(--mobile-app-width) !important;
-        margin: 0 !important;
+    }
+
+    .navbar.fixed-top {
+        padding: 0.75rem 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 90% !important;
+        background: transparent !important;
+        border: none !important;
+
+        .container {
+            width: calc(100% - (var(--mobile-edge-space) * 2)) !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            border-radius: 12px;
+            display: flex !important;
+        }
+    }
+
+    .glass-nav {
+        padding: 0.6rem var(--app-content-pad) !important;
+    }
+
+    .glass-card {
+        padding: var(--app-content-pad) !important;
+        border-radius: 20px;
+        width: 100% !important;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-mobile-adjust {
+        padding-top: 2rem !important;
+        text-align: center;
+    }
+
+    main {
+        padding-top: 80px !important;
+        // padding-bottom: 100px !important;
+        overflow-x: hidden;
     }
 
     .mobile-bottom-nav {
@@ -64,10 +110,10 @@
         position: relative;
 
         &.active {
-            color: #ff4757 !important;
+            color: $primary-color !important;
             
             .nav-icon-wrapper {
-                background: #ff4757;
+                background: $primary-color;
                 color: #ffffff;
                 width: 48px;
                 height: 48px;
@@ -76,12 +122,12 @@
                 align-items: center;
                 justify-content: center;
                 transform: translateY(-20px);
-                box-shadow: 0 10px 25px rgba(255, 71, 87, 0.4);
+                box-shadow: 0 10px 25px rgba($primary-color, 0.4);
                 z-index: 10;
             }
             
             .nav-text {
-                color: #ff4757;
+                color: $primary-color;
                 font-weight: 700;
                 opacity: 1;
                 transform: translateY(-8px);
@@ -110,11 +156,6 @@
         transition: all 0.3s ease;
     }
 
-    main {
-        padding-top: 90px !important;
-        padding-bottom: 100px !important;
-    }
-
     .navbar-collapse {
         position: absolute;
         top: calc(100% + 10px);
@@ -128,17 +169,5 @@
         border: 1px solid var(--glass-border);
         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
         z-index: 99999;
-    }
-}
-
-@media (max-width: 575.98px) {
-    .hero-mobile-adjust {
-        padding-top: 5rem !important;
-        text-align: center;
-    }
-    
-    .glass-card {
-        padding: 1.5rem !important;
-        border-radius: 20px;
     }
 }

@@ -10,18 +10,14 @@ export default function Hero() {
   const { profile } = useSelector((state) => state.content);
 
   return (
-    <section className="container py-5 hero-mobile-adjust">
-      <div className="row align-items-center min-vh-75">
-        <div className="col-lg-6 mb-5 mb-lg-0">
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-          >
+    <section className="container py-0 py-lg-5 hero-mobile-adjust">
+      <div className="row align-items-center min-vh-75 g-4 g-lg-5">
+        <div className="col-lg-6 mb-4 mb-lg-0">
+          <div className="d-flex flex-column align-items-center align-items-lg-start text-center text-lg-start">
             <span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill mb-3">
               {profile.title}
             </span>
-            <h1 className="display-3 fw-bold mb-4 lh-tight">
+            <h1 className="display-4 display-lg-3 fw-bold mb-4 lh-tight">
               Building{" "}
               <span
                 className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600"
@@ -36,30 +32,35 @@ export default function Hero() {
               </span>{" "}
               That Matter.
             </h1>
-            <p className="lead mb-5 d-flex align-items-center gap-2">
-              <strong>I&apos;m {profile.name}</strong>{" "}
-              <GoVerified className="text-primary" /> a {profile.title}.{" "}
-              {profile.bio}
+            <p className="lead mb-4 mb-lg-5 d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start gap-2">
+              <span>
+                <strong>I&apos;m {profile.name}</strong>
+              </span>
+              <GoVerified className="text-primary" />
+              <span className="opacity-75">Full Stack Engineer</span>
             </p>
-            <div className="d-flex gap-3">
-              <Link href="/projects" className="btn btn-premium btn-lg">
+            <div className="d-flex flex-column flex-md-row gap-3 justify-content-center justify-content-lg-start w-100">
+              <Link
+                href="/projects"
+                className="btn btn-premium btn-lg px-5 px-lg-4"
+              >
                 View Work
               </Link>
               <Link
                 href="/about"
-                className="btn btn-outline-light btn-lg rounded-pill px-4"
+                className="btn btn-outline-light btn-lg rounded-pill px-5 px-lg-4"
               >
-                Contact Me
+                About Me
               </Link>
             </div>
-          </motion.div>
+          </div>
         </div>
         <div className="col-lg-6">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="glass-card position-relative p-4"
+            className="glass-card position-relative"
           >
             <div
               className="position-absolute top-0 start-0 w-100 h-100 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-4"

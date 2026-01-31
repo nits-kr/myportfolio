@@ -6,7 +6,7 @@ import moment from "moment";
 
 export default function Footer() {
   return (
-    <footer className="py-5 mt-auto">
+    <footer className="footer-main mt-auto">
       <div className="container">
         <div className="glass-card text-center">
           <div className="mb-4">

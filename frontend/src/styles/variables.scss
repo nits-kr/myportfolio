@@ -23,8 +23,8 @@ $grid-breakpoints: (
 // Glassmorphism Mixin
 @mixin glass-effect {
     background: var(--glass-bg);
-    // backdrop-filter: blur(12px);
-    // -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-border);
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
     border-radius: 16px;

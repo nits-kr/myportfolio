@@ -16,12 +16,10 @@
 
 .main-content {
     padding-top: 100px;
-    min-height: 100vh;
-    padding-bottom: 50px;
+    // min-height: 100vh;
+    // padding-bottom: 50px;
     
     @media (max-width: 991.98px) {
-        width: var(--mobile-app-width);
-        margin: 0 var(--mobile-side-margin);
         padding: 1rem 0;
     }
 }
@@ -80,10 +78,29 @@ html, body, [data-bs-theme] body {
 .glass-card {
     @include glass-effect;
     padding: 2rem;
-    transition: transform 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+    }
 
     &:hover {
-        transform: translateY(-5px);
+        transform: translateY(-8px);
+        box-shadow: 0 15px 45px 0 rgba(31, 38, 135, 0.45);
+        border-color: rgba(255, 255, 255, 0.2);
     }
 }
 
@@ -105,11 +122,11 @@ html, body, [data-bs-theme] body {
     border-radius: 50px;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 4px 15px rgba($primary-color, 0.3);
 
     &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+        box-shadow: 0 6px 20px rgba($primary-color, 0.4);
         color: white;
     }
 }
@@ -132,10 +149,53 @@ html, body, [data-bs-theme] body {
     background: var(--scrollbar-thumb-hover);
 }
 
+.cursor-grab {
+    cursor: grab;
+    &:active {
+        cursor: grabbing;
+    }
+}
+
+.active-focus-card {
+    border-color: rgba($primary-color, 0.45) !important;
+    
+    &::after {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        padding: 2px;
+        background: linear-gradient(135deg, $primary-color, transparent, $primary-color);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+        z-index: 10;
+        opacity: 0.8;
+    }
+
+    .display-4, .display-3 {
+        filter: drop-shadow(0 0 15px rgba($primary-color, 0.4));
+        font-weight: 800;
+    }
+}
+
+// Custom animations or utilities for the slider
+.transition-all {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .subtext {
     color: var(--text-muted);
 }
 
-.form-control::placeholder {
-    color: var(--text-muted);
+.footer-main {
+    padding-top: 3rem;
+    padding-bottom: 2rem;
+
+    @media (max-width: 991.98px) {
+        padding-top: 2rem;
+        padding-bottom: 100px; // Space for mobile bottom nav
+    }
 }

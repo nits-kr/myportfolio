@@ -40,7 +40,7 @@ export default function ProjectDetailsPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-5"
+        className="glass-card p-4 p-md-5"
       >
         <div className="d-flex justify-content-between align-items-start mb-4">
           <div>
