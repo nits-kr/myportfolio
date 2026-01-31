@@ -20,6 +20,43 @@ const nextConfig = {
       "mixed-decls",
     ],
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com", // Assuming Cloudinary is used, standard for portfolios
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com", // Google Auth avatars
+      },
+      {
+        protocol: "https",
+        hostname: "avatars.githubusercontent.com", // GitHub avatars
+      },
+    ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
