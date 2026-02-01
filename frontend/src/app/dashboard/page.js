@@ -430,13 +430,13 @@ function DashboardContent() {
                 <tbody>
                   {isLoading ? (
                     <tr>
-                      <td colSpan="4" className="text-center py-3">
+                      <td colSpan="5" className="text-center py-3">
                         Loading projects...
                       </td>
                     </tr>
                   ) : projects.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="text-center py-3">
+                      <td colSpan="5" className="text-center py-3">
                         No projects found
                       </td>
                     </tr>
@@ -505,10 +505,12 @@ function DashboardContent() {
                       }}
                     >
                       <div className="d-flex justify-content-between align-items-start mb-2">
-                        <h6 className="fw-bold mb-0">{project.title}</h6>
-                        <p className="text-muted small mb-0">
-                          {project.subheading}
-                        </p>
+                        <div>
+                          <h6 className="fw-bold mb-0">{project.title}</h6>
+                          <p className="text-muted small mb-0">
+                            {project.subheading}
+                          </p>
+                        </div>
                         <span
                           className={`badge bg-${project.status === "Completed" ? "success" : project.status === "In Progress" ? "warning" : "primary"} border-0`}
                         >
