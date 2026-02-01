@@ -2,7 +2,7 @@ import Dexie from "dexie";
 
 export const db = new Dexie("PortfolioDB");
 
-db.version(1).stores({
+db.version(2).stores({
   // content stores the actual data from API calls
   // key: the endpoint/cache key, data: the payload, timestamp: when it was fetched
   content: "key, timestamp",
