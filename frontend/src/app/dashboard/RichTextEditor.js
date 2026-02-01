@@ -49,7 +49,7 @@ const RichTextEditor = ({ value, onChange, onClose }) => {
   }, [onChange]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-compiler/react-compiler
     setMounted(true);
     return () => setMounted(false);
   }, []);

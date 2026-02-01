@@ -18,7 +18,7 @@ export default function Navbar() {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // eslint-disable-next-line react-compiler/react-compiler
     setIsMounted(true);
   }, []);
 
