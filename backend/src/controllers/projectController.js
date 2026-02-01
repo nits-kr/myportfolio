@@ -96,7 +96,14 @@ export const updateProject = async (req, res, next) => {
       data: project,
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: "Server Error" });
+    if (err.name === "ValidationError") {
+      const messages = Object.values(err.errors).map((val) => val.message);
+      return res
+        .status(400)
+        .json({ success: false, message: "Validation Error", error: messages });
+    } else {
+      res.status(500).json({ success: false, error: "Server Error" });
+    }
   }
 };
 

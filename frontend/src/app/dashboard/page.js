@@ -17,6 +17,21 @@ import {
   useUpdateProjectMutation,
 } from "@/store/services/projectsApi";
 import { useSearchParams, useRouter } from "next/navigation";
+import Swal from "sweetalert2";
+
+const Toast = Swal.mixin({
+  toast: true,
+  position: "top-end",
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true,
+  didOpen: (toast) => {
+    toast.onmouseenter = Swal.stopTimer;
+    toast.onmouseleave = Swal.resumeTimer;
+  },
+  background: "rgba(255, 255, 255, 0.9)",
+  color: "#333",
+});
 
 function DashboardContent() {
   const { user } = useSelector((state) => state.auth);
@@ -76,21 +91,29 @@ function DashboardContent() {
 
   const onUpdateProfile = (data) => {
     dispatch(updateProfile(data));
-    alert("Profile Updated!");
+    Toast.fire({
+      icon: "success",
+      title: "Profile Updated successfully",
+    });
   };
 
   const onSubmitProject = async (data) => {
     try {
       if (editingProject) {
         await updateProject({ id: editingProject._id, ...data }).unwrap();
-        alert("Project Updated!");
-        alert("Project Updated!");
+        Toast.fire({
+          icon: "success",
+          title: "Project Updated successfully",
+        });
         setEditingProject(null);
         // Remove router.push("/projects") as we want to stay on dashboard or clear params
         router.push("/dashboard");
       } else {
         await addProject(data).unwrap();
-        alert("Project Added!");
+        Toast.fire({
+          icon: "success",
+          title: "Project Added successfully",
+        });
         // Remove this router.push since we are already on the dashboard and want to stay or reset
         // router.push("/projects");
       }
@@ -103,7 +126,11 @@ function DashboardContent() {
           ? err.data.error.join("\n")
           : err.data.error
         : "Failed to save project";
-      alert(errorMessage);
+
+      Toast.fire({
+        icon: "error",
+        title: errorMessage,
+      });
     }
   };
 
