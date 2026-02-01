@@ -115,7 +115,7 @@ function DashboardContent() {
           title: "Project Added successfully",
         });
         // Remove this router.push since we are already on the dashboard and want to stay or reset
-        // router.push("/projects");
+        router.push("/projects");
       }
       resetProject();
       setShowProjectEditor(false);
