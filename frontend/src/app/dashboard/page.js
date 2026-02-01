@@ -83,12 +83,15 @@ function DashboardContent() {
       if (editingProject) {
         await updateProject({ id: editingProject._id, ...data }).unwrap();
         alert("Project Updated!");
+        alert("Project Updated!");
         setEditingProject(null);
-        router.push("/projects");
+        // Remove router.push("/projects") as we want to stay on dashboard or clear params
+        router.push("/dashboard");
       } else {
         await addProject(data).unwrap();
         alert("Project Added!");
-        router.push("/projects");
+        // Remove this router.push since we are already on the dashboard and want to stay or reset
+        // router.push("/projects");
       }
       resetProject();
       setShowProjectEditor(false);
@@ -107,7 +110,7 @@ function DashboardContent() {
     setEditingProject(null);
     resetProject();
     setShowProjectEditor(false);
-    router.push("/projects");
+    router.push("/dashboard");
   };
 
   const handleDeleteProject = async (id) => {
@@ -124,12 +127,7 @@ function DashboardContent() {
   };
 
   const handleEditClick = (project) => {
-    setEditingProject(project);
-    setProjectValue("title", project.title);
-    setProjectValue("status", project.status);
-    setProjectValue("body", project.body);
-    setShowProjectEditor(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    router.push(`/dashboard?edit=${project._id}`);
   };
 
   const [stats] = useState({

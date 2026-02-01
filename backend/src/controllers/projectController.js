@@ -2,9 +2,11 @@ import Project from "../models/Project.js";
 
 export const getProjects = async (req, res, next) => {
   try {
-    const projects = await Project.find({ deleteStatus: { $ne: true } }).sort({
-      createdAt: -1,
-    });
+    const projects = await Project.find({ deleteStatus: { $ne: true } })
+      .select("-body")
+      .sort({
+        createdAt: -1,
+      });
 
     res.status(200).json({
       success: true,
@@ -127,13 +129,11 @@ export const deleteStatus = async (req, res, next) => {
     const project = await Project.findById(req.params.id);
 
     if (!project) {
-      return res
-        .status(404)
-        .json({
-          message: "Project not found",
-          success: false,
-          error: "Project not found",
-        });
+      return res.status(404).json({
+        message: "Project not found",
+        success: false,
+        error: "Project not found",
+      });
     }
 
     // Perform soft delete
