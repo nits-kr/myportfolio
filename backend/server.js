@@ -32,7 +32,7 @@ app.use(hpp());
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 100, // Limit each IP to 100 requests per 10 mins
+  max: 1000, // Limit each IP to 1000 requests per 10 mins
   message: "Too many requests from this IP, please try again after 10 minutes",
 });
 app.use(limiter);

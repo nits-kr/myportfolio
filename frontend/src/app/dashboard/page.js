@@ -106,8 +106,8 @@ function DashboardContent() {
           title: "Project Updated successfully",
         });
         setEditingProject(null);
-        // Remove router.push("/projects") as we want to stay on dashboard or clear params
-        router.push("/dashboard");
+        // Navigate to the public projects page as requested
+        router.push("/projects");
       } else {
         await addProject(data).unwrap();
         Toast.fire({
