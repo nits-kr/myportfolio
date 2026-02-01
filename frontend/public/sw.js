@@ -1,4 +1,4 @@
-const CACHE_NAME = "portfolio-v1";
+const CACHE_NAME = "portfolio-v2";
 const ASSETS_TO_CACHE = [
   "/",
   "/manifest.json",
@@ -31,33 +31,36 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // Only cache GET requests
+  // Only handle GET requests
   if (event.request.method !== "GET") return;
 
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Return cached response if found
-      if (response) return response;
+  const url = new URL(event.request.url);
 
-      // Otherwise fetch from network
-      return fetch(event.request)
-        .then((networkResponse) => {
-          // Cache new successful GET requests from our own origin
-          if (
-            networkResponse &&
-            networkResponse.status === 200 &&
-            networkResponse.type === "basic"
-          ) {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          // Offline fallback could be added here
-        });
-    }),
+  // EXCLUDE API requests from Service Worker caching
+  // This ensures Redux/Dexie handling takes precedence and data is fresh
+  if (url.pathname.startsWith("/api/")) {
+    return;
+  }
+
+  event.respondWith(
+    fetch(event.request)
+      .then((networkResponse) => {
+        // Cache new successful GET requests for static assets
+        if (
+          networkResponse &&
+          networkResponse.status === 200 &&
+          networkResponse.type === "basic"
+        ) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(() => {
+        // Fallback to cache if network fails
+        return caches.match(event.request);
+      }),
   );
 });
