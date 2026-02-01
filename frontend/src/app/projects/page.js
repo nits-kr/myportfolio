@@ -201,11 +201,11 @@ export default function ProjectsPage() {
 
                 <div className="flex-grow-1">
                   <h3 className="h4 fw-bold mb-3 project-title-hover">
-                    {project.title}
+                    {project?.title}
                   </h3>
 
                   <p className="small text-muted mb-4 line-clamp-3">
-                    {project.subheading || "No description available."}
+                    {project?.subheading || "No description available."}
                   </p>
                 </div>
 
