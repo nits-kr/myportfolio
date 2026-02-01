@@ -204,10 +204,9 @@ export default function ProjectsPage() {
                     {project.title}
                   </h3>
 
-                  <div
-                    className="small text-muted mb-4 line-clamp-3"
-                    dangerouslySetInnerHTML={{ __html: project.body }}
-                  />
+                  <p className="small text-muted mb-4 line-clamp-3">
+                    {project.subheading || "No description available."}
+                  </p>
                 </div>
 
                 <div className="mt-auto pt-4 border-top border-white border-opacity-5 d-flex justify-content-between align-items-center">
