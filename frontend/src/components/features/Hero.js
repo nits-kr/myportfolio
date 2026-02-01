@@ -19,15 +19,7 @@ export default function Hero() {
             </span>
             <h1 className="display-4 display-lg-3 fw-bold mb-4 lh-tight">
               Building{" "}
-              <span
-                className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(to right, #a855f7, #ec4899)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
+              <span className="text-transparent bg-clip-text text-gradient-hero">
                 Digital Experiences
               </span>{" "}
               That Matter.
@@ -62,25 +54,13 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="glass-card position-relative"
           >
-            <div
-              className="position-absolute top-0 start-0 w-100 h-100 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-4"
-              style={{ zIndex: -1 }}
-            ></div>
+            <div className="position-absolute top-0 start-0 w-100 h-100 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-4 z-index-minus-1"></div>
             {/* Abstract Code/Visual Mockup */}
             <div className="rounded-3 overflow-hidden shadow-lg border border-white border-opacity-10">
               <div className="bg-dark p-2 d-flex gap-2 border-bottom border-secondary">
-                <div
-                  className="rounded-circle bg-danger"
-                  style={{ width: 10, height: 10 }}
-                ></div>
-                <div
-                  className="rounded-circle bg-warning"
-                  style={{ width: 10, height: 10 }}
-                ></div>
-                <div
-                  className="rounded-circle bg-success"
-                  style={{ width: 10, height: 10 }}
-                ></div>
+                <div className="rounded-circle bg-danger mockup-dot"></div>
+                <div className="rounded-circle bg-warning mockup-dot"></div>
+                <div className="rounded-circle bg-success mockup-dot"></div>
               </div>
               <div className="bg-dark p-4 font-monospace text-success bg-opacity-75">
                 <p className="mb-0">

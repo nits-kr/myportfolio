@@ -414,10 +414,7 @@ function DashboardContent() {
             <h3 className="mb-4">Recent Activity</h3>
             {/* Desktop Table View */}
             <div className="table-responsive d-none d-md-block">
-              <table
-                className="table table-hover bg-transparent mb-0"
-                style={{ "--bs-table-bg": "transparent" }}
-              >
+              <table className="table table-hover table-transparent mb-0">
                 <thead>
                   <tr>
                     <th>Project</th>
@@ -494,15 +491,13 @@ function DashboardContent() {
                   {projects.map((project) => (
                     <div
                       key={project._id}
-                      className="glass-card p-3 border-start border-4"
-                      style={{
-                        borderColor:
-                          project.status === "Completed"
-                            ? "#10b981"
-                            : project.status === "In Progress"
-                              ? "#f59e0b"
-                              : "#7c3aed",
-                      }}
+                      className={`glass-card p-3 border-start border-4 ${
+                        project.status === "Completed"
+                          ? "border-status-completed"
+                          : project.status === "In Progress"
+                            ? "border-status-progress"
+                            : "border-status-review"
+                      }`}
                     >
                       <div className="d-flex justify-content-between align-items-start mb-2">
                         <div>

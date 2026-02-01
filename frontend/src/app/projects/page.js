@@ -229,58 +229,6 @@ export default function ProjectsPage() {
           ))}
         </div>
       )}
-
-      <style jsx>{`
-        .line-clamp-3 {
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-        .hover-lift {
-          transition:
-            transform 0.3s ease,
-            box-shadow 0.3s ease;
-        }
-        .hover-lift:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-        .btn-glass {
-          background: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(4px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: inherit;
-        }
-        .btn-glass:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.2);
-        }
-        .btn-icon-round {
-          width: 38px;
-          height: 38px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          padding: 0;
-        }
-        .project-title-hover {
-          background: linear-gradient(
-            to right,
-            var(--primary-color, #7000ff),
-            var(--primary-color, #7000ff)
-          );
-          background-repeat: no-repeat;
-          background-size: 0% 2px;
-          background-position: left bottom;
-          transition: background-size 0.3s ease;
-          display: inline-block;
-        }
-        .group:hover .project-title-hover {
-          background-size: 100% 2px;
-        }
-      `}</style>
     </div>
   );
 }

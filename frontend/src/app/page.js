@@ -88,7 +88,7 @@ export default function Home() {
     nextArrow: <NextArrow />,
     beforeChange: (oldIndex, newIndex) => setCurrentSlide(newIndex),
     appendDots: (dots) => (
-      <div style={{ bottom: "-35px" }}>
+      <div className="slick-custom-dots-wrapper">
         <ul className="m-0 p-0 slick-custom-dots">{dots}</ul>
       </div>
     ),
@@ -124,16 +124,9 @@ export default function Home() {
               {competencies.map((item, idx) => (
                 <div key={idx} className="col-md-6 col-lg-4">
                   <div className="glass-card text-center p-4 h-100">
-                    <div className="display-4 mb-3" style={{ opacity: 0.9 }}>
-                      {item.icon}
-                    </div>
+                    <div className="display-4 mb-3 opacity-90">{item.icon}</div>
                     <h3 className="h4 fw-bold mb-3">{item.title}</h3>
-                    <p
-                      className="mb-0 text-muted"
-                      style={{ fontSize: "0.95rem" }}
-                    >
-                      {item.desc}
-                    </p>
+                    <p className="mb-0 text-muted small">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -141,52 +134,33 @@ export default function Home() {
           </div>
 
           {/* Mobile Slider using React Slick */}
-          <div
-            className="d-md-none slick-slider-container"
-            style={{ marginTop: "2rem", marginBottom: "4rem", width: "100%" }}
-          >
+          <div className="d-md-none slick-slider-container mt-4 mb-5 w-100">
             <Slider {...settings}>
               {competencies.map((item, idx) => {
                 const isActive = idx === currentSlide;
                 return (
                   <div key={idx} className="px-2 py-4">
                     <div
-                      className={`glass-card text-center p-3 d-flex flex-column justify-content-center transition-all ${
+                      className={`glass-card text-center p-3 d-flex flex-column justify-content-center transition-all home-focus-card ${
                         isActive ? "active-focus-card" : ""
                       }`}
                       style={{
-                        height: "400px",
-                        boxShadow: isActive
-                          ? "0 25px 60px rgba(124, 58, 237, 0.4)"
-                          : "0 10px 30px rgba(0, 0, 0, 0.1)",
                         background: isActive
                           ? theme === "dark"
                             ? "rgba(15, 23, 42, 0.95)"
                             : "rgba(255, 255, 255, 0.95)"
-                          : "var(--glass-bg)",
-                        backdropFilter: "blur(20px)",
+                          : undefined,
                         border: isActive
                           ? "2px solid rgba(124, 58, 237, 0.6)"
-                          : "1px solid var(--glass-border)",
-                        transform: isActive
-                          ? "scale(1.05) translateY(-10px)"
-                          : "scale(0.9)",
-                        opacity: isActive ? 1 : 0.6,
-                        transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-                        position: "relative",
-                        zIndex: isActive ? 5 : 1,
-                        margin: "0 auto",
-                        width: "100%",
-                        maxWidth: "320px",
+                          : undefined,
                       }}
                     >
                       <div
-                        className="display-3 mb-4 icon-container"
+                        className="display-3 mb-4 card-icon-wrapper"
                         style={{
                           filter: isActive
                             ? "drop-shadow(0 0 15px rgba(124, 58, 237, 0.5))"
                             : "none",
-                          transition: "all 0.4s ease",
                         }}
                       >
                         {item.icon}
@@ -203,7 +177,7 @@ export default function Home() {
                         {item.title}
                       </h3>
                       <p
-                        className={`mb-0 ${
+                        className={`mb-0 card-desc-text ${
                           isActive
                             ? theme === "dark"
                               ? "text-light"
@@ -212,7 +186,6 @@ export default function Home() {
                         }`}
                         style={{
                           fontSize: isActive ? "0.9rem" : "0.85rem",
-                          lineHeight: "1.6",
                         }}
                       >
                         {item.desc}
@@ -225,63 +198,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      <style jsx global>{`
-        .slick-slider-container {
-          position: relative;
-          overflow: hidden;
-        }
-        .slick-track {
-          display: flex !important;
-          align-items: center !important;
-        }
-        .slick-list {
-          overflow: visible !important;
-        }
-        .custom-dot-inner {
-          width: 10px;
-          height: 10px;
-          background: var(--body-color);
-          opacity: 0.15;
-          border-radius: 50%;
-          transition: all 0.3s ease;
-          margin: 0 auto;
-        }
-        .custom-dot-inner.active {
-          width: 28px;
-          background: var(--primary-color);
-          opacity: 1;
-          border-radius: 100px;
-          box-shadow: 0 0 12px rgba(124, 58, 237, 0.5);
-        }
-        .slick-custom-dots li {
-          width: auto !important;
-          height: auto !important;
-          margin: 0 5px !important;
-        }
-        .slick-dots li button:before {
-          display: none !important;
-        }
-        /* Ensure arrows are visible on top of everything */
-        .slick-prev:before,
-        .slick-next:before {
-          display: none !important;
-        }
-        .icon-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 80px;
-        }
-        /* Fix for dot alignment */
-        .slick-custom-dots {
-          display: flex !important;
-          justify-content: center;
-          align-items: center;
-          list-style: none;
-          margin-top: 1.5rem !important;
-        }
-      `}</style>
     </>
   );
 }

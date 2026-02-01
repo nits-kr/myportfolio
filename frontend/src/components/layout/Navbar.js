@@ -29,22 +29,19 @@ export default function Navbar() {
   ];
 
   return (
-    <nav
-      className="navbar navbar-expand-lg fixed-top"
-      style={{ padding: "1rem 0" }}
-    >
+    <nav className="navbar navbar-expand-lg fixed-top py-3">
       <div className="container glass-nav custom-nav-mobile d-flex justify-content-between align-items-center rounded-4">
         <Link
           href="/"
           className="navbar-brand fw-bold text-reset fs-4 d-none d-lg-block"
         >
-          Port<span style={{ color: "#a855f7" }}>folio</span>.
+          Port<span className="text-accent">folio</span>.
         </Link>
         <Link
           href="/"
           className="navbar-brand fw-bold text-reset fs-5 d-lg-none"
         >
-          P<span style={{ color: "#a855f7" }}>.</span>
+          P<span className="text-accent">.</span>
         </Link>
 
         {/* Mobile Header Actions */}
