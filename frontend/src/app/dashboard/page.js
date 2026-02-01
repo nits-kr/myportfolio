@@ -65,6 +65,7 @@ function DashboardContent() {
       const projectToEdit = projectToEditData.data;
       setEditingProject(projectToEdit);
       setProjectValue("title", projectToEdit.title);
+      setProjectValue("subheading", projectToEdit.subheading || "");
       setProjectValue("status", projectToEdit.status);
       setProjectValue("body", projectToEdit.body);
       setProjectValue("description", projectToEdit.description);
@@ -228,6 +229,13 @@ function DashboardContent() {
                           </option>
                         </select>
                       </div>
+                      <div className="col-md-12">
+                        <input
+                          {...registerProject("subheading")}
+                          className="form-control bg-transparent"
+                          placeholder="Subheading (Short Description)"
+                        />
+                      </div>
                       <div className="col-12">
                         <label className="form-label">Description</label>
                         <div
@@ -386,6 +394,7 @@ function DashboardContent() {
                 <thead>
                   <tr>
                     <th>Project</th>
+                    <th>Subheading</th>
                     <th>Status</th>
                     <th>Date</th>
                     <th>Action</th>
@@ -408,6 +417,11 @@ function DashboardContent() {
                     projects.map((project) => (
                       <tr key={project._id} id={`project-${project._id}`}>
                         <td>{project.title}</td>
+                        <td>
+                          <span className="text-muted small">
+                            {project.subheading || "-"}
+                          </span>
+                        </td>
                         <td>
                           <span
                             className={`badge bg-${project.status === "Completed" ? "success" : project.status === "In Progress" ? "warning" : "primary"}`}
@@ -465,6 +479,9 @@ function DashboardContent() {
                     >
                       <div className="d-flex justify-content-between align-items-start mb-2">
                         <h6 className="fw-bold mb-0">{project.title}</h6>
+                        <p className="text-muted small mb-0">
+                          {project.subheading}
+                        </p>
                         <span
                           className={`badge bg-${project.status === "Completed" ? "success" : project.status === "In Progress" ? "warning" : "primary"} border-0`}
                         >
