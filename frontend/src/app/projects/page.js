@@ -31,6 +31,7 @@ export default function ProjectsPage() {
   const role = user?.role;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
   }, []);
 
