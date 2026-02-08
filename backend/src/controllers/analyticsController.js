@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import AnalyticsSession from "../models/AnalyticsSession.js";
 import PageView from "../models/PageView.js";
+import Project from "../models/Project.js";
 
 const ANALYTICS_SALT =
   process.env.ANALYTICS_SALT || "dev_analytics_salt_change_me";
@@ -158,22 +159,52 @@ export const heartbeat = async (req, res) => {
 
 export const getAnalyticsStats = async (req, res) => {
   try {
+    const windowParam = String(req.query.window || "7d");
+    const windowDays = windowParam === "1d" ? 1 : windowParam === "30d" ? 30 : 7;
+    const windowMs = windowDays * 24 * 60 * 60 * 1000;
+    const now = new Date();
+    const currentStart = new Date(now.getTime() - windowMs);
+    const prevStart = new Date(now.getTime() - 2 * windowMs);
+    const prevEnd = currentStart;
+
     const [totalViews, totalSessions] = await Promise.all([
       PageView.countDocuments(),
       AnalyticsSession.countDocuments(),
     ]);
 
+    const [currentViews, prevViews, currentProjects, prevProjects] =
+      await Promise.all([
+        PageView.countDocuments({ createdAt: { $gte: currentStart, $lt: now } }),
+        PageView.countDocuments({
+          createdAt: { $gte: prevStart, $lt: prevEnd },
+        }),
+        Project.countDocuments({ createdAt: { $gte: currentStart, $lt: now } }),
+        Project.countDocuments({ createdAt: { $gte: prevStart, $lt: prevEnd } }),
+      ]);
+
     const timeAgg = await AnalyticsSession.aggregate([
+      { $match: { lastSeenAt: { $gte: currentStart, $lt: now } } },
       {
         $group: {
           _id: null,
           avgTimeSeconds: { $avg: "$totalTimeSeconds" },
-          totalTimeSeconds: { $sum: "$totalTimeSeconds" },
         },
       },
     ]);
 
     const avgTimeSeconds = timeAgg[0]?.avgTimeSeconds || 0;
+    const viewsChangePct =
+      prevViews === 0
+        ? currentViews > 0
+          ? 100
+          : 0
+        : ((currentViews - prevViews) / prevViews) * 100;
+    const projectsChangePct =
+      prevProjects === 0
+        ? currentProjects > 0
+          ? 100
+          : 0
+        : ((currentProjects - prevProjects) / prevProjects) * 100;
 
     return res.status(200).json({
       success: true,
@@ -181,6 +212,13 @@ export const getAnalyticsStats = async (req, res) => {
         totalViews,
         totalSessions,
         avgTimeSeconds: Math.round(avgTimeSeconds),
+        currentViews,
+        prevViews,
+        viewsChangePct: Number(viewsChangePct.toFixed(1)),
+        currentProjects,
+        prevProjects,
+        projectsChangePct: Number(projectsChangePct.toFixed(1)),
+        window: windowParam,
       },
     });
   } catch (err) {

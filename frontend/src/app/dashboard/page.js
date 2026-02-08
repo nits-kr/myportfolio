@@ -46,9 +46,13 @@ function DashboardContent() {
 
   // API Hooks
   const { data: projectsData, isLoading } = useGetProjectsQuery();
-  const { data: analyticsStatsData } = useGetAnalyticsStatsQuery(undefined, {
-    skip: user?.role !== "admin",
-  });
+  const [analyticsWindow, setAnalyticsWindow] = useState("7d");
+  const { data: analyticsStatsData } = useGetAnalyticsStatsQuery(
+    { window: analyticsWindow },
+    {
+      skip: user?.role !== "admin",
+    },
+  );
   const { data: analyticsSessionsData, isLoading: isSessionsLoading } =
     useGetAnalyticsSessionsQuery(
       { page: 1, limit: 20 },
@@ -176,6 +180,8 @@ function DashboardContent() {
     projects: projects.length,
     messages: 45,
     avgTimeSeconds: analyticsStatsData?.data?.avgTimeSeconds || 0,
+    viewsChangePct: analyticsStatsData?.data?.viewsChangePct ?? 0,
+    projectsChangePct: analyticsStatsData?.data?.projectsChangePct ?? 0,
   };
 
   return (
@@ -333,6 +339,23 @@ function DashboardContent() {
           </div>
         </div>
 
+        <div className="d-flex justify-content-end mb-3">
+          <select
+            className="form-select w-auto bg-transparent"
+            value={analyticsWindow}
+            onChange={(event) => setAnalyticsWindow(event.target.value)}
+          >
+            <option className="text-dark" value="1d">
+              Yesterday
+            </option>
+            <option className="text-dark" value="7d">
+              Last 7 days
+            </option>
+            <option className="text-dark" value="30d">
+              Last 30 days
+            </option>
+          </select>
+        </div>
         <div className="row g-4 mb-5">
           <div className="col-md-4">
             <div className="glass-card h-100 p-4">
@@ -353,8 +376,23 @@ function DashboardContent() {
                     <circle cx="12" cy="12" r="3" />
                   </svg>
                 </div>
-                <span className="badge bg-success bg-opacity-10 text-success border-0 px-3 py-2 rounded-pill">
-                  +12%
+                <span
+                  className={`badge bg-${
+                    stats.viewsChangePct > 0
+                      ? "success"
+                      : stats.viewsChangePct < 0
+                        ? "danger"
+                        : "secondary"
+                  } bg-opacity-10 text-${
+                    stats.viewsChangePct > 0
+                      ? "success"
+                      : stats.viewsChangePct < 0
+                        ? "danger"
+                        : "secondary"
+                  } border-0 px-3 py-2 rounded-pill`}
+                >
+                  {stats.viewsChangePct > 0 ? "+" : ""}
+                  {stats.viewsChangePct}%
                 </span>
               </div>
               <h5 className="text-muted fw-medium mb-1">Total Views</h5>
@@ -390,8 +428,23 @@ function DashboardContent() {
                     <path d="m16 5.25-8 4.5" />
                   </svg>
                 </div>
-                <span className="badge bg-success bg-opacity-10 text-success border-0 px-3 py-2 rounded-pill">
-                  +5%
+                <span
+                  className={`badge bg-${
+                    stats.projectsChangePct > 0
+                      ? "success"
+                      : stats.projectsChangePct < 0
+                        ? "danger"
+                        : "secondary"
+                  } bg-opacity-10 text-${
+                    stats.projectsChangePct > 0
+                      ? "success"
+                      : stats.projectsChangePct < 0
+                        ? "danger"
+                        : "secondary"
+                  } border-0 px-3 py-2 rounded-pill`}
+                >
+                  {stats.projectsChangePct > 0 ? "+" : ""}
+                  {stats.projectsChangePct}%
                 </span>
               </div>
               <h5 className="text-muted fw-medium mb-1">Projects</h5>

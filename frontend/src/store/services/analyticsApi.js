@@ -3,7 +3,7 @@ import { apiSlice } from "./apiSlice";
 export const analyticsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getAnalyticsStats: builder.query({
-      query: () => "/analytics/stats",
+      query: ({ window = "7d" } = {}) => `/analytics/stats?window=${window}`,
     }),
     getAnalyticsSessions: builder.query({
       query: ({ page = 1, limit = 20 } = {}) =>
