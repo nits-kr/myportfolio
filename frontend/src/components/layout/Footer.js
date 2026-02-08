@@ -10,13 +10,32 @@ export default function Footer() {
           <div className="mb-4">
             <h3 className="fw-bold mb-3">Let&apos;s Connect</h3>
             <div className="d-flex justify-content-center gap-4">
-              <a href="#" className="fs-4 hover-scale">
+              <a
+                href="https://github.com/nits-kr"
+                className="fs-4 hover-scale"
+                aria-label="GitHub"
+                title="GitHub"
+                target="_blank"
+                rel="noreferrer"
+              >
                 <FaGithub />
               </a>
-              <a href="#" className="fs-4 hover-scale">
+              <a
+                href="https://www.linkedin.com/in/nitish-kumar-a18bb9258/"
+                className="fs-4 hover-scale"
+                aria-label="LinkedIn"
+                title="LinkedIn"
+                target="_blank"
+                rel="noreferrer"
+              >
                 <FaLinkedin />
               </a>
-              <a href="#" className="fs-4 hover-scale">
+              <a
+                href="#"
+                className="fs-4 hover-scale"
+                aria-label="Twitter"
+                title="Twitter"
+              >
                 <FaTwitter />
               </a>
             </div>
