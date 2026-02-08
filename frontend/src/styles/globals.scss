@@ -46,6 +46,7 @@ body,
     color 0.3s ease;
   font-family: -apple-system, system-ui, sans-serif !important;
   min-height: 100vh;
+  width: 100%;
   // position: relative;
   overflow-x: hidden;
 
@@ -53,7 +54,7 @@ body,
     content: "";
     position: absolute;
     top: -10%;
-    left: -10%;
+    left: 0%;
     width: 50%;
     height: 50%;
     background: radial-gradient(circle, $primary-color 0%, transparent 60%);
@@ -66,8 +67,8 @@ body,
   &::after {
     content: "";
     position: absolute;
-    bottom: -10%;
-    right: -10%;
+    bottom: 0%;
+    right: 0%;
     width: 50%;
     height: 50%;
     background: radial-gradient(circle, $accent-color 0%, transparent 60%);
@@ -505,4 +506,7 @@ body,
 
 .text-accent {
     color: #a855f7 !important;
+}
+.mobile-bottom-nav{
+  width: 100vw;
 }

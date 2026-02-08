@@ -71,3 +71,28 @@ a {
   opacity: 0.9;
   color: white;
 }
+
+.gradient-text {
+  background: linear-gradient(45deg, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.ls-2 {
+  letter-spacing: 0.2em;
+}
+
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .display-4 {
+    font-size: 2.5rem;
+  }
+
+  .glass-card {
+    padding: 1.5rem !important;
+  }
+}
