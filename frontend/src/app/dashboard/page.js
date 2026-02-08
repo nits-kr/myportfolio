@@ -79,7 +79,6 @@ function DashboardContent() {
     watch: watchProject,
   } = useForm();
   const [showProjectEditor, setShowProjectEditor] = useState(false);
-  // eslint-disable-next-line react-compiler/react-compiler
   const projectBody = watchProject("body");
   const [editingProject, setEditingProject] = useState(null);
 

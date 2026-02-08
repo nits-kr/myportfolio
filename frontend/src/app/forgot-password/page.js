@@ -406,7 +406,6 @@ export default function ForgotPasswordPage() {
                       placeholder="Confirm Password"
                       {...registerReset("confirmPassword", {
                         validate: (val) => {
-                          // eslint-disable-next-line react-compiler/react-compiler
                           if (watch("newPassword") !== val) {
                             return "Passwords do not match";
                           }
