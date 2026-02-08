@@ -1,5 +1,3 @@
-"use client";
-
 import { FaGithub, FaLinkedin, FaTwitter, FaHeart } from "react-icons/fa";
 
 export default function Footer() {
@@ -49,10 +47,13 @@ export default function Footer() {
             </a>
           </div>
           <p className="mb-0 small">
-            © {new Date().getFullYear()} Nitish Kumar. All rights reserved.
+            &copy; {new Date().getFullYear()} Nitish Kumar. All rights reserved.
           </p>
         </div>
       </div>
     </footer>
   );
 }
+
+
+
