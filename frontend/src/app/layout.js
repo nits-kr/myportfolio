@@ -1,6 +1,7 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/globals.scss";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import { Providers } from "@/store/Providers";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -45,7 +46,9 @@ export default function RootLayout({ children }) {
           <GlobalLoader />
           <ServiceWorkerRegistration />
           <OnlineStatus />
-          <AnalyticsTracker />
+          <Suspense fallback={null}>
+            <AnalyticsTracker />
+          </Suspense>
           <BootstrapClient />
           <Navbar />
           <main className="main-content">{children}</main>
