@@ -29,7 +29,7 @@ export default function Hero() {
                 <strong>I&apos;m {profile.name}</strong>
               </span>
               <GoVerified className="text-primary" />
-              <span className="opacity-75">Full Stack Engineer</span>
+              <span className="opacity-75">{profile.title}</span>
             </p>
             <div className="d-flex flex-column flex-md-row gap-3 justify-content-center justify-content-lg-start w-100">
               <Link

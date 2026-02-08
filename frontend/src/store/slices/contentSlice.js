@@ -3,7 +3,8 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   profile: {
     name: "NITISH KUMAR",
-    title: "Frontend Developer | React & Next.js Expert",
+    title:
+      "Frontend Developer (Frontend Engineer) at TechGropse | React.js, Next.js, Redux Toolkit | PWA & High-Performance Web Applications",
     email: "nits.kr99@gmail.com",
     bio: "Experienced Full-Stack Developer with 3+ years building scalable web applications using React.js, Next.js, and modern JavaScript. Specialized in enterprise solutions, real-time features, and AI integration.",
     longBio:
