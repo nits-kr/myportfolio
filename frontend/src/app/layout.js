@@ -39,6 +39,13 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link
+          rel="preconnect"
+          href="https://portfolio-backend-sjrz.onrender.com"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body suppressHydrationWarning={true} className={inter.className}>
         <Providers>
           {/* <LogoLoader /> */}
