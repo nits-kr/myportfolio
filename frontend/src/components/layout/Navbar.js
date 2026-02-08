@@ -49,6 +49,7 @@ export default function Navbar() {
             onClick={toggleTheme}
             className="btn btn-link nav-link p-0 text-reset"
             aria-label="Toggle theme"
+            suppressHydrationWarning
           >
             {theme === "dark" ? <FaSun size={20} /> : <FaMoon size={20} />}
           </button>
@@ -61,6 +62,7 @@ export default function Navbar() {
             aria-controls="navbarNav"
             aria-expanded="false"
             aria-label="Toggle navigation"
+            suppressHydrationWarning
           >
             <span className="navbar-toggler-icon"></span>
           </button>
@@ -89,6 +91,7 @@ export default function Navbar() {
                 onClick={toggleTheme}
                 className="btn btn-link nav-link p-0"
                 aria-label="Toggle theme"
+                suppressHydrationWarning
               >
                 {theme === "dark" ? <FaSun size={20} /> : <FaMoon size={20} />}
               </button>
