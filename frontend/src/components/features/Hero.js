@@ -14,7 +14,7 @@ export default function Hero() {
       <div className="row align-items-center min-vh-75 g-4 g-lg-5">
         <div className="col-lg-6 mb-4 mb-lg-0">
           <div className="d-flex flex-column align-items-center align-items-lg-start text-center text-lg-start">
-            <span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill mb-3">
+            <span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill mb-3 d-none">
               {profile.title}
             </span>
             <h1 className="display-4 display-lg-3 fw-bold mb-4 lh-tight">

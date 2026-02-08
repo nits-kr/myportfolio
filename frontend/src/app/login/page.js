@@ -62,7 +62,7 @@ export default function LoginPage() {
     error?.data?.message || error?.error || "Authentication failed";
 
   return (
-    <div className="container min-vh-100 d-flex align-items-center justify-content-center">
+    <div className="container d-flex align-items-center justify-content-center py-5">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

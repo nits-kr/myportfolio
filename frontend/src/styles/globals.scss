@@ -34,6 +34,27 @@
   --scrollbar-thumb: #cbd5e1;
   --scrollbar-thumb-hover: #{$primary-color};
   --mobile-menu-bg: rgba(255, 255, 255, 0.98);
+
+  // Bootstrap text utility overrides for light theme readability
+  .text-light {
+    color: #0f172a !important;
+  }
+
+  .text-light-emphasis {
+    color: #334155 !important;
+  }
+
+  .btn-outline-light {
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .btn-outline-light:hover,
+  .btn-outline-light:focus {
+    color: #0f172a !important;
+    background-color: rgba(15, 23, 42, 0.06) !important;
+    border-color: #94a3b8 !important;
+  }
 }
 
 html,
