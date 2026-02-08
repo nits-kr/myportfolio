@@ -12,6 +12,7 @@ import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import ServiceWorkerRegistration from "@/components/common/ServiceWorkerRegistration";
 import GlobalLoader from "@/components/common/GlobalLoader";
 import LogoLoader from "@/components/common/LogoLoader";
+import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 
 export const metadata = {
   title: "Nitish Kumar | Full Stack Developer",
@@ -44,6 +45,7 @@ export default function RootLayout({ children }) {
           <GlobalLoader />
           <ServiceWorkerRegistration />
           <OnlineStatus />
+          <AnalyticsTracker />
           <BootstrapClient />
           <Navbar />
           <main className="main-content">{children}</main>

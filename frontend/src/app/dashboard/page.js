@@ -16,6 +16,10 @@ import {
   useUpdateDeleteStatusMutation,
   useUpdateProjectMutation,
 } from "@/store/services/projectsApi";
+import {
+  useGetAnalyticsStatsQuery,
+  useGetAnalyticsSessionsQuery,
+} from "@/store/services/analyticsApi";
 import { useSearchParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 
@@ -42,6 +46,14 @@ function DashboardContent() {
 
   // API Hooks
   const { data: projectsData, isLoading } = useGetProjectsQuery();
+  const { data: analyticsStatsData } = useGetAnalyticsStatsQuery(undefined, {
+    skip: user?.role !== "admin",
+  });
+  const { data: analyticsSessionsData, isLoading: isSessionsLoading } =
+    useGetAnalyticsSessionsQuery(
+      { page: 1, limit: 20 },
+      { skip: user?.role !== "admin" },
+    );
   const [addProject, { isLoading: isAdding }] = useAddProjectMutation();
   const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
   const [deleteProject] = useUpdateDeleteStatusMutation();
@@ -159,11 +171,12 @@ function DashboardContent() {
     router.push(`/dashboard?edit=${project._id}`);
   };
 
-  const [stats] = useState({
-    views: 1250,
-    projects: 12,
+  const stats = {
+    views: analyticsStatsData?.data?.totalViews || 0,
+    projects: projects.length,
     messages: 45,
-  });
+    avgTimeSeconds: analyticsStatsData?.data?.avgTimeSeconds || 0,
+  };
 
   return (
     <ProtectedRoute>
@@ -348,6 +361,9 @@ function DashboardContent() {
               <h2 className="display-6 fw-bold mb-0">
                 {stats.views.toLocaleString()}
               </h2>
+              <small className="text-muted">
+                Avg time: {Math.round(stats.avgTimeSeconds)}s
+              </small>
             </div>
           </div>
           <div className="col-md-4">
@@ -542,6 +558,66 @@ function DashboardContent() {
             </div>
           </div>
         </div>
+
+        {user?.role === "admin" && (
+          <div className="mt-5">
+            <div className="glass-card p-4">
+              <h3 className="mb-4">Viewer Details</h3>
+              <div className="table-responsive">
+                <table className="table table-hover table-transparent mb-0">
+                  <thead>
+                    <tr>
+                      <th>IP Hash</th>
+                      <th>Last Path</th>
+                      <th>Total Time</th>
+                      <th>Last Seen</th>
+                      <th>First Seen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isSessionsLoading ? (
+                      <tr>
+                        <td colSpan="5" className="text-center py-3">
+                          Loading viewers...
+                        </td>
+                      </tr>
+                    ) : analyticsSessionsData?.data?.length ? (
+                      analyticsSessionsData.data.map((session) => (
+                        <tr key={session._id}>
+                          <td className="text-muted small">
+                            {session.ipHash?.slice(0, 12)}...
+                          </td>
+                          <td>
+                            <span className="text-muted small">
+                              {session.lastPath || "-"}
+                            </span>
+                          </td>
+                          <td>{Math.round(session.totalTimeSeconds || 0)}s</td>
+                          <td>
+                            {new Date(session.lastSeenAt).toLocaleString(
+                              "en-US",
+                            )}
+                          </td>
+                          <td>
+                            {new Date(session.firstSeenAt).toLocaleString(
+                              "en-US",
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="text-center py-3">
+                          No viewers yet
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );
