@@ -9,9 +9,6 @@ import morgan from "morgan";
 import connectDB from "./src/config/db.js";
 import logger from "./src/utils/logger.js";
 
-// Load env vars
-dotenv.config();
-
 // Connect to database
 connectDB();
 
