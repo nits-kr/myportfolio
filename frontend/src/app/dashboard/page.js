@@ -243,11 +243,17 @@ function DashboardContent() {
       setShowBlogEditor(false);
     } catch (err) {
       console.error("Failed to save blog:", err);
-      const errorMessage = err?.data?.error
-        ? Array.isArray(err.data.error)
+      // Helper to extract error message
+      let errorMessage = "Failed to save blog";
+      if (err?.data?.message) {
+        errorMessage = err.data.message;
+      } else if (err?.data?.error) {
+        errorMessage = Array.isArray(err.data.error)
           ? err.data.error.join("\n")
-          : err.data.error
-        : "Failed to save blog";
+          : err.data.error;
+      } else if (err?.error) {
+        errorMessage = err.error;
+      }
 
       Toast.fire({
         icon: "error",
