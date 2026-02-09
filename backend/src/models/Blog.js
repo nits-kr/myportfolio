@@ -50,7 +50,8 @@ const blogSchema = new mongoose.Schema({
 });
 
 // Create slug from title
-blogSchema.pre("save", function (next) {
+// Create slug from title
+blogSchema.pre("save", async function () {
   if (this.isModified("title") && !this.slug) {
     this.slug = this.title
       .toLowerCase()
@@ -58,7 +59,6 @@ blogSchema.pre("save", function (next) {
       .replace(/ +/g, "-");
   }
   this.updatedAt = Date.now();
-  next();
 });
 
 export default mongoose.model("Blog", blogSchema);
