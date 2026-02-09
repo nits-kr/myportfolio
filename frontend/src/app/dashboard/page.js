@@ -82,13 +82,11 @@ function DashboardContent() {
   const projects = projectsData?.data || [];
   const blogs = blogsData?.data || [];
 
-  // Profile Form
   const { register: registerProfile, handleSubmit: handleSubmitProfile } =
     useForm({
       defaultValues: profile,
     });
 
-  // Project Form
   const {
     register: registerProject,
     handleSubmit: handleSubmitProject,
@@ -100,7 +98,6 @@ function DashboardContent() {
   const projectBody = watchProject("body");
   const [editingProject, setEditingProject] = useState(null);
 
-  // Blog Form
   const {
     register: registerBlog,
     handleSubmit: handleSubmitBlog,
