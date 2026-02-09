@@ -18,6 +18,7 @@ connectDB();
 // Route files
 import authRoutes from "./src/routes/authRoutes.js";
 import projectRoutes from "./src/routes/projectRoutes.js";
+import blogRoutes from "./src/routes/blogRoutes.js"; // Import Blog routes
 import subUserRoutes from "./src/routes/subUser.routes.js"; // Import SubUser routes
 import analyticsRoutes from "./src/routes/analyticsRoutes.js";
 import errorHandler from "./src/middleware/errorMiddleware.js"; // Import Error Handler
@@ -90,6 +91,7 @@ app.use(
 // Mount routers
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/blogs", blogRoutes); // Mount Blog routes
 app.use("/api/sub-users", subUserRoutes); // Mount SubUser routes
 app.use("/api/analytics", analyticsRoutes);
 

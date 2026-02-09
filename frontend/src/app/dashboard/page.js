@@ -20,6 +20,14 @@ import {
   useGetAnalyticsStatsQuery,
   useGetAnalyticsSessionsQuery,
 } from "@/store/services/analyticsApi";
+import {
+  useGetBlogsQuery,
+  useGetBlogQuery,
+  useAddBlogMutation,
+  useUpdateBlogMutation,
+  useUpdateBlogDeleteStatusMutation,
+} from "@/store/services/blogsApi";
+
 import { useSearchParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 
@@ -45,7 +53,9 @@ function DashboardContent() {
   const router = useRouter();
 
   // API Hooks
-  const { data: projectsData, isLoading } = useGetProjectsQuery();
+  const { data: projectsData, isLoading: isProjectsLoading } =
+    useGetProjectsQuery();
+  const { data: blogsData, isLoading: isBlogsLoading } = useGetBlogsQuery();
   const [analyticsWindow, setAnalyticsWindow] = useState("7d");
   const { data: analyticsStatsData } = useGetAnalyticsStatsQuery(
     { window: analyticsWindow },
@@ -62,7 +72,12 @@ function DashboardContent() {
   const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
   const [deleteProject] = useUpdateDeleteStatusMutation();
 
+  const [addBlog, { isLoading: isAddingBlog }] = useAddBlogMutation();
+  const [updateBlog, { isLoading: isUpdatingBlog }] = useUpdateBlogMutation();
+  const [deleteBlog] = useUpdateBlogDeleteStatusMutation();
+
   const projects = projectsData?.data || [];
+  const blogs = blogsData?.data || [];
 
   // Profile Form
   const { register: registerProfile, handleSubmit: handleSubmitProfile } =
@@ -82,13 +97,32 @@ function DashboardContent() {
   const projectBody = watchProject("body");
   const [editingProject, setEditingProject] = useState(null);
 
+  // Blog Form
+  const {
+    register: registerBlog,
+    handleSubmit: handleSubmitBlog,
+    reset: resetBlog,
+    setValue: setBlogValue,
+    watch: watchBlog,
+  } = useForm();
+  const [showBlogEditor, setShowBlogEditor] = useState(false);
+  const blogBody = watchBlog("body");
+  const [editingBlog, setEditingBlog] = useState(null);
+
+  // Tab State
+  const tab = searchParams.get("tab") || "projects";
+
   // Check for edit/view params
   const editId = searchParams.get("edit");
   const viewId = searchParams.get("view");
   const targetId = editId || viewId;
 
   const { data: projectToEditData } = useGetProjectQuery(targetId, {
-    skip: !targetId,
+    skip: !targetId || tab !== "projects",
+  });
+
+  const { data: blogToEditData } = useGetBlogQuery(targetId, {
+    skip: !targetId || tab !== "blogs",
   });
 
   useEffect(() => {
@@ -104,6 +138,19 @@ function DashboardContent() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [targetId, projectToEditData, setProjectValue]);
+
+  useEffect(() => {
+    if (targetId && tab === "blogs" && blogToEditData?.data) {
+      const blogToEdit = blogToEditData.data;
+      setEditingBlog(blogToEdit);
+      setBlogValue("title", blogToEdit.title);
+      setBlogValue("subheading", blogToEdit.subheading || "");
+      setBlogValue("status", blogToEdit.status);
+      setBlogValue("body", blogToEdit.body);
+      setShowBlogEditor(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [targetId, tab, blogToEditData, setBlogValue]);
 
   const onUpdateProfile = (data) => {
     dispatch(updateProfile(data));
@@ -174,6 +221,65 @@ function DashboardContent() {
     router.push(`/dashboard?edit=${project._id}`);
   };
 
+  const onSubmitBlog = async (data) => {
+    try {
+      if (editingBlog) {
+        await updateBlog({ id: editingBlog._id, ...data }).unwrap();
+        Toast.fire({
+          icon: "success",
+          title: "Blog Updated successfully",
+        });
+        setEditingBlog(null);
+        router.push("/dashboard?tab=blogs");
+      } else {
+        await addBlog(data).unwrap();
+        Toast.fire({
+          icon: "success",
+          title: "Blog Added successfully",
+        });
+        router.push("/dashboard?tab=blogs");
+      }
+      resetBlog();
+      setShowBlogEditor(false);
+    } catch (err) {
+      console.error("Failed to save blog:", err);
+      const errorMessage = err?.data?.error
+        ? Array.isArray(err.data.error)
+          ? err.data.error.join("\n")
+          : err.data.error
+        : "Failed to save blog";
+
+      Toast.fire({
+        icon: "error",
+        title: errorMessage,
+      });
+    }
+  };
+
+  const handleCancelEditBlog = () => {
+    setEditingBlog(null);
+    resetBlog();
+    setShowBlogEditor(false);
+    router.push("/dashboard?tab=blogs");
+  };
+
+  const handleDeleteBlog = async (id) => {
+    if (window.confirm("Are you sure you want to delete this blog?")) {
+      try {
+        await deleteBlog(id).unwrap();
+        if (editingBlog?._id === id) {
+          handleCancelEditBlog();
+        }
+      } catch (err) {
+        console.error("Failed to delete blog:", err);
+      }
+    }
+  };
+
+  const handleEditBlogClick = (blog) => {
+    router.push(`/dashboard?tab=blogs&edit=${blog._id}`);
+  };
+
   const stats = {
     views: analyticsStatsData?.data?.totalViews || 0,
     projects: projects.length,
@@ -200,6 +306,22 @@ function DashboardContent() {
                 </Link>
               </div>
             )}
+
+            {/* Tab Navigation */}
+            <div className="d-flex gap-3 mb-4">
+              <button
+                className={`btn ${tab === "projects" ? "btn-primary" : "btn-outline-light"}`}
+                onClick={() => router.push("/dashboard?tab=projects")}
+              >
+                Projects
+              </button>
+              <button
+                className={`btn ${tab === "blogs" ? "btn-primary" : "btn-outline-light"}`}
+                onClick={() => router.push("/dashboard?tab=blogs")}
+              >
+                Blogs
+              </button>
+            </div>
 
             {user?.role === "admin" && (
               <div className="d-flex flex-column gap-5">
@@ -238,101 +360,203 @@ function DashboardContent() {
                   </form>
                 </div>
 
-                <div className="glass-card p-4">
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h4 className="mb-0">
-                      {editingProject ? "Edit Project" : "Add New Project"}
-                    </h4>
-                    {editingProject && (
-                      <button
-                        onClick={handleCancelEdit}
-                        className="btn btn-outline-light btn-sm"
-                      >
-                        Cancel Edit
-                      </button>
-                    )}
-                  </div>
-                  <form onSubmit={handleSubmitProject(onSubmitProject)}>
-                    <div className="row g-3">
-                      <div className="col-md-6">
-                        <input
-                          {...registerProject("title")}
-                          className="form-control bg-transparent"
-                          placeholder="Project Title"
-                          required
-                        />
-                      </div>
-                      <div className="col-md-6">
-                        <select
-                          {...registerProject("status")}
-                          className="form-select bg-transparent"
-                        >
-                          <option className="text-dark" value="In Progress">
-                            In Progress
-                          </option>
-                          <option className="text-dark" value="Completed">
-                            Completed
-                          </option>
-                        </select>
-                      </div>
-                      <div className="col-md-12">
-                        <input
-                          {...registerProject("subheading")}
-                          className="form-control bg-transparent"
-                          placeholder="Subheading (Short Description)"
-                        />
-                      </div>
-                      <div className="col-12">
-                        <label className="form-label">Description</label>
-                        <div
-                          className="form-control bg-transparent"
-                          style={{
-                            minHeight: "100px",
-                            cursor: "pointer",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                            background: "rgba(0,0,0,0.1) !important",
-                          }}
-                          onClick={() => setShowProjectEditor(true)}
-                        >
-                          {projectBody ? (
-                            <div
-                              dangerouslySetInnerHTML={{ __html: projectBody }}
-                            />
-                          ) : (
-                            <span className="text-secondary opacity-50">
-                              Click to add description...
-                            </span>
-                          )}
-                        </div>
-                        <input type="hidden" {...registerProject("body")} />
-                      </div>
-                      {showProjectEditor && (
-                        <RichTextEditor
-                          value={projectBody}
-                          onChange={(content) =>
-                            setProjectValue("body", content)
-                          }
-                          onClose={() => setShowProjectEditor(false)}
-                        />
-                      )}
-                      <div className="col-12 text-end">
+                {tab === "projects" && (
+                  <div className="glass-card p-4">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h4 className="mb-0">
+                        {editingProject ? "Edit Project" : "Add New Project"}
+                      </h4>
+                      {editingProject && (
                         <button
-                          type="submit"
-                          className="btn btn-success"
-                          disabled={isAdding || isUpdating}
+                          onClick={handleCancelEdit}
+                          className="btn btn-outline-light btn-sm"
                         >
-                          {isAdding || isUpdating
-                            ? editingProject
-                              ? "Updating..."
-                              : "Adding..."
-                            : editingProject
-                              ? "Update Project"
-                              : "Add Project"}
+                          Cancel Edit
                         </button>
-                      </div>
+                      )}
                     </div>
-                  </form>
-                </div>
+                    <form onSubmit={handleSubmitProject(onSubmitProject)}>
+                      <div className="row g-3">
+                        <div className="col-md-6">
+                          <input
+                            {...registerProject("title")}
+                            className="form-control bg-transparent"
+                            placeholder="Project Title"
+                            required
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <select
+                            {...registerProject("status")}
+                            className="form-select bg-transparent"
+                          >
+                            <option className="text-dark" value="In Progress">
+                              In Progress
+                            </option>
+                            <option className="text-dark" value="Completed">
+                              Completed
+                            </option>
+                          </select>
+                        </div>
+                        <div className="col-md-12">
+                          <input
+                            {...registerProject("subheading")}
+                            className="form-control bg-transparent"
+                            placeholder="Subheading (Short Description)"
+                          />
+                        </div>
+                        <div className="col-12">
+                          <label className="form-label">Description</label>
+                          <div
+                            className="form-control bg-transparent"
+                            style={{
+                              minHeight: "100px",
+                              cursor: "pointer",
+                              border: "1px solid rgba(255, 255, 255, 0.1)",
+                              background: "rgba(0,0,0,0.1) !important",
+                            }}
+                            onClick={() => setShowProjectEditor(true)}
+                          >
+                            {projectBody ? (
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: projectBody,
+                                }}
+                              />
+                            ) : (
+                              <span className="text-secondary opacity-50">
+                                Click to add description...
+                              </span>
+                            )}
+                          </div>
+                          <input type="hidden" {...registerProject("body")} />
+                        </div>
+                        {showProjectEditor && (
+                          <RichTextEditor
+                            value={projectBody}
+                            onChange={(content) =>
+                              setProjectValue("body", content)
+                            }
+                            onClose={() => setShowProjectEditor(false)}
+                          />
+                        )}
+                        <div className="col-12 text-end">
+                          <button
+                            type="submit"
+                            className="btn btn-success"
+                            disabled={isAdding || isUpdating}
+                          >
+                            {isAdding || isUpdating
+                              ? editingProject
+                                ? "Updating..."
+                                : "Adding..."
+                              : editingProject
+                                ? "Update Project"
+                                : "Add Project"}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {tab === "blogs" && (
+                  <div className="glass-card p-4">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h4 className="mb-0">
+                        {editingBlog ? "Edit Blog" : "Add New Blog"}
+                      </h4>
+                      {editingBlog && (
+                        <button
+                          onClick={handleCancelEditBlog}
+                          className="btn btn-outline-light btn-sm"
+                        >
+                          Cancel Edit
+                        </button>
+                      )}
+                    </div>
+                    <form onSubmit={handleSubmitBlog(onSubmitBlog)}>
+                      <div className="row g-3">
+                        <div className="col-md-6">
+                          <input
+                            {...registerBlog("title")}
+                            className="form-control bg-transparent"
+                            placeholder="Blog Title"
+                            required
+                          />
+                        </div>
+                        <div className="col-md-6">
+                          <select
+                            {...registerBlog("status")}
+                            className="form-select bg-transparent"
+                          >
+                            <option className="text-dark" value="Draft">
+                              Draft
+                            </option>
+                            <option className="text-dark" value="Published">
+                              Published
+                            </option>
+                          </select>
+                        </div>
+                        <div className="col-md-12">
+                          <input
+                            {...registerBlog("subheading")}
+                            className="form-control bg-transparent"
+                            placeholder="Subheading (Short Description)"
+                          />
+                        </div>
+                        <div className="col-12">
+                          <label className="form-label">Body</label>
+                          <div
+                            className="form-control bg-transparent"
+                            style={{
+                              minHeight: "100px",
+                              cursor: "pointer",
+                              border: "1px solid rgba(255, 255, 255, 0.1)",
+                              background: "rgba(0,0,0,0.1) !important",
+                            }}
+                            onClick={() => setShowBlogEditor(true)}
+                          >
+                            {blogBody ? (
+                              <div
+                                dangerouslySetInnerHTML={{ __html: blogBody }}
+                              />
+                            ) : (
+                              <span className="text-secondary opacity-50">
+                                Click to add body content...
+                              </span>
+                            )}
+                          </div>
+                          <input type="hidden" {...registerBlog("body")} />
+                        </div>
+                        {showBlogEditor && (
+                          <RichTextEditor
+                            value={blogBody}
+                            onChange={(content) =>
+                              setBlogValue("body", content)
+                            }
+                            onClose={() => setShowBlogEditor(false)}
+                          />
+                        )}
+                        <div className="col-12 text-end">
+                          <button
+                            type="submit"
+                            className="btn btn-success"
+                            disabled={isAddingBlog || isUpdatingBlog}
+                          >
+                            {isAddingBlog || isUpdatingBlog
+                              ? editingBlog
+                                ? "Updating..."
+                                : "Adding..."
+                              : editingBlog
+                                ? "Update Blog"
+                                : "Add Blog"}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -481,133 +705,284 @@ function DashboardContent() {
         <div className="mt-5">
           <div className="glass-card p-4">
             <h3 className="mb-4">Recent Activity</h3>
-            {/* Desktop Table View */}
-            <div className="table-responsive d-none d-md-block">
-              <table className="table table-hover table-transparent mb-0">
-                <thead>
-                  <tr>
-                    <th>Project</th>
-                    <th>Subheading</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoading ? (
-                    <tr>
-                      <td colSpan="5" className="text-center py-3">
-                        Loading projects...
-                      </td>
-                    </tr>
-                  ) : projects.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="text-center py-3">
-                        No projects found
-                      </td>
-                    </tr>
-                  ) : (
-                    projects.map((project) => (
-                      <tr key={project._id} id={`project-${project._id}`}>
-                        <td>{project.title}</td>
-                        <td>
-                          <span className="text-muted small">
-                            {project.subheading || "-"}
-                          </span>
-                        </td>
-                        <td>
-                          <span
-                            className={`badge bg-${project.status === "Completed" ? "success" : project.status === "In Progress" ? "warning" : "primary"}`}
-                          >
-                            {project.status}
-                          </span>
-                        </td>
-                        <td>
-                          {new Date(project.createdAt).toLocaleDateString(
-                            "en-US",
-                            { year: "numeric", month: "short", day: "numeric" },
-                          )}
-                        </td>
-                        <td>
-                          <button
-                            onClick={() => handleEditClick(project)}
-                            className="btn btn-outline-info btn-sm py-0 px-2 me-2"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProject(project._id)}
-                            className="btn btn-outline-danger btn-sm py-0 px-2"
-                          >
-                            &times;
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
 
-            {/* Mobile Card View */}
-            <div className="d-md-none">
-              {isLoading ? (
-                <div className="text-center py-3">Loading projects...</div>
-              ) : projects.length === 0 ? (
-                <div className="text-center py-3">No projects found</div>
-              ) : (
-                <div className="d-flex flex-column gap-3">
-                  {projects.map((project) => (
-                    <div
-                      key={project._id}
-                      className={`glass-card p-3 border-start border-4 ${
-                        project.status === "Completed"
-                          ? "border-status-completed"
-                          : project.status === "In Progress"
-                            ? "border-status-progress"
-                            : "border-status-review"
-                      }`}
-                    >
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                          <h6 className="fw-bold mb-0">{project.title}</h6>
-                          <p className="text-muted small mb-0">
-                            {project.subheading}
-                          </p>
-                        </div>
-                        <span
-                          className={`badge bg-${project.status === "Completed" ? "success" : project.status === "In Progress" ? "warning" : "primary"} border-0`}
-                        >
-                          {project.status}
-                        </span>
-                      </div>
-                      <div className="d-flex justify-content-between align-items-center">
-                        <small className="text-muted">
-                          {new Date(project.createdAt).toLocaleDateString(
-                            "en-US",
-                            { year: "numeric", month: "short", day: "numeric" },
-                          )}
-                        </small>
-                        <div className="d-flex gap-2">
-                          <button
-                            onClick={() => handleEditClick(project)}
-                            className="btn btn-premium btn-sm py-1 px-3"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProject(project._id)}
-                            className="btn btn-outline-danger btn-sm py-1"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+            {tab === "projects" && (
+              <>
+                {/* Desktop Table View */}
+                <div className="table-responsive d-none d-md-block">
+                  <table className="table table-hover table-transparent mb-0">
+                    <thead>
+                      <tr>
+                        <th>Project</th>
+                        <th>Subheading</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {isProjectsLoading ? (
+                        <tr>
+                          <td colSpan="5" className="text-center py-3">
+                            Loading projects...
+                          </td>
+                        </tr>
+                      ) : projects.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" className="text-center py-3">
+                            No projects found
+                          </td>
+                        </tr>
+                      ) : (
+                        projects.map((project) => (
+                          <tr key={project._id} id={`project-${project._id}`}>
+                            <td>{project.title}</td>
+                            <td>
+                              <span className="text-muted small">
+                                {project.subheading || "-"}
+                              </span>
+                            </td>
+                            <td>
+                              <span
+                                className={`badge bg-${project.status === "Completed" ? "success" : project.status === "In Progress" ? "warning" : "primary"}`}
+                              >
+                                {project.status}
+                              </span>
+                            </td>
+                            <td>
+                              {new Date(project.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )}
+                            </td>
+                            <td>
+                              <button
+                                onClick={() => handleEditClick(project)}
+                                className="btn btn-outline-info btn-sm py-0 px-2 me-2"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProject(project._id)}
+                                className="btn btn-outline-danger btn-sm py-0 px-2"
+                              >
+                                &times;
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              )}
-            </div>
+
+                {/* Mobile Card View */}
+                <div className="d-md-none">
+                  {isProjectsLoading ? (
+                    <div className="text-center py-3">Loading projects...</div>
+                  ) : projects.length === 0 ? (
+                    <div className="text-center py-3">No projects found</div>
+                  ) : (
+                    <div className="d-flex flex-column gap-3">
+                      {projects.map((project) => (
+                        <div
+                          key={project._id}
+                          className={`glass-card p-3 border-start border-4 ${
+                            project.status === "Completed"
+                              ? "border-status-completed"
+                              : project.status === "In Progress"
+                                ? "border-status-progress"
+                                : "border-status-review"
+                          }`}
+                        >
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                              <h6 className="fw-bold mb-0">{project.title}</h6>
+                              <p className="text-muted small mb-0">
+                                {project.subheading}
+                              </p>
+                            </div>
+                            <span
+                              className={`badge bg-${project.status === "Completed" ? "success" : project.status === "In Progress" ? "warning" : "primary"} border-0`}
+                            >
+                              {project.status}
+                            </span>
+                          </div>
+                          <div className="d-flex justify-content-between align-items-center">
+                            <small className="text-muted">
+                              {new Date(project.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )}
+                            </small>
+                            <div className="d-flex gap-2">
+                              <button
+                                onClick={() => handleEditClick(project)}
+                                className="btn btn-premium btn-sm py-1 px-3"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProject(project._id)}
+                                className="btn btn-outline-danger btn-sm py-1"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {tab === "blogs" && (
+              <>
+                {/* Desktop Table View */}
+                <div className="table-responsive d-none d-md-block">
+                  <table className="table table-hover table-transparent mb-0">
+                    <thead>
+                      <tr>
+                        <th>Blog</th>
+                        <th>Subheading</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {isBlogsLoading ? (
+                        <tr>
+                          <td colSpan="5" className="text-center py-3">
+                            Loading blogs...
+                          </td>
+                        </tr>
+                      ) : blogs.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" className="text-center py-3">
+                            No blogs found
+                          </td>
+                        </tr>
+                      ) : (
+                        blogs.map((blog) => (
+                          <tr key={blog._id} id={`blog-${blog._id}`}>
+                            <td>{blog.title}</td>
+                            <td>
+                              <span className="text-muted small">
+                                {blog.subheading || "-"}
+                              </span>
+                            </td>
+                            <td>
+                              <span
+                                className={`badge bg-${blog.status === "Published" ? "success" : "warning"}`}
+                              >
+                                {blog.status}
+                              </span>
+                            </td>
+                            <td>
+                              {new Date(blog.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )}
+                            </td>
+                            <td>
+                              <button
+                                onClick={() => handleEditBlogClick(blog)}
+                                className="btn btn-outline-info btn-sm py-0 px-2 me-2"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteBlog(blog._id)}
+                                className="btn btn-outline-danger btn-sm py-0 px-2"
+                              >
+                                &times;
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="d-md-none">
+                  {isBlogsLoading ? (
+                    <div className="text-center py-3">Loading blogs...</div>
+                  ) : blogs.length === 0 ? (
+                    <div className="text-center py-3">No blogs found</div>
+                  ) : (
+                    <div className="d-flex flex-column gap-3">
+                      {blogs.map((blog) => (
+                        <div
+                          key={blog._id}
+                          className={`glass-card p-3 border-start border-4 ${
+                            blog.status === "Published"
+                              ? "border-status-completed"
+                              : "border-status-review"
+                          }`}
+                        >
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                              <h6 className="fw-bold mb-0">{blog.title}</h6>
+                              <p className="text-muted small mb-0">
+                                {blog.subheading}
+                              </p>
+                            </div>
+                            <span
+                              className={`badge bg-${blog.status === "Published" ? "success" : "warning"} border-0`}
+                            >
+                              {blog.status}
+                            </span>
+                          </div>
+                          <div className="d-flex justify-content-between align-items-center">
+                            <small className="text-muted">
+                              {new Date(blog.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )}
+                            </small>
+                            <div className="d-flex gap-2">
+                              <button
+                                onClick={() => handleEditBlogClick(blog)}
+                                className="btn btn-premium btn-sm py-1 px-3"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteBlog(blog._id)}
+                                className="btn btn-outline-danger btn-sm py-1"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
 

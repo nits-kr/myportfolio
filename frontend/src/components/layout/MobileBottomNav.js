@@ -4,7 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/context/ThemeContext";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
-import { FaHome, FaUser, FaProjectDiagram, FaThLarge } from "react-icons/fa";
+import {
+  FaHome,
+  FaUser,
+  FaProjectDiagram,
+  FaThLarge,
+  FaBookOpen,
+} from "react-icons/fa";
 import { motion } from "framer-motion";
 
 export default function MobileBottomNav() {
@@ -20,6 +26,7 @@ export default function MobileBottomNav() {
       path: "/projects",
       icon: <FaProjectDiagram size={20} />,
     },
+    { name: "Blogs", path: "/blogs", icon: <FaBookOpen size={20} /> },
     { name: "Dashboard", path: "/dashboard", icon: <FaThLarge size={20} /> },
   ];
 
