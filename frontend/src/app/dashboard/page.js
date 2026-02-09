@@ -26,6 +26,7 @@ import {
   useAddBlogMutation,
   useUpdateBlogMutation,
   useUpdateBlogDeleteStatusMutation,
+  useUploadImageMutation,
 } from "@/store/services/blogsApi";
 
 import { useSearchParams, useRouter } from "next/navigation";
