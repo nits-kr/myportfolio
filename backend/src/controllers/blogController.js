@@ -86,6 +86,7 @@ export const createBlog = async (req, res, next) => {
       data: blog,
     });
   } catch (err) {
+    console.error("Create Blog Error:", err); // Log the actual error
     if (err.name === "ValidationError") {
       const messages = Object.values(err.errors).map((val) => val.message);
       return res.status(400).json({
@@ -97,7 +98,7 @@ export const createBlog = async (req, res, next) => {
       res.status(500).json({
         success: false,
         message: "Server Error",
-        error: "Server Error",
+        error: err.message, // Send actual error message to client for debugging
       });
     }
   }
