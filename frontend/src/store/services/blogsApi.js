@@ -40,6 +40,13 @@ export const blogsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Blog"],
     }),
+    uploadImage: builder.mutation({
+      query: (formData) => ({
+        url: "/upload",
+        method: "POST",
+        body: formData,
+      }),
+    }),
   }),
 });
 
@@ -50,4 +57,5 @@ export const {
   useUpdateBlogMutation,
   useDeleteBlogMutation,
   useUpdateBlogDeleteStatusMutation,
+  useUploadImageMutation,
 } = blogsApi;

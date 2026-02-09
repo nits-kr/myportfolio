@@ -75,6 +75,8 @@ function DashboardContent() {
   const [addBlog, { isLoading: isAddingBlog }] = useAddBlogMutation();
   const [updateBlog, { isLoading: isUpdatingBlog }] = useUpdateBlogMutation();
   const [deleteBlog] = useUpdateBlogDeleteStatusMutation();
+  const [uploadImage, { isLoading: isUploadingImage }] =
+    useUploadImageMutation();
 
   const projects = projectsData?.data || [];
   const blogs = blogsData?.data || [];
@@ -223,8 +225,20 @@ function DashboardContent() {
 
   const onSubmitBlog = async (data) => {
     try {
+      let finalData = { ...data };
+
+      // Handle image upload if a file is selected
+      if (data.image && data.image[0] instanceof File) {
+        const formData = new FormData();
+        formData.append("image", data.image[0]);
+        const uploadResult = await uploadImage(formData).unwrap();
+        if (uploadResult.success) {
+          finalData.image = uploadResult.url;
+        }
+      }
+
       if (editingBlog) {
-        await updateBlog({ id: editingBlog._id, ...data }).unwrap();
+        await updateBlog({ id: editingBlog._id, ...finalData }).unwrap();
         Toast.fire({
           icon: "success",
           title: "Blog Updated successfully",
@@ -232,7 +246,7 @@ function DashboardContent() {
         setEditingBlog(null);
         router.push("/dashboard?tab=blogs");
       } else {
-        await addBlog(data).unwrap();
+        await addBlog(finalData).unwrap();
         Toast.fire({
           icon: "success",
           title: "Blog Added successfully",
@@ -505,10 +519,12 @@ function DashboardContent() {
                           </select>
                         </div>
                         <div className="col-md-12">
+                          <label className="form-label">Blog Image</label>
                           <input
+                            type="file"
                             {...registerBlog("image")}
                             className="form-control bg-transparent"
-                            placeholder="Image URL (optional)"
+                            accept="image/*"
                           />
                         </div>
                         <div className="col-md-12">
