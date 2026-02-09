@@ -53,7 +53,6 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // API Hooks
   const { data: projectsData, isLoading: isProjectsLoading } =
     useGetProjectsQuery();
   const { data: blogsData, isLoading: isBlogsLoading } = useGetBlogsQuery();
