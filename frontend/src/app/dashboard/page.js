@@ -6,7 +6,6 @@ import Link from "next/link";
 import RichTextEditor from "./RichTextEditor";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useSelector, useDispatch } from "react-redux";
-// import moment from "moment";
 import { useForm } from "react-hook-form";
 import { updateProfile } from "@/store/slices/contentSlice";
 import {
