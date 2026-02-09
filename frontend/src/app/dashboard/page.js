@@ -106,6 +106,7 @@ function DashboardContent() {
   const [showBlogEditor, setShowBlogEditor] = useState(false);
   const blogBody = watchBlog("body");
   const [editingBlog, setEditingBlog] = useState(null);
+  const [blogImagePreview, setBlogImagePreview] = useState(null);
 
   // Tab State
   const tab = searchParams.get("tab") || "projects";
@@ -145,10 +146,22 @@ function DashboardContent() {
       setBlogValue("subheading", blogToEdit.subheading || "");
       setBlogValue("status", blogToEdit.status);
       setBlogValue("body", blogToEdit.body);
+      setBlogImagePreview(blogToEdit.image);
       setShowBlogEditor(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [targetId, tab, blogToEditData, setBlogValue]);
+
+  // Handle Blog Image Preview for local files
+  const watchedBlogImage = watchBlog("image");
+  useEffect(() => {
+    if (watchedBlogImage && watchedBlogImage[0] instanceof File) {
+      const imageUrl = URL.createObjectURL(watchedBlogImage[0]);
+      setBlogImagePreview(imageUrl);
+      // Clean up the URL when component unmounts or image changes
+      return () => URL.revokeObjectURL(imageUrl);
+    }
+  }, [watchedBlogImage]);
 
   const onUpdateProfile = (data) => {
     dispatch(updateProfile(data));
@@ -231,6 +244,12 @@ function DashboardContent() {
         if (uploadResult.success) {
           finalData.image = uploadResult.url;
         }
+      } else if (editingBlog && editingBlog.image) {
+        // Preserve existing image URL if editing and no new image is selected
+        finalData.image = editingBlog.image;
+      } else {
+        // Remove image field if it's an empty FileList/object to prevent backend errors
+        delete finalData.image;
       }
 
       if (editingBlog) {
@@ -240,16 +259,17 @@ function DashboardContent() {
           title: "Blog Updated successfully",
         });
         setEditingBlog(null);
-        router.push("/dashboard?tab=blogs");
+        router.push("/blogs");
       } else {
         await addBlog(finalData).unwrap();
         Toast.fire({
           icon: "success",
           title: "Blog Added successfully",
         });
-        router.push("/dashboard?tab=blogs");
+        router.push("/blogs");
       }
       resetBlog();
+      setBlogImagePreview(null);
       setShowBlogEditor(false);
     } catch (err) {
       console.error("Failed to save blog:", err);
@@ -275,6 +295,7 @@ function DashboardContent() {
   const handleCancelEditBlog = () => {
     setEditingBlog(null);
     resetBlog();
+    setBlogImagePreview(null);
     setShowBlogEditor(false);
     router.push("/dashboard?tab=blogs");
   };
@@ -516,6 +537,19 @@ function DashboardContent() {
                         </div>
                         <div className="col-md-12">
                           <label className="form-label">Blog Image</label>
+                          {blogImagePreview && (
+                            <div className="mb-3">
+                              <img
+                                src={blogImagePreview}
+                                alt="Blog Preview"
+                                className="img-thumbnail bg-transparent border-secondary"
+                                style={{
+                                  maxHeight: "200px",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            </div>
+                          )}
                           <input
                             type="file"
                             {...registerBlog("image")}
@@ -567,15 +601,33 @@ function DashboardContent() {
                           <button
                             type="submit"
                             className="btn btn-success"
-                            disabled={isAddingBlog || isUpdatingBlog}
+                            disabled={
+                              isAddingBlog || isUpdatingBlog || isUploadingImage
+                            }
                           >
-                            {isAddingBlog || isUpdatingBlog
-                              ? editingBlog
-                                ? "Updating..."
-                                : "Adding..."
-                              : editingBlog
-                                ? "Update Blog"
-                                : "Add Blog"}
+                            {isUploadingImage ? (
+                              <>
+                                <span
+                                  className="spinner-border spinner-border-sm me-2"
+                                  role="status"
+                                  aria-hidden="true"
+                                ></span>
+                                Uploading Image...
+                              </>
+                            ) : isAddingBlog || isUpdatingBlog ? (
+                              <>
+                                <span
+                                  className="spinner-border spinner-border-sm me-2"
+                                  role="status"
+                                  aria-hidden="true"
+                                ></span>
+                                {editingBlog ? "Updating..." : "Adding..."}
+                              </>
+                            ) : editingBlog ? (
+                              "Update Blog"
+                            ) : (
+                              "Add Blog"
+                            )}
                           </button>
                         </div>
                       </div>
