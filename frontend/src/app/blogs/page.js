@@ -208,6 +208,20 @@ export default function BlogsPage() {
                       {blog.status}
                     </span>
                   </div>
+                  {blog.image && (
+                    <div className="mb-3">
+                      <img
+                        src={blog.image}
+                        alt={blog.title}
+                        className="img-fluid rounded-3"
+                        style={{
+                          objectFit: "cover",
+                          width: "100%",
+                          height: "200px",
+                        }}
+                      />
+                    </div>
+                  )}
                   <h3 className="h4 fw-bold mb-3 project-title-hover">
                     {blog?.title}
                   </h3>

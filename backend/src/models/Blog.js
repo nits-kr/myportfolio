@@ -47,6 +47,10 @@ const blogSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  image: {
+    type: String, // URL of the image
+    required: false,
+  },
 });
 
 // Create slug from title

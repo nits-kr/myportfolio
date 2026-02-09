@@ -506,6 +506,13 @@ function DashboardContent() {
                         </div>
                         <div className="col-md-12">
                           <input
+                            {...registerBlog("image")}
+                            className="form-control bg-transparent"
+                            placeholder="Image URL (optional)"
+                          />
+                        </div>
+                        <div className="col-md-12">
+                          <input
                             {...registerBlog("subheading")}
                             className="form-control bg-transparent"
                             placeholder="Subheading (Short Description)"

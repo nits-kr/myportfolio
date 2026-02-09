@@ -71,6 +71,17 @@ export default function BlogDetailsPage() {
           </div>
         </div>
 
+        {blog.image && (
+          <div className="mb-4">
+            <img
+              src={blog.image}
+              alt={blog.title}
+              className="img-fluid rounded-3 w-100 shadow-sm"
+              style={{ maxHeight: "500px", objectFit: "cover" }}
+            />
+          </div>
+        )}
+
         {blog.subheading && (
           <p className="lead text-muted mb-4 fst-italic border-start border-4 border-secondary ps-3">
             {blog.subheading}
