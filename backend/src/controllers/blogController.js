@@ -203,6 +203,10 @@ export const deleteStatus = async (req, res, next) => {
       data: blog,
     });
   } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: "Server Error",
     });
   }
 };
@@ -214,12 +218,16 @@ export const likeBlog = async (req, res, next) => {
   try {
     const { email } = req.body;
     if (!email) {
-      return res.status(400).json({ success: false, message: "Email is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is required" });
     }
 
     const blog = await Blog.findById(req.params.id);
     if (!blog) {
-      return res.status(404).json({ success: false, message: "Blog not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Blog not found" });
     }
 
     const index = blog.likes.indexOf(email);
@@ -252,11 +260,15 @@ export const addComment = async (req, res, next) => {
     const isAdminReply = req.user && req.user.role === "admin";
 
     if (!isAdminReply && (!name || !email)) {
-      return res.status(400).json({ success: false, message: "Name and email are required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Name and email are required" });
     }
 
     if (!body) {
-      return res.status(400).json({ success: false, message: "Comment body is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Comment body is required" });
     }
 
     const comment = await Comment.create({
@@ -284,12 +296,16 @@ export const likeComment = async (req, res, next) => {
   try {
     const { email } = req.body;
     if (!email) {
-      return res.status(400).json({ success: false, message: "Email is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is required" });
     }
 
     const comment = await Comment.findById(req.params.commentId);
     if (!comment) {
-      return res.status(404).json({ success: false, message: "Comment not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Comment not found" });
     }
 
     const index = comment.likes.indexOf(email);
@@ -315,7 +331,9 @@ export const likeComment = async (req, res, next) => {
 // @access  Public
 export const getComments = async (req, res, next) => {
   try {
-    const comments = await Comment.find({ blogId: req.params.id }).sort({ createdAt: -1 });
+    const comments = await Comment.find({ blogId: req.params.id }).sort({
+      createdAt: -1,
+    });
 
     res.status(200).json({
       success: true,

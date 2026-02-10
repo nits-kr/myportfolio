@@ -122,6 +122,7 @@ export default function BlogDetailsPage() {
       }).unwrap();
     } catch (err) {
       console.error("Failed to like comment:", err);
+      if (err.data) console.error("Error details:", err.data);
     }
   };
 
