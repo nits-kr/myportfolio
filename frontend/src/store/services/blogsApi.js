@@ -80,7 +80,6 @@ export const blogsApi = apiSlice.injectEndpoints({
           patchResult.undo();
         }
       },
-      invalidatesTags: (result, error, { id }) => [{ type: "Blog", id }],
     }),
     getComments: builder.query({
       query: (id) => `/blogs/${id}/comments`,
@@ -123,9 +122,6 @@ export const blogsApi = apiSlice.injectEndpoints({
           patchResult.undo();
         }
       },
-      invalidatesTags: (result, error, { blogId }) => [
-        { type: "Comment", id: blogId },
-      ],
     }),
   }),
 });

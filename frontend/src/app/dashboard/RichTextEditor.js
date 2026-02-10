@@ -36,6 +36,7 @@ const RichTextEditor = ({ value, onChange, onClose }) => {
   const iframeRef = useRef(null);
   const [viewSource, setViewSource] = useState(false);
   const [sourceCode, setSourceCode] = useState(value || "");
+  const [showCodeModal, setShowCodeModal] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   // Refs to track state without triggering re-renders or dependency loops
@@ -84,6 +85,8 @@ const RichTextEditor = ({ value, onChange, onClose }) => {
           ul, ol { margin-left: 20px; }
           img { max-width: 100%; height: auto; }
           blockquote { border-left: 4px solid #ccc; padding-left: 10px; margin-left: 0; color: #666; }
+          pre { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; overflow-x: auto; margin: 1rem 0; }
+          code { font-family: inherit; }
 `;
           doc.head.appendChild(style);
         }
@@ -143,6 +146,19 @@ const RichTextEditor = ({ value, onChange, onClose }) => {
     if (url) execCmd("insertImage", url);
   };
 
+  const insertCodeBlock = (code, language) => {
+    const escapedCode = code
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+    const html = `<pre class="language-${language}"><code class="language-${language}">${escapedCode}</code></pre><p><br></p>`;
+    execCmd("insertHTML", html);
+    setShowCodeModal(false);
+  };
+
   // Use portal to render at body level to avoid z-index/stacking context issues
 
   if (!mounted) return null;
@@ -191,7 +207,7 @@ const RichTextEditor = ({ value, onChange, onClose }) => {
                 <option value="h4">Heading 4</option>
                 <option value="h5">Heading 5</option>
                 <option value="h6">Heading 6</option>
-                <option value="pre">Code Block</option>
+                <option value="pre">Code Block (simple)</option>
                 <option value="blockquote">Quote</option>
               </select>
             </div>
@@ -350,6 +366,11 @@ const RichTextEditor = ({ value, onChange, onClose }) => {
                 label="Insert Image"
               />
               <ToolbarButton
+                icon={<FiCode />}
+                onClick={() => setShowCodeModal(true)}
+                label="Insert Code Block (Syntax Highlight)"
+              />
+              <ToolbarButton
                 icon={<FiMinus />}
                 onClick={() => execCmd("insertHorizontalRule")}
                 label="Horizontal Line"
@@ -428,6 +449,13 @@ const RichTextEditor = ({ value, onChange, onClose }) => {
           </div>
         </div>
       </div>
+
+      {showCodeModal && (
+        <CodeBlockModal
+          onClose={() => setShowCodeModal(false)}
+          onInsert={insertCodeBlock}
+        />
+      )}
     </div>,
     document.body,
   );
@@ -438,5 +466,185 @@ const ToolbarButton = ({ icon, onClick, label }) => (
     {React.cloneElement(icon, { size: 18 })}
   </button>
 );
+
+const CodeBlockModal = ({ onClose, onInsert }) => {
+  const [code, setCode] = useState("");
+  const [language, setLanguage] = useState("javascript");
+
+  const languages = [
+    { label: "JavaScript", value: "javascript" },
+    { label: "HTML", value: "html" },
+    { label: "CSS", value: "css" },
+    { label: "Python", value: "python" },
+    { label: "Java", value: "java" },
+    { label: "C++", value: "cpp" },
+    { label: "PHP", value: "php" },
+    { label: "SQL", value: "sql" },
+    { label: "JSON", value: "json" },
+    { label: "Bash", value: "bash" },
+  ];
+
+  return (
+    <div className="code-modal-overlay">
+      <div className="code-modal-container">
+        <div className="code-modal-header">
+          <div className="d-flex align-items-center gap-2">
+            <FiCode size={20} className="text-primary" />
+            <h4 className="m-0">Insert Syntax Code Block</h4>
+          </div>
+          <button onClick={onClose} className="btn-close-minimal">
+            <FiX size={20} />
+          </button>
+        </div>
+
+        <div className="code-modal-body">
+          <div className="mb-3">
+            <label className="form-label small fw-bold text-secondary">
+              Language
+            </label>
+            <select
+              className="form-select custom-select-rte"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+            >
+              {languages.map((lang) => (
+                <option key={lang.value} value={lang.value}>
+                  {lang.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mb-0">
+            <label className="form-label small fw-bold text-secondary">
+              Source Code
+            </label>
+            <textarea
+              className="form-control code-input-area"
+              rows="10"
+              placeholder="Paste your code here..."
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              spellCheck={false}
+            ></textarea>
+          </div>
+        </div>
+
+        <div className="code-modal-footer">
+          <button onClick={onClose} className="btn-rte-secondary">
+            Cancel
+          </button>
+          <button
+            onClick={() => onInsert(code, language)}
+            className="btn-rte-primary"
+            disabled={!code.trim()}
+          >
+            Insert Code
+          </button>
+        </div>
+      </div>
+
+      <style jsx>{`
+        .code-modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.4);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          padding: 20px;
+        }
+        .code-modal-container {
+          background: white;
+          width: 100%;
+          max-width: 600px;
+          border-radius: 16px;
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+          overflow: hidden;
+          animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+          from {
+            transform: translateY(20px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        .code-modal-header {
+          padding: 16px 20px;
+          border-bottom: 1px solid #eee;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        .code-modal-body {
+          padding: 20px;
+        }
+        .code-modal-footer {
+          padding: 16px 20px;
+          border-top: 1px solid #eee;
+          background: #f9fafb;
+          display: flex;
+          justify-content: flex-end;
+          gap: 12px;
+        }
+        .code-input-area {
+          font-family: "Consolas", "Monaco", monospace;
+          font-size: 14px;
+          background: #1e1e1e;
+          color: #d4d4d4 !important;
+          border: none;
+          padding: 15px;
+          resize: vertical;
+        }
+        .code-input-area:focus {
+          background: #1e1e1e;
+          color: #d4d4d4;
+          box-shadow: 0 0 0 2px rgba(0, 102, 255, 0.2);
+        }
+        .btn-close-minimal {
+          background: none;
+          border: none;
+          color: #999;
+          cursor: pointer;
+          transition: color 0.2s;
+        }
+        .btn-close-minimal:hover {
+          color: #333;
+        }
+        .btn-rte-primary {
+          background: #0066ff;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-weight: 600;
+        }
+        .btn-rte-primary:disabled {
+          background: #ccc;
+          cursor: not-allowed;
+        }
+        .btn-rte-secondary {
+          background: #eee;
+          color: #666;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-weight: 600;
+        }
+        .custom-select-rte {
+          border-radius: 8px;
+          border: 1px solid #ddd;
+          padding: 8px 12px;
+        }
+      `}</style>
+    </div>
+  );
+};
 
 export default RichTextEditor;

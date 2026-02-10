@@ -9,7 +9,7 @@ import {
   useLikeCommentMutation,
 } from "@/store/services/blogsApi";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { useSelector } from "react-redux";
 import Link from "next/link";
 import {
@@ -20,97 +20,20 @@ import {
   IoChatbubbleOutline,
   IoSend,
   IoReturnDownForward,
+  IoCopyOutline,
 } from "react-icons/io5";
 import SubscribeModal from "@/components/common/SubscribeModal";
+import Prism from "prismjs/components/prism-core";
+import "prismjs/themes/prism-tomorrow.css";
 
-export default function BlogDetailsPage() {
-  const { id } = useParams();
-  const { user: adminUser } = useSelector((state) => state.auth);
-  const isAdmin = adminUser?.role === "admin";
-
-  const { data: blogData, error, isLoading } = useGetBlogQuery(id);
-  const { data: commentsData } = useGetCommentsQuery(id);
-  const [likeBlog] = useLikeBlogMutation();
-  const [addComment] = useAddCommentMutation();
-  const [likeComment] = useLikeCommentMutation();
-
-  const blog = blogData?.data;
-  const comments = commentsData?.data || [];
-
-  const [subscriberEmail, setSubscriberEmail] = useState(null);
-  const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null);
-
-  useEffect(() => {
-    const email = localStorage.getItem("blogSubscriberEmail");
-    if (email) setSubscriberEmail(email);
-  }, []);
-
-  const checkSubscription = (action) => {
-    if (isAdmin) return true; // Admin is always allowed
-    if (!subscriberEmail) {
-      setPendingAction(() => action);
-      setIsSubscribeModalOpen(true);
-      return false;
-    }
-    return true;
-  };
-
-  const handleLike = async () => {
-    if (!checkSubscription(handleLike)) return;
-    try {
-      await likeBlog({
-        id,
-        email: subscriberEmail || adminUser.email,
-      }).unwrap();
-    } catch (err) {
-      console.error("Failed to like:", err);
-    }
-  };
-
-  const handleShare = async () => {
-    if (!checkSubscription(handleShare)) return;
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: blog.title,
-          text: blog.subheading || blog.title,
-          url: window.location.href,
-        });
-      } else {
-        alert(
-          "Web Share not supported on this browser. URL copied to clipboard!",
-        );
-        navigator.clipboard.writeText(window.location.href);
-      }
-    } catch (err) {
-      console.error("Error sharing:", err);
-    }
-  };
-
-  const handleLikeComment = async (commentId) => {
-    if (!checkSubscription(() => handleLikeComment(commentId))) return;
-    try {
-      await likeComment({
-        commentId,
-        email: subscriberEmail || adminUser.email,
-        blogId: id,
-      }).unwrap();
-    } catch (err) {
-      console.error("Failed to like comment:", err);
-      if (err.data) console.error("Error details:", err.data);
-    }
-  };
-
-  const onSubscribeSuccess = (email) => {
-    setSubscriberEmail(email);
-    if (pendingAction) {
-      pendingAction();
-      setPendingAction(null);
-    }
-  };
-
-  const CommentForm = ({
+const CommentForm = memo(
+  ({
+    blogId,
+    adminUser,
+    subscriberEmail,
+    isAdmin,
+    addComment,
+    checkSubscription,
     parentId = null,
     placeholder = "Share your perspective...",
     onCancel = null,
@@ -125,7 +48,7 @@ export default function BlogDetailsPage() {
 
       try {
         await addComment({
-          id,
+          id: blogId,
           name: isAdmin
             ? adminUser.name
             : localStorage.getItem("blogSubscriberName"),
@@ -177,9 +100,22 @@ export default function BlogDetailsPage() {
         </form>
       </div>
     );
-  };
+  },
+);
 
-  const CommentItem = ({ comment, depth = 0 }) => {
+const CommentItem = memo(
+  ({
+    comment,
+    comments,
+    depth = 0,
+    subscriberEmail,
+    adminUser,
+    handleLikeComment,
+    blogId,
+    isAdmin,
+    addComment,
+    checkSubscription,
+  }) => {
     const [isReplying, setIsReplying] = useState(false);
     const isCommentLiked = comment.likes?.includes(
       subscriberEmail || adminUser?.email,
@@ -253,6 +189,12 @@ export default function BlogDetailsPage() {
               className="reply-form-section"
             >
               <CommentForm
+                blogId={blogId}
+                adminUser={adminUser}
+                subscriberEmail={subscriberEmail}
+                isAdmin={isAdmin}
+                addComment={addComment}
+                checkSubscription={checkSubscription}
                 parentId={comment._id}
                 placeholder={`Reply to ${comment.name}...`}
                 onCancel={() => setIsReplying(false)}
@@ -265,15 +207,188 @@ export default function BlogDetailsPage() {
         {replies.length > 0 && (
           <div className="nested-replies-container">
             {replies.map((reply) => (
-              <CommentItem key={reply._id} comment={reply} depth={depth + 1} />
+              <CommentItem
+                key={reply._id}
+                comment={reply}
+                comments={comments}
+                depth={depth + 1}
+                subscriberEmail={subscriberEmail}
+                adminUser={adminUser}
+                handleLikeComment={handleLikeComment}
+                blogId={blogId}
+                isAdmin={isAdmin}
+                addComment={addComment}
+                checkSubscription={checkSubscription}
+              />
             ))}
           </div>
         )}
       </div>
     );
-  };
+  },
+);
 
-  const rootComments = comments.filter((c) => !c.parentId);
+export default function BlogDetailsPage() {
+  const { id } = useParams();
+  const { user: adminUser } = useSelector((state) => state.auth);
+  const isAdmin = adminUser?.role === "admin";
+
+  const { data: blogData, error, isLoading } = useGetBlogQuery(id);
+  const { data: commentsData } = useGetCommentsQuery(id);
+  const [likeBlog] = useLikeBlogMutation();
+  const [addComment] = useAddCommentMutation();
+  const [likeComment] = useLikeCommentMutation();
+
+  const blog = blogData?.data;
+  const comments = commentsData?.data || [];
+
+  const [subscriberEmail, setSubscriberEmail] = useState(null);
+  const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+
+  useEffect(() => {
+    const email = localStorage.getItem("blogSubscriberEmail");
+    if (email) setSubscriberEmail(email);
+  }, []);
+
+  const checkSubscription = useCallback(
+    (action) => {
+      if (isAdmin) return true; // Admin is always allowed
+      if (!subscriberEmail) {
+        setPendingAction(() => action);
+        setIsSubscribeModalOpen(true);
+        return false;
+      }
+      return true;
+    },
+    [isAdmin, subscriberEmail],
+  );
+
+  const handleLike = useCallback(async () => {
+    if (!checkSubscription(handleLike)) return;
+    try {
+      await likeBlog({
+        id,
+        email: subscriberEmail || adminUser.email,
+      }).unwrap();
+    } catch (err) {
+      console.error("Failed to like:", err);
+    }
+  }, [id, subscriberEmail, adminUser, likeBlog, checkSubscription]);
+
+  const handleShare = useCallback(async () => {
+    if (!checkSubscription(handleShare)) return;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: blog?.title,
+          text: blog?.subheading || blog?.title,
+          url: window.location.href,
+        });
+      } else {
+        alert(
+          "Web Share not supported on this browser. URL copied to clipboard!",
+        );
+        navigator.clipboard.writeText(window.location.href);
+      }
+    } catch (err) {
+      console.error("Error sharing:", err);
+    }
+  }, [blog, checkSubscription]);
+
+  const handleLikeComment = useCallback(
+    async (commentId) => {
+      if (!checkSubscription(() => handleLikeComment(commentId))) return;
+      try {
+        await likeComment({
+          commentId,
+          email: subscriberEmail || adminUser.email,
+          blogId: id,
+        }).unwrap();
+      } catch (err) {
+        console.error("Failed to like comment:", err);
+        if (err.data) console.error("Error details:", err.data);
+      }
+    },
+    [id, subscriberEmail, adminUser, likeComment, checkSubscription],
+  );
+
+  const onSubscribeSuccess = useCallback(
+    (email) => {
+      setSubscriberEmail(email);
+      if (pendingAction) {
+        pendingAction();
+        setPendingAction(null);
+      }
+    },
+    [pendingAction],
+  );
+
+  useEffect(() => {
+    if (blog?.body) {
+      // Prism components often expect a global Prism object
+      if (typeof window !== "undefined") {
+        window.Prism = Prism;
+      }
+
+      // Load foundational languages
+      require("prismjs/components/prism-markup");
+      require("prismjs/components/prism-clike");
+      require("prismjs/components/prism-markup-templating");
+
+      // Load specific languages
+      require("prismjs/components/prism-javascript");
+      require("prismjs/components/prism-css");
+      require("prismjs/components/prism-python");
+      require("prismjs/components/prism-php");
+      require("prismjs/components/prism-sql");
+      require("prismjs/components/prism-bash");
+      require("prismjs/components/prism-json");
+
+      // Highlight elements safely
+      const codeBlocks = document.querySelectorAll("pre");
+      codeBlocks.forEach((block) => {
+        const codeElement = block.querySelector("code");
+        if (codeElement && Prism.highlightElement) {
+          try {
+            Prism.highlightElement(codeElement);
+          } catch (e) {
+            console.error("Prism highlighting failed:", e);
+          }
+        }
+
+        // Add copy buttons if not already present
+        if (block.querySelector(".copy-btn-wrapper")) return;
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "copy-btn-wrapper";
+
+        const btn = document.createElement("button");
+        btn.className = "copy-code-btn";
+        btn.innerHTML = `<span>Copy</span>`;
+
+        btn.onclick = () => {
+          const code =
+            block.querySelector("code")?.innerText || block.innerText;
+          navigator.clipboard.writeText(code).then(() => {
+            btn.innerHTML = `<span>Copied!</span>`;
+            setTimeout(() => {
+              btn.innerHTML = `<span>Copy</span>`;
+            }, 2000);
+          });
+        };
+
+        wrapper.appendChild(btn);
+        block.style.position = "relative";
+        block.appendChild(wrapper);
+      });
+    }
+  }, [blog]);
+
+  const rootComments = useMemo(
+    () => comments.filter((c) => !c.parentId),
+    [comments],
+  );
 
   if (isLoading && !blog) {
     return (
@@ -396,7 +511,15 @@ export default function BlogDetailsPage() {
           </div>
 
           <div className="primary-form-box">
-            <CommentForm placeholder="Join the conversation..." />
+            <CommentForm
+              blogId={id}
+              adminUser={adminUser}
+              subscriberEmail={subscriberEmail}
+              isAdmin={isAdmin}
+              addComment={addComment}
+              checkSubscription={checkSubscription}
+              placeholder="Join the conversation..."
+            />
           </div>
 
           <div className="threaded-comments-list">
@@ -410,7 +533,18 @@ export default function BlogDetailsPage() {
               </div>
             ) : (
               rootComments.map((comment) => (
-                <CommentItem key={comment._id} comment={comment} />
+                <CommentItem
+                  key={comment._id}
+                  comment={comment}
+                  comments={comments}
+                  subscriberEmail={subscriberEmail}
+                  adminUser={adminUser}
+                  handleLikeComment={handleLikeComment}
+                  blogId={id}
+                  isAdmin={isAdmin}
+                  addComment={addComment}
+                  checkSubscription={checkSubscription}
+                />
               ))
             )}
           </div>
@@ -424,6 +558,48 @@ export default function BlogDetailsPage() {
       />
 
       <style jsx global>{`
+        pre {
+          background: #1e1e1e !important;
+          border-radius: 12px !important;
+          padding: 1.5rem !important;
+          margin: 2rem 0 !important;
+          position: relative;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        code {
+          font-family: "Fira Code", "Consolas", "Monaco", monospace !important;
+          font-size: 0.95rem !important;
+          line-height: 1.6 !important;
+        }
+        .copy-btn-wrapper {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          z-index: 10;
+        }
+        .copy-code-btn {
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: #ccc;
+          padding: 4px 12px;
+          border-radius: 6px;
+          font-size: 12px;
+          cursor: pointer;
+          transition: all 0.2s;
+          backdrop-filter: blur(4px);
+        }
+        .copy-code-btn:hover {
+          background: rgba(255, 255, 255, 0.2);
+          color: white;
+          border-color: rgba(255, 255, 255, 0.4);
+        }
+        .copy-code-btn span {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
         :root {
           --enterprise-blue: #0066ff;
           --enterprise-blue-hover: #0052cc;
