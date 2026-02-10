@@ -54,7 +54,7 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
                 </motion.div>
                 <h3>Thank You!</h3>
                 <p className="text-muted">
-                  You're now subscribed. Unlocking your interaction...
+                  You&apos;re now subscribed. Unlocking your interaction...
                 </p>
               </div>
             ) : (

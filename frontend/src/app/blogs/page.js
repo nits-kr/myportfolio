@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import {
@@ -210,10 +211,12 @@ export default function BlogsPage() {
                   </div>
                   {blog.image && (
                     <div className="mb-3">
-                      <img
+                      <Image
                         src={blog.image}
                         alt={blog.title}
                         className="img-fluid rounded-3"
+                        width={400}
+                        height={200}
                         style={{
                           objectFit: "cover",
                           width: "100%",
@@ -239,7 +242,7 @@ export default function BlogsPage() {
                     href={`/blogs/${blog._id}`}
                     className="btn btn-link btn-sm text-secondary text-decoration-none fw-bold p-0"
                   >
-                    Read Article →
+                    Read Article &rarr;
                   </Link>
                 </div>
               </div>

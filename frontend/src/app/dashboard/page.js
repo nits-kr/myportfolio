@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import RichTextEditor from "./RichTextEditor";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useSelector, useDispatch } from "react-redux";
@@ -539,10 +540,12 @@ function DashboardContent() {
                           <label className="form-label">Blog Image</label>
                           {blogImagePreview && (
                             <div className="mb-3">
-                              <img
+                              <Image
                                 src={blogImagePreview}
                                 alt="Blog Preview"
                                 className="img-thumbnail bg-transparent border-secondary"
+                                width={300}
+                                height={200}
                                 style={{
                                   maxHeight: "200px",
                                   objectFit: "cover",

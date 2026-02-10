@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { useSelector } from "react-redux";
 import Link from "next/link";
+import Image from "next/image";
 import {
   IoArrowBack,
   IoHeart,
@@ -102,6 +103,7 @@ const CommentForm = memo(
     );
   },
 );
+CommentForm.displayName = "CommentForm";
 
 const CommentItem = memo(
   ({
@@ -227,6 +229,7 @@ const CommentItem = memo(
     );
   },
 );
+CommentItem.displayName = "CommentItem";
 
 export default function BlogDetailsPage() {
   const { id } = useParams();
@@ -240,7 +243,7 @@ export default function BlogDetailsPage() {
   const [likeComment] = useLikeCommentMutation();
 
   const blog = blogData?.data;
-  const comments = commentsData?.data || [];
+  const comments = useMemo(() => commentsData?.data || [], [commentsData]);
 
   const [subscriberEmail, setSubscriberEmail] = useState(null);
   const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
@@ -265,50 +268,62 @@ export default function BlogDetailsPage() {
   );
 
   const handleLike = useCallback(async () => {
-    if (!checkSubscription(handleLike)) return;
-    try {
-      await likeBlog({
-        id,
-        email: subscriberEmail || adminUser.email,
-      }).unwrap();
-    } catch (err) {
-      console.error("Failed to like:", err);
-    }
+    const execute = async () => {
+      try {
+        await likeBlog({
+          id,
+          email: subscriberEmail || adminUser.email,
+        }).unwrap();
+      } catch (err) {
+        console.error("Failed to like:", err);
+      }
+    };
+
+    if (!checkSubscription(execute)) return;
+    await execute();
   }, [id, subscriberEmail, adminUser, likeBlog, checkSubscription]);
 
   const handleShare = useCallback(async () => {
-    if (!checkSubscription(handleShare)) return;
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: blog?.title,
-          text: blog?.subheading || blog?.title,
-          url: window.location.href,
-        });
-      } else {
-        alert(
-          "Web Share not supported on this browser. URL copied to clipboard!",
-        );
-        navigator.clipboard.writeText(window.location.href);
+    const execute = async () => {
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: blog?.title,
+            text: blog?.subheading || blog?.title,
+            url: window.location.href,
+          });
+        } else {
+          alert(
+            "Web Share not supported on this browser. URL copied to clipboard!",
+          );
+          navigator.clipboard.writeText(window.location.href);
+        }
+      } catch (err) {
+        console.error("Error sharing:", err, blog, id);
       }
-    } catch (err) {
-      console.error("Error sharing:", err);
-    }
-  }, [blog, checkSubscription]);
+    };
+
+    if (!checkSubscription(execute)) return;
+    await execute();
+  }, [blog, id, checkSubscription]);
 
   const handleLikeComment = useCallback(
     async (commentId) => {
-      if (!checkSubscription(() => handleLikeComment(commentId))) return;
-      try {
-        await likeComment({
-          commentId,
-          email: subscriberEmail || adminUser.email,
-          blogId: id,
-        }).unwrap();
-      } catch (err) {
-        console.error("Failed to like comment:", err);
-        if (err.data) console.error("Error details:", err.data);
-      }
+      const execute = async () => {
+        try {
+          await likeComment({
+            commentId,
+            email: subscriberEmail || adminUser.email,
+            blogId: id,
+          }).unwrap();
+        } catch (err) {
+          console.error("Failed to like comment:", err);
+          if (err.data) console.error("Error details:", err.data);
+        }
+      };
+
+      if (!checkSubscription(execute)) return;
+      await execute();
     },
     [id, subscriberEmail, adminUser, likeComment, checkSubscription],
   );
@@ -450,10 +465,18 @@ export default function BlogDetailsPage() {
 
           {blog.image && (
             <figure className="blog-featured-image-wrapper">
-              <img
+              <Image
                 src={blog.image}
                 alt={blog.title}
                 className="blog-featured-image"
+                width={1200}
+                height={600}
+                priority
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  objectFit: "cover",
+                }}
               />
             </figure>
           )}
