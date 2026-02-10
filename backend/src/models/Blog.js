@@ -51,6 +51,10 @@ const blogSchema = new mongoose.Schema({
     type: String, // URL of the image
     required: false,
   },
+  likes: {
+    type: [String], // Array of subscriber emails
+    default: [],
+  },
 });
 
 blogSchema.pre("save", async function () {

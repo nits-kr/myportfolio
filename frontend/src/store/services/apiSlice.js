@@ -88,6 +88,6 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: offlineBaseQuery,
-  tagTypes: ["Project", "Blog"],
+  tagTypes: ["Project", "Blog", "Comment"],
   endpoints: (builder) => ({}),
 });

@@ -1,4 +1,5 @@
 import Blog from "../models/Blog.js";
+import Comment from "../models/Comment.js";
 
 // @desc    Get all blogs (Public view - only published)
 // @route   GET /api/blogs
@@ -202,10 +203,125 @@ export const deleteStatus = async (req, res, next) => {
       data: blog,
     });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-      error: "Server Error",
     });
+  }
+};
+
+// @desc    Toggle like for a blog
+// @route   POST /api/blogs/:id/like
+// @access  Public (Subscriber email required)
+export const likeBlog = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
+    }
+
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) {
+      return res.status(404).json({ success: false, message: "Blog not found" });
+    }
+
+    const index = blog.likes.indexOf(email);
+    if (index === -1) {
+      blog.likes.push(email);
+    } else {
+      blog.likes.splice(index, 1);
+    }
+
+    await blog.save();
+
+    res.status(200).json({
+      success: true,
+      data: blog.likes,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// @desc    Add a comment to a blog
+// @route   POST /api/blogs/:id/comments
+// @access  Public (Subscriber required or Admin)
+export const addComment = async (req, res, next) => {
+  try {
+    const { name, email, body, parentId } = req.body;
+    const blogId = req.params.id;
+
+    // Check if it's an admin reply (protect/authorize middleware might have set req.user)
+    const isAdminReply = req.user && req.user.role === "admin";
+
+    if (!isAdminReply && (!name || !email)) {
+      return res.status(400).json({ success: false, message: "Name and email are required" });
+    }
+
+    if (!body) {
+      return res.status(400).json({ success: false, message: "Comment body is required" });
+    }
+
+    const comment = await Comment.create({
+      blogId,
+      name: isAdminReply ? req.user.name : name,
+      email: isAdminReply ? req.user.email : email,
+      body,
+      parentId: parentId || null,
+      isAdminReply,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: comment,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// @desc    Toggle like for a comment
+// @route   POST /api/blogs/comments/:commentId/like
+// @access  Public (Subscriber email required)
+export const likeComment = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
+    }
+
+    const comment = await Comment.findById(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ success: false, message: "Comment not found" });
+    }
+
+    const index = comment.likes.indexOf(email);
+    if (index === -1) {
+      comment.likes.push(email);
+    } else {
+      comment.likes.splice(index, 1);
+    }
+
+    await comment.save();
+
+    res.status(200).json({
+      success: true,
+      data: comment.likes,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// @desc    Get comments for a blog
+// @route   GET /api/blogs/:id/comments
+// @access  Public
+export const getComments = async (req, res, next) => {
+  try {
+    const comments = await Comment.find({ blogId: req.params.id }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: comments,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };
