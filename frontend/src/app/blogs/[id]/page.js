@@ -40,8 +40,6 @@ export default function BlogDetailsPage() {
   const [subscriberEmail, setSubscriberEmail] = useState(null);
   const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
-  const [commentBody, setCommentBody] = useState("");
-  const [replyTo, setReplyTo] = useState(null);
 
   useEffect(() => {
     const email = localStorage.getItem("blogSubscriberEmail");
@@ -90,28 +88,6 @@ export default function BlogDetailsPage() {
     }
   };
 
-  const handleCommentSubmit = async (e, parentId = null) => {
-    e.preventDefault();
-    if (!commentBody.trim()) return;
-    if (!checkSubscription(() => handleCommentSubmit(e, parentId))) return;
-
-    try {
-      await addComment({
-        id,
-        name: isAdmin
-          ? adminUser.name
-          : localStorage.getItem("blogSubscriberName"),
-        email: isAdmin ? adminUser.email : subscriberEmail,
-        body: commentBody,
-        parentId,
-      }).unwrap();
-      setCommentBody("");
-      setReplyTo(null);
-    } catch (err) {
-      console.error("Failed to comment:", err);
-    }
-  };
-
   const handleLikeComment = async (commentId) => {
     if (!checkSubscription(() => handleLikeComment(commentId))) return;
     try {
@@ -134,46 +110,121 @@ export default function BlogDetailsPage() {
     }
   };
 
+  const CommentForm = ({
+    parentId = null,
+    placeholder = "Share your perspective...",
+    onCancel = null,
+    autoFocus = false,
+  }) => {
+    const [body, setBody] = useState("");
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      if (!body.trim()) return;
+      if (!checkSubscription(() => handleSubmit(e))) return;
+
+      try {
+        await addComment({
+          id,
+          name: isAdmin
+            ? adminUser.name
+            : localStorage.getItem("blogSubscriberName"),
+          email: isAdmin ? adminUser.email : subscriberEmail,
+          body,
+          parentId,
+        }).unwrap();
+        setBody("");
+        if (onCancel) onCancel();
+      } catch (err) {
+        console.error("Failed to comment:", err);
+      }
+    };
+
+    return (
+      <div className="comment-form-wrapper mt-3">
+        <form onSubmit={handleSubmit}>
+          <div className="position-relative">
+            <textarea
+              autoFocus={autoFocus}
+              className="form-control modern-textarea"
+              rows="3"
+              placeholder={placeholder}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+            ></textarea>
+            <div className="form-actions-overlay">
+              {onCancel && (
+                <button
+                  type="button"
+                  className="btn-pill-secondary me-2"
+                  onClick={onCancel}
+                >
+                  Cancel
+                </button>
+              )}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="submit"
+                className="btn-pill-primary"
+                disabled={!body.trim()}
+              >
+                <IoSend size={16} className="me-2" />
+                Post
+              </motion.button>
+            </div>
+          </div>
+        </form>
+      </div>
+    );
+  };
+
   const CommentItem = ({ comment, depth = 0 }) => {
+    const [isReplying, setIsReplying] = useState(false);
     const isCommentLiked = comment.likes?.includes(
       subscriberEmail || adminUser?.email,
     );
     const replies = comments.filter((c) => c.parentId === comment._id);
 
     return (
-      <div
-        className={`mb-4 ${depth > 0 ? "ms-md-5 ms-3 ps-3 border-start border-2 border-primary-subtle" : ""}`}
-      >
+      <div className={`comment-thread-node ${depth > 0 ? "is-nested" : ""}`}>
         <motion.div
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          className={`comment-card shadow-sm ${comment.isAdminReply ? "admin-reply border-primary" : ""}`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`comment-card-modern ${comment.isAdminReply ? "is-admin" : ""}`}
         >
-          <div className="d-flex align-items-center justify-content-between mb-3">
+          <div className="comment-header">
             <div className="d-flex align-items-center gap-3">
               <div
-                className={`avatar-placeholder ${comment.isAdminReply ? "admin-avatar" : ""}`}
+                className={`avatar-circle-modern ${comment.isAdminReply ? "avatar-admin" : ""}`}
               >
                 {comment.name.charAt(0).toUpperCase()}
               </div>
               <div>
-                <h6 className="fw-bold mb-0">
-                  {comment.name}
+                <div className="author-name-group">
+                  <span className="author-name">{comment.name}</span>
                   {comment.isAdminReply && (
-                    <span className="ms-2 badge bg-primary small">Admin</span>
+                    <span className="admin-badge-modern">Official Admin</span>
                   )}
-                </h6>
-                <small className="text-muted">
-                  {new Date(comment.createdAt).toLocaleDateString()}
-                </small>
+                </div>
+                <span className="comment-date">
+                  {new Date(comment.createdAt).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
               </div>
             </div>
           </div>
-          <p className="mb-3 text-secondary leading-relaxed">{comment.body}</p>
 
-          <div className="d-flex align-items-center gap-4">
+          <div className="comment-body-modern">
+            <p>{comment.body}</p>
+          </div>
+
+          <div className="comment-footer-modern">
             <button
-              className={`btn btn-link p-0 text-decoration-none d-flex align-items-center gap-1 small ${isCommentLiked ? "text-danger" : "text-muted"}`}
+              className={`action-pill ${isCommentLiked ? "is-liked" : ""}`}
               onClick={() => handleLikeComment(comment._id)}
             >
               {isCommentLiked ? (
@@ -184,36 +235,50 @@ export default function BlogDetailsPage() {
               <span>{comment.likes?.length || 0}</span>
             </button>
             <button
-              className="btn btn-link p-0 text-decoration-none d-flex align-items-center gap-1 small text-muted"
-              onClick={() => {
-                setReplyTo(comment);
-                setCommentBody("");
-                document
-                  .getElementById("comment-input")
-                  ?.scrollIntoView({ behavior: "smooth" });
-                document.getElementById("comment-input")?.focus();
-              }}
+              className={`action-pill ${isReplying ? "is-active" : ""}`}
+              onClick={() => setIsReplying(!isReplying)}
             >
               <IoReturnDownForward size={16} />
-              <span>Reply</span>
+              <span>{isReplying ? "Cancel" : "Reply"}</span>
             </button>
           </div>
         </motion.div>
-        {replies.map((reply) => (
-          <CommentItem key={reply._id} comment={reply} depth={depth + 1} />
-        ))}
+
+        <AnimatePresence>
+          {isReplying && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="reply-form-section"
+            >
+              <CommentForm
+                parentId={comment._id}
+                placeholder={`Reply to ${comment.name}...`}
+                onCancel={() => setIsReplying(false)}
+                autoFocus={true}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {replies.length > 0 && (
+          <div className="nested-replies-container">
+            {replies.map((reply) => (
+              <CommentItem key={reply._id} comment={reply} depth={depth + 1} />
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
   const rootComments = comments.filter((c) => !c.parentId);
 
-  if (isLoading) {
+  if (isLoading && !blog) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-secondary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+      <div className="loading-viewport">
+        <div className="premium-loader"></div>
       </div>
     );
   }
@@ -221,12 +286,12 @@ export default function BlogDetailsPage() {
   if (error || !blog) {
     return (
       <div className="container py-5 text-center">
-        <div className="alert alert-danger glass-card">
-          Blog not found or error loading blog.
+        <div className="error-card-modern">
+          <p>This blog post is temporarily unavailable.</p>
+          <Link href="/blogs" className="btn-pill-outline mt-3">
+            &larr; Back to Catalog
+          </Link>
         </div>
-        <Link href="/blogs" className="btn btn-outline-secondary mt-3">
-          &larr; Back to Blogs
-        </Link>
       </div>
     );
   }
@@ -234,178 +299,123 @@ export default function BlogDetailsPage() {
   const isLiked = blog.likes?.includes(subscriberEmail || adminUser?.email);
 
   return (
-    <div className="container py-5">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-4 p-md-5 mb-5"
-      >
-        <div className="d-flex justify-content-between align-items-start mb-4">
-          <div>
-            <span
-              className={`badge bg-${blog.status === "Published" ? "success" : "warning"} mb-2`}
-            >
-              {blog.status}
-            </span>
-            <h1 className="fw-bold display-4 mb-2">{blog.title}</h1>
-            <p className="text-muted">
-              Published on {new Date(blog.createdAt).toLocaleDateString()}
-              {blog.author && <span> by {blog.author.name}</span>}
-            </p>
-          </div>
-          <div>
-            <Link
-              href="/blogs"
-              className="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center p-0"
-              style={{
-                width: "40px",
-                height: "40px",
-                transition: "all 0.3s ease",
-              }}
-              title="Back to Blogs"
-            >
-              <IoArrowBack size={20} />
-            </Link>
-          </div>
-        </div>
-
-        {blog.image && (
-          <div className="mb-4">
-            <img
-              src={blog.image}
-              alt={blog.title}
-              className="img-fluid rounded-3 w-100 shadow-sm"
-              style={{ maxHeight: "500px", objectFit: "cover" }}
-            />
-          </div>
-        )}
-
-        {blog.subheading && (
-          <p className="lead text-muted mb-4 fst-italic border-start border-4 border-secondary ps-3">
-            {blog.subheading}
-          </p>
-        )}
-
-        <div className="blog-content mt-5 mb-5 pb-5 border-bottom">
-          <div dangerouslySetInnerHTML={{ __html: blog.body }} />
-        </div>
-
-        <div className="interaction-strip">
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            className={`interaction-btn ${isLiked ? "active" : ""}`}
-            onClick={handleLike}
-          >
-            {isLiked ? (
-              <IoHeart size={22} className="text-danger" />
-            ) : (
-              <IoHeartOutline size={22} />
-            )}
-            <span>{blog.likes?.length || 0}</span>
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            className="interaction-btn"
-            onClick={handleShare}
-          >
-            <IoShareOutline size={22} />
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            className="interaction-btn text-primary"
-            onClick={() => document.getElementById("comment-input")?.focus()}
-          >
-            <IoChatbubbleOutline size={22} />
-            <span>{comments.length}</span>
-          </motion.button>
-        </div>
-      </motion.div>
-
-      {/* Comments Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="glass-card p-4 p-md-5"
-      >
-        <h3 className="fw-bold mb-5 flex align-items-center gap-2">
-          Replies{" "}
-          <span className="badge bg-primary rounded-pill fs-6">
-            {comments.length}
-          </span>
-        </h3>
-
-        {/* Comment Form */}
-        <div className="mb-5">
-          <AnimatePresence>
-            {replyTo && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="mb-3 d-flex justify-content-between align-items-center p-3 bg-primary bg-opacity-10 rounded-4"
+    <div className="blog-details-viewport">
+      <div className="container">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="premium-blog-card"
+        >
+          <header className="blog-detail-header">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <span
+                className={`status-badge-modern ${blog.status.toLowerCase()}`}
               >
-                <span className="small text-primary fw-medium">
-                  Replying to <strong>{replyTo.name}</strong>
-                </span>
-                <button
-                  className="btn btn-sm btn-outline-primary rounded-pill px-3"
-                  onClick={() => setReplyTo(null)}
-                >
-                  Cancel
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                {blog.status}
+              </span>
+              <Link href="/blogs" className="back-link-pill">
+                <IoArrowBack size={18} />
+              </Link>
+            </div>
+            <h1 className="blog-headline-modern">{blog.title}</h1>
+            <div className="blog-meta-modern">
+              <span className="meta-item">
+                {new Date(blog.createdAt).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+              {blog.author && <span className="meta-separator">•</span>}
+              {blog.author && (
+                <span className="meta-item">By {blog.author.name}</span>
+              )}
+            </div>
+          </header>
 
-          <form onSubmit={(e) => handleCommentSubmit(e, replyTo?._id)}>
-            <div className="position-relative">
-              <textarea
-                id="comment-input"
-                className="form-control custom-textarea p-4"
-                rows="3"
-                placeholder={
-                  replyTo ? `Write a reply...` : "What are your thoughts?"
-                }
-                value={commentBody}
-                onChange={(e) => setCommentBody(e.target.value)}
-                style={{ paddingRight: "60px !important" }}
-              ></textarea>
+          {blog.image && (
+            <figure className="blog-featured-image-wrapper">
+              <img
+                src={blog.image}
+                alt={blog.title}
+                className="blog-featured-image"
+              />
+            </figure>
+          )}
+
+          {blog.subheading && (
+            <blockquote className="blog-quote-pill">
+              {blog.subheading}
+            </blockquote>
+          )}
+
+          <article className="blog-body-article">
+            <div dangerouslySetInnerHTML={{ __html: blog.body }} />
+          </article>
+
+          <footer className="interaction-bar-modern">
+            <div className="interaction-group">
               <motion.button
-                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                type="submit"
-                className="btn btn-primary position-absolute bottom-0 end-0 m-3 rounded-circle d-flex align-items-center justify-content-center shadow-lg"
-                style={{ width: "45px", height: "45px" }}
-                disabled={!commentBody.trim()}
+                className={`interact-btn-modern ${isLiked ? "is-liked" : ""}`}
+                onClick={handleLike}
               >
-                <IoSend size={20} />
+                {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
+                <span className="count">{blog.likes?.length || 0}</span>
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                className="interact-btn-modern"
+                onClick={handleShare}
+              >
+                <IoShareOutline size={24} />
               </motion.button>
             </div>
-          </form>
-        </div>
 
-        {/* Comments List */}
-        <div className="comments-list d-flex flex-column gap-2">
-          {rootComments.length === 0 ? (
-            <div className="text-center py-5 border rounded-4 border-dashed">
-              <IoChatbubbleOutline
-                size={40}
-                className="text-muted mb-3 opacity-50"
-              />
-              <p className="text-muted mb-0">
-                No comments yet. Be the first to start the conversation!
-              </p>
-            </div>
-          ) : (
-            rootComments.map((comment) => (
-              <CommentItem key={comment._id} comment={comment} />
-            ))
-          )}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              className="comment-count-pill"
+              onClick={() =>
+                document
+                  .getElementById("main-comment-anchor")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+            >
+              <IoChatbubbleOutline size={20} className="me-2" />
+              <span>{comments.length} Comments</span>
+            </motion.button>
+          </footer>
+        </motion.div>
+
+        {/* Discussion Section */}
+        <div id="main-comment-anchor" className="discussion-section-modern">
+          <div className="discussion-header-modern">
+            <h3 className="section-title">Community Discussion</h3>
+            <span className="discussion-count">{comments.length}</span>
+          </div>
+
+          <div className="primary-form-box">
+            <CommentForm placeholder="Join the conversation..." />
+          </div>
+
+          <div className="threaded-comments-list">
+            {rootComments.length === 0 ? (
+              <div className="empty-discussion-box">
+                <IoChatbubbleOutline size={48} className="mb-3 opacity-20" />
+                <p>
+                  No perspectives shared yet. Be the first to start the
+                  discussion.
+                </p>
+              </div>
+            ) : (
+              rootComments.map((comment) => (
+                <CommentItem key={comment._id} comment={comment} />
+              ))
+            )}
+          </div>
         </div>
-      </motion.div>
+      </div>
 
       <SubscribeModal
         isOpen={isSubscribeModalOpen}
@@ -413,47 +423,430 @@ export default function BlogDetailsPage() {
         onSuccess={onSubscribeSuccess}
       />
 
-      <style jsx>{`
-        .custom-textarea {
+      <style jsx global>{`
+        :root {
+          --enterprise-blue: #0066ff;
+          --enterprise-blue-hover: #0052cc;
+          --text-main: #1a1a1a;
+          --text-secondary: #666666;
+          --surface-main: #ffffff;
+          --surface-nested: #f3f4f9;
+          --viewport-bg: #fbfbfc;
+          --shadow-soft:
+            0 4px 24px -1px rgba(0, 0, 0, 0.04),
+            0 2px 8px -1px rgba(0, 0, 0, 0.02);
+          --shadow-premium: 0 12px 48px -12px rgba(0, 0, 0, 0.08);
+          --border-light: rgba(0, 0, 0, 0.06);
+          --input-bg: #ffffff;
+          --card-bg-admin: linear-gradient(to bottom right, #ffffff, #f0f7ff);
+        }
+
+        [data-bs-theme="dark"] {
+          --text-main: #f3f4f6;
+          --text-secondary: #a0aec0;
+          --surface-main: #111827;
+          --surface-nested: #1f2937;
+          --viewport-bg: #0a0a0b;
+          --shadow-soft:
+            0 4px 24px -1px rgba(0, 0, 0, 0.2),
+            0 2px 8px -1px rgba(0, 0, 0, 0.1);
+          --shadow-premium: 0 12px 48px -12px rgba(0, 0, 0, 0.3);
+          --border-light: rgba(255, 255, 255, 0.08);
+          --input-bg: #1f2937;
+          --card-bg-admin: linear-gradient(
+            to bottom right,
+            #111827,
+            rgba(0, 102, 255, 0.05)
+          );
+        }
+
+        .blog-details-viewport {
+          background-color: var(--viewport-bg);
+          min-height: 100vh;
+          padding: 80px 0;
+          transition: background-color 0.3s ease;
+        }
+
+        .premium-blog-card {
+          background: var(--surface-main);
+          border-radius: 32px;
+          padding: 64px;
+          transition:
+            background-color 0.3s ease,
+            box-shadow 0.3s ease;
+          box-shadow: var(--shadow-premium);
+          margin-bottom: 64px;
+        }
+
+        .blog-headline-modern {
+          font-size: 3.5rem;
+          font-weight: 800;
+          letter-spacing: -0.02em;
+          color: var(--text-main);
+          line-height: 1.1;
+          margin-bottom: 24px;
+        }
+
+        .blog-meta-modern {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          color: var(--text-secondary);
+          font-weight: 500;
+          font-size: 0.95rem;
+          flex-wrap: wrap;
+        }
+
+        .blog-featured-image-wrapper {
+          margin: 48px 0;
           border-radius: 24px;
-          border: 1px solid rgba(0, 0, 0, 0.08);
-          background: rgba(255, 255, 255, 0.3);
-          resize: none;
-          transition: all 0.3s ease;
-          font-size: 1.1rem;
-          backdrop-filter: blur(5px);
+          overflow: hidden;
+          box-shadow: 0 20px 80px -20px rgba(0, 0, 0, 0.15);
         }
-        .custom-textarea:focus {
-          background: #fff;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-          border-color: #0d6efd;
+
+        .blog-featured-image {
+          width: 100%;
+          max-height: 600px;
+          object-fit: cover;
         }
-        .avatar-placeholder {
-          width: 40px;
-          height: 40px;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-          color: white;
+
+        .blog-quote-pill {
+          font-size: 1.4rem;
+          font-weight: 500;
+          font-style: italic;
+          color: var(--enterprise-blue);
+          padding: 32px;
+          background: rgba(0, 102, 255, 0.03);
+          border-left: 4px solid var(--enterprise-blue);
+          border-radius: 0 16px 16px 0;
+          margin-bottom: 48px;
+        }
+
+        .blog-body-article {
+          font-size: 1.25rem;
+          line-height: 1.8;
+          color: var(--text-main);
+          margin-bottom: 64px;
+        }
+
+        .interaction-bar-modern {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-top: 40px;
+          border-top: 1px solid var(--border-light);
+        }
+
+        .interaction-group {
+          display: flex;
+          gap: 16px;
+        }
+
+        .interact-btn-modern {
+          background: var(--surface-nested);
+          border: none;
+          min-width: 64px;
+          height: 56px;
+          border-radius: 16px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: bold;
-          font-size: 1.2rem;
+          color: var(--text-main);
+          gap: 10px;
+          padding: 0 16px;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .admin-avatar {
-          background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+
+        .interact-btn-modern .count {
+          min-width: 20px;
+          text-align: center;
+          font-variant-numeric: tabular-nums;
         }
-        .admin-reply {
-          border-left: 4px solid #0d6efd !important;
-          background: rgba(13, 110, 253, 0.03) !important;
+
+        .interact-btn-modern:hover {
+          background: var(--surface-nested);
+          filter: brightness(0.95);
+          transform: translateY(-2px);
         }
-        .leading-relaxed {
+
+        .interact-btn-modern.is-liked {
+          color: #ef4444;
+          background: rgba(239, 68, 68, 0.08);
+        }
+
+        .comment-count-pill {
+          background: var(--enterprise-blue);
+          color: white;
+          padding: 12px 28px;
+          border-radius: 100px;
+          border: none;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          transition: all 0.2s ease;
+        }
+
+        /* Discussion Styles */
+        .discussion-section-modern {
+          max-width: 800px;
+          margin: 0 auto;
+        }
+
+        .discussion-header-modern {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 32px;
+        }
+
+        .section-title {
+          font-weight: 800;
+          margin: 0;
+          color: var(--text-main);
+        }
+
+        .discussion-count {
+          background: var(--surface-nested);
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-weight: 700;
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+        }
+
+        .modern-textarea {
+          border-radius: 20px;
+          border: 1.5px solid var(--border-light);
+          padding: 24px;
+          background: var(--input-bg);
+          color: var(--text-main);
+          width: 100%;
+          font-size: 1.1rem;
+          transition: all 0.2s ease;
+          box-shadow: var(--shadow-soft);
+        }
+
+        .modern-textarea:focus {
+          border-color: var(--enterprise-blue);
+          box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.08);
+          outline: none;
+        }
+
+        .form-actions-overlay {
+          position: absolute;
+          bottom: 12px;
+          right: 12px;
+          display: flex;
+          align-items: center;
+        }
+
+        .btn-pill-primary {
+          background: var(--enterprise-blue);
+          color: white;
+          border: none;
+          padding: 10px 24px;
+          border-radius: 100px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+        }
+
+        .btn-pill-secondary {
+          background: none;
+          border: none;
+          color: var(--text-secondary);
+          font-weight: 600;
+        }
+
+        /* Comment Cards */
+        .comment-card-modern {
+          background: var(--surface-main);
+          border-radius: 20px;
+          padding: 24px;
+          box-shadow: var(--shadow-soft);
+          margin-bottom: 16px;
+          transition: transform 0.2s ease;
+        }
+
+        .comment-card-modern.is-admin {
+          background: var(--card-bg-admin);
+          border: 1px solid rgba(0, 102, 255, 0.1);
+        }
+
+        .avatar-circle-modern {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: var(--surface-nested);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          color: var(--enterprise-blue);
+        }
+
+        .avatar-admin {
+          background: var(--enterprise-blue);
+          color: white;
+        }
+
+        .author-name-group {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .author-name {
+          font-weight: 700;
+          color: var(--text-main);
+        }
+
+        .admin-badge-modern {
+          font-size: 0.65rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          background: var(--enterprise-blue);
+          color: white;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .comment-date {
+          font-size: 0.75rem;
+          color: #a0aec0;
+          display: block;
+        }
+
+        .comment-body-modern {
+          padding: 12px 0;
+          font-size: 1.05rem;
           line-height: 1.6;
+          color: var(--text-main);
+          opacity: 0.9;
         }
-        .border-dashed {
-          border-style: dashed !important;
-          border-width: 2px !important;
-          background: rgba(0, 0, 0, 0.01);
+
+        .comment-footer-modern {
+          display: flex;
+          gap: 20px;
+          margin-top: 8px;
+        }
+
+        .action-pill {
+          background: none;
+          border: none;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: var(--text-secondary);
+          font-size: 0.85rem;
+          font-weight: 600;
+          padding: 6px 12px;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+          min-width: 60px;
+        }
+
+        .action-pill span {
+          min-width: 14px;
+          text-align: left;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .action-pill:hover {
+          color: var(--enterprise-blue);
+        }
+
+        .action-pill.is-liked {
+          color: #ef4444;
+        }
+
+        .comment-thread-node.is-nested {
+          margin-left: 24px;
+          padding-left: 24px;
+          border-left: 2px solid var(--border-light);
+          margin-top: 16px;
+        }
+
+        .loading-viewport {
+          height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: white;
+        }
+
+        .premium-loader {
+          width: 40px;
+          height: 40px;
+          border: 3px solid #f1f5f9;
+          border-top-color: var(--enterprise-blue);
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .premium-blog-card {
+            padding: 24px;
+            margin-bottom: 32px;
+            border-radius: 20px;
+          }
+          .blog-headline-modern {
+            font-size: 1.8rem;
+          }
+          .blog-featured-image-wrapper {
+            margin: 24px 0;
+            border-radius: 16px;
+          }
+          .blog-quote-pill {
+            font-size: 1.1rem;
+            padding: 20px;
+          }
+          .blog-body-article {
+            font-size: 1.1rem;
+            margin-bottom: 32px;
+          }
+          .interaction-bar-modern {
+            flex-direction: column;
+            gap: 20px;
+            align-items: flex-start;
+          }
+          .interaction-group {
+            width: 100%;
+            justify-content: space-between;
+          }
+          .comment-thread-node.is-nested {
+            margin-left: 10px;
+            padding-left: 10px;
+          }
+          .comment-card-modern {
+            padding: 16px;
+          }
+          .avatar-circle-modern {
+            width: 36px;
+            height: 36px;
+            font-size: 0.9rem;
+          }
+          .blog-details-viewport {
+            padding: 40px 0;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .blog-headline-modern {
+            font-size: 1.5rem;
+          }
+          .premium-blog-card {
+            padding: 16px;
+          }
         }
       `}</style>
     </div>
