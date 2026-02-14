@@ -116,3 +116,79 @@ export const verifyEmail = async (req, res, next) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
+// @desc    Resend verification email
+// @route   POST /api/subscribers/resend-verification
+// @access  Public
+export const resendVerificationEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const subscriber = await Subscriber.findOne({ email });
+
+    if (!subscriber) {
+      return res.status(404).json({
+        success: false,
+        message: "Subscriber not found",
+      });
+    }
+
+    if (subscriber.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is already verified",
+      });
+    }
+
+    // Generate new verification token (works even if old token expired)
+
+    // Generate new verification token
+    const verificationToken = subscriber.getVerificationToken();
+    await subscriber.save();
+
+    // Create verification URL
+    const verifyUrl = `${process.env.FRONTEND_URL}/verify/${verificationToken}`;
+
+    const message = `You requested a new verification email. Please verify your email by clicking the link below: \n\n ${verifyUrl}\n\nThis link will expire in 48 hours.`;
+
+    try {
+      await sendEmail({
+        email: subscriber.email,
+        subject: "Email Verification for MyPortfolio - New Link",
+        message,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #3498db;">Email Verification</h2>
+            <p>You requested a new verification email for MyPortfolio.</p>
+            <p>Please verify your email by clicking the button below:</p>
+            <a href="${verifyUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3498db; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">Verify Email</a>
+            <p style="color: #666; font-size: 12px;">If the button doesn't work, copy and paste this link into your browser:<br>${verifyUrl}</p>
+            <p style="color: #e74c3c; font-weight: bold;">This link will expire in 48 hours.</p>
+            <p style="color: #999; font-size: 11px; margin-top: 30px;">If you didn't request this, you can safely ignore this email.</p>
+          </div>
+        `,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Verification email resent successfully",
+      });
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({
+        success: false,
+        message: "Email could not be sent",
+        error: err.message,
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};

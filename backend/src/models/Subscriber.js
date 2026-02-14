@@ -38,8 +38,8 @@ subscriberSchema.methods.getVerificationToken = function () {
     .update(verificationToken)
     .digest("hex");
 
-  // Set expire (24 hours)
-  this.verificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000;
+  // Set expire (48 hours)
+  this.verificationTokenExpire = Date.now() + 48 * 60 * 60 * 1000;
 
   return verificationToken;
 };

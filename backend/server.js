@@ -20,6 +20,7 @@ import uploadRoutes from "./src/routes/uploadRoutes.js"; // Import Upload routes
 import subUserRoutes from "./src/routes/subUser.routes.js"; // Import SubUser routes
 import analyticsRoutes from "./src/routes/analyticsRoutes.js";
 import subscriberRoutes from "./src/routes/subscriberRoutes.js"; // Import Subscriber routes
+import { scheduleReminderJob } from "./src/utils/reminderScheduler.js"; // Import Reminder Scheduler
 import errorHandler from "./src/middleware/errorMiddleware.js"; // Import Error Handler
 
 const app = express();
@@ -102,6 +103,9 @@ const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+
+  // Initialize verification reminder scheduler
+  scheduleReminderJob();
 });
 
 // Handle unhandled promise rejections
