@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 
 const subscriberSchema = new mongoose.Schema({
   name: {
@@ -14,10 +15,33 @@ const subscriberSchema = new mongoose.Schema({
       "Please add a valid email",
     ],
   },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: String,
+  verificationTokenExpire: Date,
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
+
+// Generate and hash verification token
+subscriberSchema.methods.getVerificationToken = function () {
+  // Generate token
+  const verificationToken = crypto.randomBytes(20).toString("hex");
+
+  // Hash token and set to verificationToken field
+  this.verificationToken = crypto
+    .createHash("sha256")
+    .update(verificationToken)
+    .digest("hex");
+
+  // Set expire (24 hours)
+  this.verificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000;
+
+  return verificationToken;
+};
 
 export default mongoose.model("Subscriber", subscriberSchema);
