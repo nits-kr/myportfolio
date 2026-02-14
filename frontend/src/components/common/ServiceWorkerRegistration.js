@@ -22,7 +22,7 @@ const ServiceWorkerRegistration = () => {
     }
   }, []);
 
-  return null;
+  return <span style={{ display: "none" }} aria-hidden="true" />;
 };
 
 export default ServiceWorkerRegistration;

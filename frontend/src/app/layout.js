@@ -42,7 +42,7 @@ export default function RootLayout({ children }) {
       <head>
         <link
           rel="preconnect"
-          href="https://portfolio-backend-sjrz.onrender.com"
+          href="https://portfolio-backend-sjlz.onrender.com"
           crossOrigin="anonymous"
         />
       </head>

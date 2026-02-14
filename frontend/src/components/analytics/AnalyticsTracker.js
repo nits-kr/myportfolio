@@ -4,8 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSelector } from "react-redux";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 const SESSION_KEY = "portfolio_session_id";
 const LAST_PATH_KEY = "portfolio_last_path";
 
@@ -90,10 +89,14 @@ export default function AnalyticsTracker() {
     if (!sessionId) return;
 
     const sendHeartbeat = (useBeacon = false) => {
-      sendJson(`${API_BASE}/analytics/heartbeat`, {
-        sessionId,
-        path: pathname,
-      }, useBeacon);
+      sendJson(
+        `${API_BASE}/analytics/heartbeat`,
+        {
+          sessionId,
+          path: pathname,
+        },
+        useBeacon,
+      );
     };
 
     if (heartbeatRef.current) {
@@ -127,5 +130,5 @@ export default function AnalyticsTracker() {
     };
   }, [pathname, user?.role]);
 
-  return null;
+  return <span style={{ display: "none" }} aria-hidden="true" />;
 }

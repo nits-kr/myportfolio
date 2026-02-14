@@ -7,5 +7,5 @@ export default function BootstrapClient() {
     require("bootstrap/dist/js/bootstrap.bundle.min.js");
   }, []);
 
-  return null;
+  return <span style={{ display: "none" }} aria-hidden="true" />;
 }
