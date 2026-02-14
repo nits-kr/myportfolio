@@ -2,15 +2,14 @@ import nodemailer from "nodemailer";
 
 const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true, // Use SSL
+    host: process.env.SMTP_HOST || "smtpdm",
+    port: process.env.SMTP_PORT || 80,
+    secure: false, // Port 80 doesn't use SSL
     auth: {
       user: process.env.SMTP_EMAIL,
       pass: process.env.SMTP_PASSWORD,
     },
     tls: {
-      // Do not fail on invalid certs
       rejectUnauthorized: false,
     },
   });
