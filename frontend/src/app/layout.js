@@ -20,10 +20,6 @@ export const metadata = {
   description:
     "Portfolio of Nitish Kumar - Full Stack Developer (React, Next.js, Node.js, MongoDB).",
   manifest: "/manifest.json",
-  icons: {
-    icon: "/icons/icon-512x512.png",
-    apple: "/icons/icon-512x512.png",
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
