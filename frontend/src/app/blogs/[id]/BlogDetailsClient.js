@@ -116,6 +116,14 @@ const CommentForm = memo(
 );
 CommentForm.displayName = "CommentForm";
 
+const IOSSpinner = () => (
+  <div className="ios-spinner">
+    {[...Array(12)].map((_, i) => (
+      <div key={i}></div>
+    ))}
+  </div>
+);
+
 const CommentItem = memo(
   ({
     comment,
@@ -128,7 +136,9 @@ const CommentItem = memo(
     isAdmin,
     addComment,
     checkSubscription,
+    likingCommentId,
   }) => {
+    const isLiking = likingCommentId === comment._id;
     const [isReplying, setIsReplying] = useState(false);
     const isCommentLiked = comment.hasLiked;
     const replies = comments.filter((c) => c.parentId === comment._id);
@@ -171,15 +181,20 @@ const CommentItem = memo(
 
           <div className="comment-footer-modern">
             <button
-              className={`action-pill ${isCommentLiked ? "is-liked" : ""}`}
-              onClick={() => handleLikeComment(comment._id)}
+              className={`action-pill ${isCommentLiked ? "is-liked" : ""} ${isLiking ? "is-loading" : ""}`}
+              onClick={() => !isLiking && handleLikeComment(comment._id)}
+              disabled={isLiking}
               aria-label={isCommentLiked ? "Unlike comment" : "Like comment"}
             >
-              {isCommentLiked ? (
-                <IoHeart size={16} />
-              ) : (
-                <IoHeartOutline size={16} />
-              )}
+              <span className="icon-wrapper">
+                {isLiking ? (
+                  <IOSSpinner />
+                ) : isCommentLiked ? (
+                  <IoHeart size={16} />
+                ) : (
+                  <IoHeartOutline size={16} />
+                )}
+              </span>
               <span>{comment.likesCount || 0}</span>
             </button>
             <button
@@ -237,6 +252,7 @@ const CommentItem = memo(
                 isAdmin={isAdmin}
                 addComment={addComment}
                 checkSubscription={checkSubscription}
+                likingCommentId={likingCommentId}
               />
             ))}
           </div>
@@ -264,9 +280,10 @@ export default function BlogDetailsClient({
     skip: !shouldFetch,
   });
   const { data: commentsData } = useGetCommentsQuery(id);
-  const [likeBlog] = useLikeBlogMutation();
+  const [likeBlog, { isLoading: isLikingBlog }] = useLikeBlogMutation();
   const [addComment] = useAddCommentMutation();
   const [likeComment] = useLikeCommentMutation();
+  const [likingCommentId, setLikingCommentId] = useState(null);
 
   const blog = initialBlog || blogData?.data;
   const comments = useMemo(
@@ -353,6 +370,7 @@ export default function BlogDetailsClient({
   const handleLikeComment = useCallback(
     async (commentId) => {
       const execute = async (emailOverride = null) => {
+        setLikingCommentId(commentId);
         try {
           await likeComment({
             commentId,
@@ -367,6 +385,8 @@ export default function BlogDetailsClient({
               position: "top-right",
             });
           }
+        } finally {
+          setLikingCommentId(null);
         }
       };
 
@@ -547,11 +567,20 @@ export default function BlogDetailsClient({
             <div className="interaction-group">
               <motion.button
                 whileTap={{ scale: 0.9 }}
-                className={`interact-btn-modern ${isLiked ? "is-liked" : ""}`}
-                onClick={handleLike}
+                className={`interact-btn-modern ${isLiked ? "is-liked" : ""} ${isLikingBlog ? "is-loading" : ""}`}
+                onClick={() => !isLikingBlog && handleLike()}
+                disabled={isLikingBlog}
                 aria-label={isLiked ? "Unlike blog post" : "Like blog post"}
               >
-                {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
+                <span className="icon-wrapper">
+                  {isLikingBlog ? (
+                    <IOSSpinner />
+                  ) : isLiked ? (
+                    <IoHeart size={24} />
+                  ) : (
+                    <IoHeartOutline size={24} />
+                  )}
+                </span>
                 <span className="count">{blog?.likesCount || 0}</span>
               </motion.button>
 
@@ -628,6 +657,7 @@ export default function BlogDetailsClient({
                     addComment(args);
                   }}
                   checkSubscription={checkSubscription}
+                  likingCommentId={likingCommentId}
                 />
               ))
             )}
