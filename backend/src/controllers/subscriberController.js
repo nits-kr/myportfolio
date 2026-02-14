@@ -58,9 +58,11 @@ export const subscribe = async (req, res, next) => {
       subscriber.verificationTokenExpire = undefined;
       await subscriber.save();
 
-      return res
-        .status(500)
-        .json({ success: false, message: "Email could not be sent" });
+      return res.status(500).json({
+        success: false,
+        message: "Email could not be sent",
+        error: err.message,
+      });
     }
   } catch (err) {
     if (err.name === "ValidationError") {
