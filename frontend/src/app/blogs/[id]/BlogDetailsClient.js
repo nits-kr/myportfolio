@@ -254,7 +254,14 @@ export default function BlogDetailsClient({ initialBlog }) {
   const { user: adminUser } = useSelector((state) => state.auth);
   const isAdmin = adminUser?.role === "admin";
 
-  const { data: blogData, error, isLoading } = useGetBlogQuery(id);
+  const [shouldFetch, setShouldFetch] = useState(!initialBlog);
+  const {
+    data: blogData,
+    error,
+    isLoading,
+  } = useGetBlogQuery(id, {
+    skip: !shouldFetch,
+  });
   const { data: commentsData } = useGetCommentsQuery(id);
   const [likeBlog] = useLikeBlogMutation();
   const [addComment] = useAddCommentMutation();
@@ -303,9 +310,17 @@ export default function BlogDetailsClient({ initialBlog }) {
       }
     };
 
+    if (!shouldFetch) setShouldFetch(true);
     if (!checkSubscription(execute)) return;
     await execute();
-  }, [id, subscriberEmail, adminUser, likeBlog, checkSubscription]);
+  }, [
+    id,
+    subscriberEmail,
+    adminUser,
+    likeBlog,
+    checkSubscription,
+    shouldFetch,
+  ]);
 
   const handleShare = useCallback(async () => {
     const execute = async () => {
@@ -351,10 +366,18 @@ export default function BlogDetailsClient({ initialBlog }) {
         }
       };
 
+      if (!shouldFetch) setShouldFetch(true);
       if (!checkSubscription(execute)) return;
       await execute();
     },
-    [id, subscriberEmail, adminUser, likeComment, checkSubscription],
+    [
+      id,
+      subscriberEmail,
+      adminUser,
+      likeComment,
+      checkSubscription,
+      shouldFetch,
+    ],
   );
 
   const onSubscribeSuccess = useCallback(
@@ -435,7 +458,10 @@ export default function BlogDetailsClient({ initialBlog }) {
     [comments],
   );
 
-  if (!blog && isLoading) {
+  // If we have initialBlog, we are not "loading" in the visual sense
+  const isActuallyLoading = !blog && isLoading;
+
+  if (isActuallyLoading) {
     return (
       <div className="loading-viewport">
         <div className="premium-loader"></div>
@@ -580,7 +606,10 @@ export default function BlogDetailsClient({ initialBlog }) {
               adminUser={adminUser}
               subscriberEmail={subscriberEmail}
               isAdmin={isAdmin}
-              addComment={addComment}
+              addComment={(args) => {
+                if (!shouldFetch) setShouldFetch(true);
+                addComment(args);
+              }}
               checkSubscription={checkSubscription}
               placeholder="Join the conversation..."
             />
@@ -606,7 +635,10 @@ export default function BlogDetailsClient({ initialBlog }) {
                   handleLikeComment={handleLikeComment}
                   blogId={id}
                   isAdmin={isAdmin}
-                  addComment={addComment}
+                  addComment={(args) => {
+                    if (!shouldFetch) setShouldFetch(true);
+                    addComment(args);
+                  }}
                   checkSubscription={checkSubscription}
                 />
               ))
