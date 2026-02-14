@@ -7,7 +7,16 @@ export const blogsApi = apiSlice.injectEndpoints({
       providesTags: ["Blog"],
     }),
     getBlog: builder.query({
-      query: (id) => `/blogs/${id}`,
+      query: (id) => {
+        const email =
+          typeof window !== "undefined"
+            ? localStorage.getItem("blogSubscriberEmail")
+            : null;
+        return {
+          url: `/blogs/${id}`,
+          params: email ? { viewerEmail: email } : {},
+        };
+      },
       providesTags: (result, error, id) => [{ type: "Blog", id }],
     }),
     addBlog: builder.mutation({
@@ -63,7 +72,16 @@ export const blogsApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [{ type: "Blog", id }],
     }),
     getComments: builder.query({
-      query: (id) => `/blogs/${id}/comments`,
+      query: (id) => {
+        const email =
+          typeof window !== "undefined"
+            ? localStorage.getItem("blogSubscriberEmail")
+            : null;
+        return {
+          url: `/blogs/${id}/comments`,
+          params: email ? { viewerEmail: email } : {},
+        };
+      },
       providesTags: (result, error, id) => [{ type: "Comment", id }],
     }),
     addComment: builder.mutation({

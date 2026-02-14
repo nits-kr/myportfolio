@@ -22,7 +22,7 @@ export const getBlogs = async (req, res, next) => {
     // So we will do the same here.
 
     const blogs = await Blog.find({ deleteStatus: { $ne: true } })
-      .select("-body") // Exclude heavy body from list view
+      .select("-body -likes") // Exclude heavy body and sensitive likes from list view
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -56,10 +56,20 @@ export const getBlog = async (req, res, next) => {
       });
     }
 
+    const { viewerEmail } = req.query;
+
+    // Transform blog object to hide PII
+    const blogObj = blog.toObject();
+    blogObj.likesCount = blogObj.likes?.length || 0;
+    blogObj.hasLiked = viewerEmail
+      ? blogObj.likes?.includes(viewerEmail)
+      : false;
+    delete blogObj.likes; // Remove the raw list of emails
+
     res.status(200).json({
       success: true,
       message: "Blog fetched successfully",
-      data: blog,
+      data: blogObj,
     });
   } catch (err) {
     res.status(500).json({
@@ -309,9 +319,12 @@ export const addComment = async (req, res, next) => {
       isAdminReply,
     });
 
+    const commentObj = comment.toObject();
+    delete commentObj.email; // Never return email to client
+
     res.status(201).json({
       success: true,
-      data: comment,
+      data: commentObj,
     });
   } catch (err) {
     res.status(500).json({ success: false, message: "Server Error" });
@@ -377,9 +390,22 @@ export const getComments = async (req, res, next) => {
       createdAt: -1,
     });
 
+    const { viewerEmail } = req.query;
+
+    const sanitizedComments = comments.map((comment) => {
+      const commentObj = comment.toObject();
+      commentObj.likesCount = commentObj.likes?.length || 0;
+      commentObj.hasLiked = viewerEmail
+        ? commentObj.likes?.includes(viewerEmail)
+        : false;
+      delete commentObj.likes;
+      delete commentObj.email; // Hide email
+      return commentObj;
+    });
+
     res.status(200).json({
       success: true,
-      data: comments,
+      data: sanitizedComments,
     });
   } catch (err) {
     res.status(500).json({ success: false, message: "Server Error" });

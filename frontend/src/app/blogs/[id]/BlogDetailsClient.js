@@ -130,9 +130,7 @@ const CommentItem = memo(
     checkSubscription,
   }) => {
     const [isReplying, setIsReplying] = useState(false);
-    const isCommentLiked = comment.likes?.includes(
-      subscriberEmail || adminUser?.email,
-    );
+    const isCommentLiked = comment.hasLiked;
     const replies = comments.filter((c) => c.parentId === comment._id);
 
     return (
@@ -182,7 +180,7 @@ const CommentItem = memo(
               ) : (
                 <IoHeartOutline size={16} />
               )}
-              <span>{comment.likes?.length || 0}</span>
+              <span>{comment.likesCount || 0}</span>
             </button>
             <button
               className={`action-pill ${isReplying ? "is-active" : ""}`}
@@ -475,7 +473,7 @@ export default function BlogDetailsClient({
     );
   }
 
-  const isLiked = blog?.likes?.includes(subscriberEmail || adminUser?.email);
+  const isLiked = blog?.hasLiked;
 
   return (
     <div className="blog-details-viewport">
@@ -554,7 +552,7 @@ export default function BlogDetailsClient({
                 aria-label={isLiked ? "Unlike blog post" : "Like blog post"}
               >
                 {isLiked ? <IoHeart size={24} /> : <IoHeartOutline size={24} />}
-                <span className="count">{blog?.likes?.length || 0}</span>
+                <span className="count">{blog?.likesCount || 0}</span>
               </motion.button>
 
               <motion.button
