@@ -75,6 +75,13 @@ const CommentForm = memo(
               placeholder={placeholder}
               value={body}
               onChange={(e) => setBody(e.target.value)}
+              onFocus={() => {
+                if (!isAdmin && !subscriberEmail) {
+                  checkSubscription();
+                  // Blur the textarea to prevent typing until subscribed
+                  document.activeElement.blur();
+                }
+              }}
             ></textarea>
             <div className="form-actions-overlay">
               {onCancel && (
@@ -174,7 +181,12 @@ const CommentItem = memo(
             </button>
             <button
               className={`action-pill ${isReplying ? "is-active" : ""}`}
-              onClick={() => setIsReplying(!isReplying)}
+              onClick={() => {
+                if (!isReplying) {
+                  if (!checkSubscription(() => setIsReplying(true))) return;
+                }
+                setIsReplying(!isReplying);
+              }}
             >
               <IoReturnDownForward size={16} />
               <span>{isReplying ? "Cancel" : "Reply"}</span>

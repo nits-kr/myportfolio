@@ -7,10 +7,10 @@ export const subscribe = async (req, res, next) => {
   try {
     const { name, email } = req.body;
 
-    if (!name || !email) {
+    if (!email) {
       return res
         .status(400)
-        .json({ success: false, message: "Name and email are required" });
+        .json({ success: false, message: "Email is strictly required" });
     }
 
     let subscriber = await Subscriber.findOne({ email });
@@ -23,7 +23,7 @@ export const subscribe = async (req, res, next) => {
       });
     }
 
-    subscriber = await Subscriber.create({ name, email });
+    subscriber = await Subscriber.create({ email });
 
     res.status(201).json({
       success: true,

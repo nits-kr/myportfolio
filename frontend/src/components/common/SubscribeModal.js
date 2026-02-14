@@ -6,22 +6,36 @@ import { useSubscribeMutation } from "@/store/services/blogsApi";
 import { IoClose, IoMailOutline, IoPersonOutline } from "react-icons/io5";
 
 export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [subscribe, { isLoading, error }] = useSubscribeMutation();
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isReturningUser, setIsReturningUser] = useState(false);
+  const [displayName, setDisplayName] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const result = await subscribe({ name, email }).unwrap();
+      const result = await subscribe({ email }).unwrap();
+
       if (result.success) {
-        localStorage.setItem("blogSubscriberName", name);
+        const isReturning = result.message === "Already subscribed";
+        const finalName = isReturning ? result.data.name : "";
+
+        if (finalName) localStorage.setItem("blogSubscriberName", finalName);
         localStorage.setItem("blogSubscriberEmail", email);
+
+        setIsReturningUser(isReturning);
+        setDisplayName(finalName);
         setIsSuccess(true);
+
         setTimeout(() => {
           onSuccess(email);
           onClose();
+          setTimeout(() => {
+            setIsSuccess(false);
+            setIsReturningUser(false);
+            setEmail("");
+          }, 500);
         }, 2000);
       }
     } catch (err) {
@@ -50,11 +64,15 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
                   animate={{ scale: 1 }}
                   className="success-icon mb-3"
                 >
-                  🎉
+                  {isReturningUser ? "✨" : "🎉"}
                 </motion.div>
-                <h3>Thank You!</h3>
+                <h3>{isReturningUser ? "Welcome Back!" : "Thank You!"}</h3>
                 <p className="text-muted">
-                  You&apos;re now subscribed. Unlocking your interaction...
+                  {isReturningUser && displayName
+                    ? `Good to see you again, ${displayName}. Restoring your session...`
+                    : isReturningUser
+                      ? "Welcome back! Restoring your session..."
+                      : "You're now subscribed. Unlocking your interaction..."}
                 </p>
               </div>
             ) : (
@@ -68,18 +86,9 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
 
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3 input-group-modern">
-                    <IoPersonOutline className="input-icon" />
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Your Name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="mb-4 input-group-modern">
-                    <IoMailOutline className="input-icon" />
+                    <span className="input-icon">
+                      <IoMailOutline />
+                    </span>
                     <input
                       type="email"
                       className="form-control"
@@ -87,6 +96,7 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      disabled={showNameField || isLoading}
                     />
                   </div>
 
@@ -101,7 +111,7 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
                     className="btn btn-primary w-100 py-2 fw-bold"
                     disabled={isLoading}
                   >
-                    {isLoading ? "Subscribing..." : "Subscribe Now"}
+                    {isLoading ? "Processing..." : "Continue"}
                   </button>
                 </form>
               </>
@@ -115,8 +125,8 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
               left: 0;
               right: 0;
               bottom: 0;
-              background: rgba(0, 0, 0, 0.4);
-              backdrop-filter: blur(5px);
+              background: rgba(0, 0, 0, 0.6);
+              backdrop-filter: blur(8px);
               display: flex;
               align-items: center;
               justify-content: center;
@@ -127,8 +137,10 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
               position: relative;
               max-width: 450px;
               width: 100%;
-              background: rgba(255, 255, 255, 0.8) !important;
-              box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+              background: var(--glass-bg) !important;
+              backdrop-filter: blur(15px);
+              border: 1px solid var(--glass-border) !important;
+              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             }
             .close-btn {
               position: absolute;
@@ -136,38 +148,55 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
               right: 15px;
               background: none;
               border: none;
-              color: #6c757d;
+              color: var(--foreground);
+              opacity: 0.6;
               cursor: pointer;
-              transition: color 0.2s;
+              transition: all 0.2s;
+              z-index: 10;
             }
             .close-btn:hover {
-              color: #343a40;
+              opacity: 1;
+              transform: rotate(90deg);
             }
             .input-group-modern {
-              position: relative;
+              position: relative !important;
+              display: block !important;
+              width: 100%;
             }
-            .input-icon {
-              position: absolute;
-              left: 12px;
-              top: 50%;
-              transform: translateY(-50%);
-              color: #6c757d;
-              z-index: 5;
+            .input-group-modern .input-icon {
+              position: absolute !important;
+              left: 16px !important;
+              top: 50% !important;
+              transform: translateY(-50%) !important;
+              color: var(--foreground) !important;
+              opacity: 0.6 !important;
+              z-index: 100 !important;
+              font-size: 1.25rem !important;
+              display: flex !important;
+              align-items: center !important;
+              pointer-events: none !important;
             }
-            .form-control {
-              padding-left: 40px;
-              border-radius: 10px;
-              height: 48px;
-              border: 1px solid rgba(0, 0, 0, 0.1);
-              background: rgba(255, 255, 255, 0.5);
+            .input-group-modern .form-control {
+              padding-left: 50px !important;
+              border-radius: 12px !important;
+              height: 54px !important;
+              border: 1px solid var(--glass-border) !important;
+              background: rgba(255, 255, 255, 0.05) !important;
+              color: var(--foreground) !important;
+              width: 100% !important;
+              transition: all 0.3s ease !important;
             }
-            .form-control:focus {
-              box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
-              border-color: #0d6efd;
-              background: #fff;
+            .input-group-modern .form-control::placeholder {
+              color: var(--foreground);
+              opacity: 0.4;
+            }
+            .input-group-modern .form-control:focus {
+              box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15) !important;
+              border-color: #0d6efd !important;
+              background: rgba(255, 255, 255, 0.1) !important;
             }
             .success-icon {
-              font-size: 3rem;
+              font-size: 4rem;
             }
           `}</style>
         </div>

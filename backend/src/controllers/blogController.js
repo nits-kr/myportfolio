@@ -262,7 +262,10 @@ export const addComment = async (req, res, next) => {
     if (!isAdminReply && (!name || !email)) {
       return res
         .status(400)
-        .json({ success: false, message: "Name and email are required" });
+        .json({
+          success: false,
+          message: "Name and email are required (from BlogController)",
+        });
     }
 
     if (!body) {
