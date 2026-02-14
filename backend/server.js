@@ -65,7 +65,9 @@ app.use(cookieParser());
 
 // Enable CORS
 const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",")
+  ? process.env.CORS_ORIGIN.split(",").map((origin) =>
+      origin.trim().replace(/\/$/, ""),
+    )
   : ["http://localhost:3000"];
 
 // Add localhost:3000 explicitly if not present (for failsafe dev)
