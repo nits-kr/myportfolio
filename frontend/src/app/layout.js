@@ -52,7 +52,9 @@ export default function RootLayout({ children }) {
           <GlobalLoader />
           <ServiceWorkerRegistration />
           <OnlineStatus />
-          <Suspense fallback={null}>
+          <Suspense
+            fallback={<span style={{ display: "none" }} aria-hidden="true" />}
+          >
             <AnalyticsTracker />
           </Suspense>
           <BootstrapClient />

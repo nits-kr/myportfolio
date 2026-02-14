@@ -25,8 +25,7 @@ import {
 } from "react-icons/io5";
 import SubscribeModal from "@/components/common/SubscribeModal";
 import toast, { Toaster } from "react-hot-toast";
-import Prism from "prismjs/components/prism-core";
-import "prismjs/themes/prism-tomorrow.css";
+import "@/styles/BlogDetails.scss";
 
 const CommentForm = memo(
   ({
@@ -417,53 +416,67 @@ export default function BlogDetailsClient({
 
   useEffect(() => {
     if (blog?.body) {
-      if (typeof window !== "undefined") {
-        window.Prism = Prism;
-      }
-      require("prismjs/components/prism-markup");
-      require("prismjs/components/prism-clike");
-      require("prismjs/components/prism-markup-templating");
-      require("prismjs/components/prism-javascript");
-      require("prismjs/components/prism-css");
-      require("prismjs/components/prism-python");
-      require("prismjs/components/prism-php");
-      require("prismjs/components/prism-sql");
-      require("prismjs/components/prism-bash");
-      require("prismjs/components/prism-json");
+      const initPrism = async () => {
+        try {
+          // Dynamic Import Prism and CSS
+          const Prism = (await import("prismjs/components/prism-core")).default;
+          await import("prismjs/themes/prism-tomorrow.css");
 
-      const codeBlocks = document.querySelectorAll("pre");
-      codeBlocks.forEach((block) => {
-        const codeElement = block.querySelector("code");
-        if (codeElement && Prism.highlightElement) {
-          try {
-            Prism.highlightElement(codeElement);
-          } catch (e) {
-            console.error("Prism highlighting failed:", e);
+          // Ensure window.Prism is set for nested components if needed
+          if (typeof window !== "undefined") {
+            window.Prism = Prism;
           }
-        }
-        if (block.querySelector(".copy-btn-wrapper")) return;
-        const wrapper = document.createElement("div");
-        wrapper.className = "copy-btn-wrapper";
-        const btn = document.createElement("button");
-        btn.className = "copy-code-btn";
-        btn.innerHTML = `<span>Copy</span>`;
-        btn.setAttribute("aria-label", "Copy code block");
-        btn.onclick = () => {
-          const code =
-            block.querySelector("code")?.innerText || block.innerText;
-          navigator.clipboard.writeText(code).then(() => {
-            btn.innerHTML = `<span>Copied!</span>`;
-            setTimeout(() => {
-              btn.innerHTML = `<span>Copy</span>`;
-            }, 2000);
+
+          // Dynamic Import Languages as needed
+          await import("prismjs/components/prism-markup");
+          await import("prismjs/components/prism-clike");
+          await import("prismjs/components/prism-markup-templating");
+          await import("prismjs/components/prism-javascript");
+          await import("prismjs/components/prism-css");
+          await import("prismjs/components/prism-python");
+          await import("prismjs/components/prism-php");
+          await import("prismjs/components/prism-sql");
+          await import("prismjs/components/prism-bash");
+          await import("prismjs/components/prism-json");
+
+          const codeBlocks = document.querySelectorAll("pre");
+          codeBlocks.forEach((block) => {
+            const codeElement = block.querySelector("code");
+            if (codeElement && Prism.highlightElement) {
+              try {
+                Prism.highlightElement(codeElement);
+              } catch (e) {
+                console.error("Prism highlighting failed:", e);
+              }
+            }
+            if (block.querySelector(".copy-btn-wrapper")) return;
+            const wrapper = document.createElement("div");
+            wrapper.className = "copy-btn-wrapper";
+            const btn = document.createElement("button");
+            btn.className = "copy-code-btn";
+            btn.innerHTML = `<span>Copy</span>`;
+            btn.onclick = () => {
+              const code =
+                block.querySelector("code")?.innerText || block.innerText;
+              navigator.clipboard.writeText(code).then(() => {
+                btn.innerHTML = `<span>Copied!</span>`;
+                setTimeout(() => {
+                  btn.innerHTML = `<span>Copy</span>`;
+                }, 2000);
+              });
+            };
+            wrapper.appendChild(btn);
+            block.style.position = "relative";
+            block.appendChild(wrapper);
           });
-        };
-        wrapper.appendChild(btn);
-        block.style.position = "relative";
-        block.appendChild(wrapper);
-      });
+        } catch (err) {
+          console.error("Failed to load Prism:", err);
+        }
+      };
+
+      initPrism();
     }
-  }, [blog]);
+  }, [blog?.body]);
 
   const rootComments = useMemo(
     () => comments.filter((c) => !c.parentId),
