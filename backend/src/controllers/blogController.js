@@ -1,5 +1,6 @@
 import Blog from "../models/Blog.js";
 import Comment from "../models/Comment.js";
+import Subscriber from "../models/Subscriber.js";
 
 // @desc    Get all blogs (Public view - only published)
 // @route   GET /api/blogs
@@ -223,6 +224,16 @@ export const likeBlog = async (req, res, next) => {
         .json({ success: false, message: "Email is required" });
     }
 
+    // Check if user is verified
+    const subscriber = await Subscriber.findOne({ email });
+    if (!subscriber || !subscriber.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Please verify your email before liking. Check your inbox for the verification link.",
+      });
+    }
+
     const blog = await Blog.findById(req.params.id);
     if (!blog) {
       return res
@@ -260,18 +271,28 @@ export const addComment = async (req, res, next) => {
     const isAdminReply = req.user && req.user.role === "admin";
 
     if (!isAdminReply && (!name || !email)) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Name and email are required (from BlogController)",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Name and email are required (from BlogController)",
+      });
     }
 
     if (!body) {
       return res
         .status(400)
         .json({ success: false, message: "Comment body is required" });
+    }
+
+    // Check if user is verified (skip for admin)
+    if (!isAdminReply) {
+      const subscriber = await Subscriber.findOne({ email });
+      if (!subscriber || !subscriber.isVerified) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Please verify your email before commenting. Check your inbox for the verification link.",
+        });
+      }
     }
 
     const comment = await Comment.create({
@@ -302,6 +323,16 @@ export const likeComment = async (req, res, next) => {
       return res
         .status(400)
         .json({ success: false, message: "Email is required" });
+    }
+
+    // Check if user is verified
+    const subscriber = await Subscriber.findOne({ email });
+    if (!subscriber || !subscriber.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Please verify your email before liking. Check your inbox for the verification link.",
+      });
     }
 
     const comment = await Comment.findById(req.params.commentId);
