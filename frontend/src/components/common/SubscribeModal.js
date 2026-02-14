@@ -96,7 +96,7 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      disabled={showNameField || isLoading}
+                      disabled={isLoading}
                     />
                   </div>
 
