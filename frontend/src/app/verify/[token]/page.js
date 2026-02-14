@@ -20,6 +20,10 @@ export default function VerifyPage() {
         if (data.success) {
           setStatus("success");
           setMessage(data.message);
+          // Store email in localStorage so user doesn't need to subscribe again
+          if (data.data?.email) {
+            localStorage.setItem("blogSubscriberEmail", data.data.email);
+          }
         } else {
           setStatus("error");
           setMessage(data.message || "Verification failed");

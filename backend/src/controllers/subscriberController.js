@@ -108,6 +108,9 @@ export const verifyEmail = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Email verified successfully. You are now subscribed!",
+      data: {
+        email: subscriber.email,
+      },
     });
   } catch (err) {
     res.status(500).json({ success: false, message: "Server Error" });
