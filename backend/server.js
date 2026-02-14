@@ -64,13 +64,16 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Enable CORS
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",").map((origin) =>
-      origin.trim().replace(/\/$/, ""),
-    )
-  : ["http://localhost:3000"];
+const allowedOrigins = (
+  process.env.CORS_ORIGIN ||
+  process.env.FRONTEND_URL ||
+  ""
+)
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/$/, ""))
+  .filter((origin) => origin !== "");
 
-// Add localhost:3000 explicitly if not present (for failsafe dev)
+// Always allow localhost:3000 for development
 if (!allowedOrigins.includes("http://localhost:3000")) {
   allowedOrigins.push("http://localhost:3000");
 }
