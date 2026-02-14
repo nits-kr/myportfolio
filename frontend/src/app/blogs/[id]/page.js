@@ -24,7 +24,7 @@ import {
   IoCopyOutline,
 } from "react-icons/io5";
 import SubscribeModal from "@/components/common/SubscribeModal";
-import Toast from "@/components/common/Toast";
+import toast, { Toaster } from "react-hot-toast";
 import Prism from "prismjs/components/prism-core";
 import "prismjs/themes/prism-tomorrow.css";
 
@@ -63,10 +63,10 @@ const CommentForm = memo(
       } catch (err) {
         console.error("Failed to comment:", err);
         if (err.status === 403 && err.data?.message) {
-          // Show toast via parent component
-          if (window.showToast) {
-            window.showToast(err.data.message, "error");
-          }
+          toast.error(err.data.message, {
+            duration: 5000,
+            position: "top-right",
+          });
         }
       }
     };
@@ -267,19 +267,10 @@ export default function BlogDetailsPage() {
   const [subscriberEmail, setSubscriberEmail] = useState(null);
   const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
-  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     const email = localStorage.getItem("blogSubscriberEmail");
     if (email) setSubscriberEmail(email);
-  }, []);
-
-  // Expose showToast for CommentForm
-  useEffect(() => {
-    window.showToast = (message, type) => setToast({ message, type });
-    return () => {
-      delete window.showToast;
-    };
   }, []);
 
   const checkSubscription = useCallback(
@@ -305,7 +296,10 @@ export default function BlogDetailsPage() {
       } catch (err) {
         console.error("Failed to like:", err);
         if (err.status === 403 && err.data?.message) {
-          setToast({ message: err.data.message, type: "error" });
+          toast.error(err.data.message, {
+            duration: 5000,
+            position: "top-right",
+          });
         }
       }
     };
@@ -350,7 +344,10 @@ export default function BlogDetailsPage() {
         } catch (err) {
           console.error("Failed to like comment:", err);
           if (err.status === 403 && err.data?.message) {
-            setToast({ message: err.data.message, type: "error" });
+            toast.error(err.data.message, {
+              duration: 5000,
+              position: "top-right",
+            });
           }
         }
       };
@@ -613,13 +610,21 @@ export default function BlogDetailsPage() {
         onSuccess={onSubscribeSuccess}
       />
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+      <Toaster
+        toastOptions={{
+          style: {
+            background: "var(--surface-main)",
+            color: "var(--text-main)",
+            border: "1px solid var(--border-light)",
+          },
+          error: {
+            iconTheme: {
+              primary: "#ef4444",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
 
       <style jsx global>{`
         pre {
