@@ -252,7 +252,10 @@ export const likeBlog = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: blog.likes,
+      data: {
+        likeCount: blog.likes.length,
+        hasLiked: blog.likes.includes(email),
+      },
     });
   } catch (err) {
     res.status(500).json({ success: false, message: "Server Error" });
@@ -353,7 +356,10 @@ export const likeComment = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: comment.likes,
+      data: {
+        likeCount: comment.likes.length,
+        hasLiked: comment.likes.includes(email),
+      },
     });
   } catch (err) {
     res.status(500).json({ success: false, message: "Server Error" });
