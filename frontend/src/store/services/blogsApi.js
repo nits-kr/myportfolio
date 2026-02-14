@@ -60,26 +60,7 @@ export const blogsApi = apiSlice.injectEndpoints({
         method: "POST",
         body: { email },
       }),
-      async onQueryStarted({ id, email }, { dispatch, queryFulfilled }) {
-        const patchResult = dispatch(
-          blogsApi.util.updateQueryData("getBlog", id, (draft) => {
-            const blog = draft.data;
-            if (blog && blog.likes) {
-              const index = blog.likes.indexOf(email);
-              if (index === -1) {
-                blog.likes.push(email);
-              } else {
-                blog.likes.splice(index, 1);
-              }
-            }
-          }),
-        );
-        try {
-          await queryFulfilled;
-        } catch {
-          patchResult.undo();
-        }
-      },
+      invalidatesTags: (result, error, { id }) => [{ type: "Blog", id }],
     }),
     getComments: builder.query({
       query: (id) => `/blogs/${id}/comments`,
@@ -99,29 +80,9 @@ export const blogsApi = apiSlice.injectEndpoints({
         method: "POST",
         body: { email },
       }),
-      async onQueryStarted(
-        { commentId, email, blogId },
-        { dispatch, queryFulfilled },
-      ) {
-        const patchResult = dispatch(
-          blogsApi.util.updateQueryData("getComments", blogId, (draft) => {
-            const comment = draft.data?.find((c) => c._id === commentId);
-            if (comment && comment.likes) {
-              const index = comment.likes.indexOf(email);
-              if (index === -1) {
-                comment.likes.push(email);
-              } else {
-                comment.likes.splice(index, 1);
-              }
-            }
-          }),
-        );
-        try {
-          await queryFulfilled;
-        } catch {
-          patchResult.undo();
-        }
-      },
+      invalidatesTags: (result, error, { blogId }) => [
+        { type: "Comment", id: blogId },
+      ],
     }),
   }),
 });
