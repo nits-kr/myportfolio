@@ -25,8 +25,6 @@ const GlobalLoader = () => {
     }
   }, []);
 
-  if (!isLoading) return null;
-
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: loaderStyles }} />
@@ -42,7 +40,11 @@ const GlobalLoader = () => {
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          transition: "opacity 0.5s ease-out",
+          transition:
+            "opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s",
+          opacity: isLoading ? 1 : 0,
+          visibility: isLoading ? "visible" : "hidden",
+          pointerEvents: isLoading ? "all" : "none",
         }}
       >
         <div className="modern-loader">

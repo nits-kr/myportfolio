@@ -138,8 +138,8 @@ const CommentItem = memo(
     return (
       <div className={`comment-thread-node ${depth > 0 ? "is-nested" : ""}`}>
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           className={`comment-card-modern ${comment.isAdminReply ? "is-admin" : ""}`}
         >
           <div className="comment-header">
@@ -399,17 +399,12 @@ export default function BlogDetailsClient({
 
   useEffect(() => {
     if (blog?.body) {
-      // Prism components often expect a global Prism object
       if (typeof window !== "undefined") {
         window.Prism = Prism;
       }
-
-      // Load foundational languages
       require("prismjs/components/prism-markup");
       require("prismjs/components/prism-clike");
       require("prismjs/components/prism-markup-templating");
-
-      // Load specific languages
       require("prismjs/components/prism-javascript");
       require("prismjs/components/prism-css");
       require("prismjs/components/prism-python");
@@ -418,7 +413,6 @@ export default function BlogDetailsClient({
       require("prismjs/components/prism-bash");
       require("prismjs/components/prism-json");
 
-      // Highlight elements safely
       const codeBlocks = document.querySelectorAll("pre");
       codeBlocks.forEach((block) => {
         const codeElement = block.querySelector("code");
@@ -429,18 +423,13 @@ export default function BlogDetailsClient({
             console.error("Prism highlighting failed:", e);
           }
         }
-
-        // Add copy buttons if not already present
         if (block.querySelector(".copy-btn-wrapper")) return;
-
         const wrapper = document.createElement("div");
         wrapper.className = "copy-btn-wrapper";
-
         const btn = document.createElement("button");
         btn.className = "copy-code-btn";
         btn.innerHTML = `<span>Copy</span>`;
         btn.setAttribute("aria-label", "Copy code block");
-
         btn.onclick = () => {
           const code =
             block.querySelector("code")?.innerText || block.innerText;
@@ -451,7 +440,6 @@ export default function BlogDetailsClient({
             }, 2000);
           });
         };
-
         wrapper.appendChild(btn);
         block.style.position = "relative";
         block.appendChild(wrapper);
@@ -464,7 +452,6 @@ export default function BlogDetailsClient({
     [comments],
   );
 
-  // If we have initialBlog, we are not "loading" in the visual sense
   const isActuallyLoading = !blog && isLoading;
 
   if (isActuallyLoading) {
@@ -537,14 +524,11 @@ export default function BlogDetailsClient({
                 alt={blog.title}
                 className="blog-featured-image"
                 width={1200}
-                height={600}
+                height={686}
                 priority
+                fetchPriority="high"
+                decoding="sync"
                 sizes="(max-width: 768px) 100vw, 1200px"
-                style={{
-                  width: "100%",
-                  height: "auto",
-                  objectFit: "cover",
-                }}
               />
             </figure>
           )}
@@ -674,479 +658,6 @@ export default function BlogDetailsClient({
           },
         }}
       />
-
-      <style jsx global>{`
-        pre {
-          background: #1e1e1e !important;
-          border-radius: 12px !important;
-          padding: 1.5rem !important;
-          margin: 2rem 0 !important;
-          position: relative;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        code {
-          font-family: "Fira Code", "Consolas", "Monaco", monospace !important;
-          font-size: 0.95rem !important;
-          line-height: 1.6 !important;
-        }
-        .copy-btn-wrapper {
-          position: absolute;
-          top: 10px;
-          right: 10px;
-          z-index: 10;
-        }
-        .copy-code-btn {
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          color: #ccc;
-          padding: 4px 12px;
-          border-radius: 6px;
-          font-size: 12px;
-          cursor: pointer;
-          transition: all 0.2s;
-          backdrop-filter: blur(4px);
-        }
-        .copy-code-btn:hover {
-          background: rgba(255, 255, 255, 0.2);
-          color: white;
-          border-color: rgba(255, 255, 255, 0.4);
-        }
-        .copy-code-btn span {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        :root {
-          --enterprise-blue: #0066ff;
-          --enterprise-blue-hover: #0052cc;
-          --text-main: #1a1a1a;
-          --text-secondary: #666666;
-          --surface-main: #ffffff;
-          --surface-nested: #f3f4f9;
-          --viewport-bg: #fbfbfc;
-          --shadow-soft:
-            0 4px 24px -1px rgba(0, 0, 0, 0.04),
-            0 2px 8px -1px rgba(0, 0, 0, 0.02);
-          --shadow-premium: 0 12px 48px -12px rgba(0, 0, 0, 0.08);
-          --border-light: rgba(0, 0, 0, 0.06);
-          --input-bg: #ffffff;
-          --card-bg-admin: linear-gradient(to bottom right, #ffffff, #f0f7ff);
-        }
-
-        [data-bs-theme="dark"] {
-          --text-main: #f3f4f6;
-          --text-secondary: #a0aec0;
-          --surface-main: #111827;
-          --surface-nested: #1f2937;
-          --viewport-bg: #0a0a0b;
-          --shadow-soft:
-            0 4px 24px -1px rgba(0, 0, 0, 0.2),
-            0 2px 8px -1px rgba(0, 0, 0, 0.1);
-          --shadow-premium: 0 12px 48px -12px rgba(0, 0, 0, 0.3);
-          --border-light: rgba(255, 255, 255, 0.08);
-          --input-bg: #1f2937;
-          --card-bg-admin: linear-gradient(
-            to bottom right,
-            #111827,
-            rgba(0, 102, 255, 0.05)
-          );
-        }
-
-        .blog-details-viewport {
-          background-color: var(--viewport-bg);
-          min-height: 100vh;
-          padding: 80px 0;
-          transition: background-color 0.3s ease;
-        }
-
-        .premium-blog-card {
-          background: var(--surface-main);
-          border-radius: 32px;
-          padding: 64px;
-          transition:
-            background-color 0.3s ease,
-            box-shadow 0.3s ease;
-          box-shadow: var(--shadow-premium);
-          margin-bottom: 64px;
-        }
-
-        .blog-headline-modern {
-          font-size: 3.5rem;
-          font-weight: 800;
-          letter-spacing: -0.02em;
-          color: var(--text-main);
-          line-height: 1.1;
-          margin-bottom: 24px;
-        }
-
-        .blog-meta-modern {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: var(--text-secondary);
-          font-weight: 500;
-          font-size: 0.95rem;
-          flex-wrap: wrap;
-        }
-
-        .blog-featured-image-wrapper {
-          margin: 48px 0;
-          border-radius: 24px;
-          overflow: hidden;
-          box-shadow: 0 20px 80px -20px rgba(0, 0, 0, 0.15);
-          aspect-ratio: 2 / 1;
-          background: var(--surface-nested);
-          min-height: 200px;
-        }
-
-        .blog-featured-image {
-          width: 100%;
-          max-height: 600px;
-          object-fit: cover;
-        }
-
-        .blog-quote-pill {
-          font-size: 1.4rem;
-          font-weight: 500;
-          font-style: italic;
-          color: var(--enterprise-blue);
-          padding: 32px;
-          background: rgba(0, 102, 255, 0.03);
-          border-left: 4px solid var(--enterprise-blue);
-          border-radius: 0 16px 16px 0;
-          margin-bottom: 48px;
-        }
-
-        .blog-body-article {
-          font-size: 1.25rem;
-          line-height: 1.8;
-          color: var(--text-main);
-          margin-bottom: 64px;
-        }
-
-        .interaction-bar-modern {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding-top: 40px;
-          border-top: 1px solid var(--border-light);
-        }
-
-        .interaction-group {
-          display: flex;
-          gap: 16px;
-        }
-
-        .interact-btn-modern {
-          background: var(--surface-nested);
-          border: none;
-          min-width: 64px;
-          height: 56px;
-          border-radius: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--text-main);
-          gap: 10px;
-          padding: 0 16px;
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .interact-btn-modern .count {
-          min-width: 20px;
-          text-align: center;
-          font-variant-numeric: tabular-nums;
-        }
-
-        .interact-btn-modern:hover {
-          background: var(--surface-nested);
-          filter: brightness(0.95);
-          transform: translateY(-2px);
-        }
-
-        .interact-btn-modern.is-liked {
-          color: #ef4444;
-          background: rgba(239, 68, 68, 0.08);
-        }
-
-        .comment-count-pill {
-          background: var(--enterprise-blue);
-          color: white;
-          padding: 12px 28px;
-          border-radius: 100px;
-          border: none;
-          font-weight: 600;
-          display: flex;
-          align-items: center;
-          transition: all 0.2s ease;
-        }
-
-        /* Discussion Styles */
-        .discussion-section-modern {
-          max-width: 800px;
-          margin: 0 auto;
-        }
-
-        .discussion-header-modern {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 32px;
-        }
-
-        .section-title {
-          font-weight: 800;
-          margin: 0;
-          color: var(--text-main);
-        }
-
-        .discussion-count {
-          background: var(--surface-nested);
-          padding: 4px 12px;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 0.85rem;
-          color: var(--text-secondary);
-        }
-
-        .modern-textarea {
-          border-radius: 20px;
-          border: 1.5px solid var(--border-light);
-          padding: 24px;
-          background: var(--input-bg);
-          color: var(--text-main);
-          width: 100%;
-          font-size: 1.1rem;
-          transition: all 0.2s ease;
-          box-shadow: var(--shadow-soft);
-        }
-
-        .modern-textarea:focus {
-          border-color: var(--enterprise-blue);
-          box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.08);
-          outline: none;
-        }
-
-        .form-actions-overlay {
-          position: absolute;
-          bottom: 12px;
-          right: 12px;
-          display: flex;
-          align-items: center;
-        }
-
-        .btn-pill-primary {
-          background: var(--enterprise-blue);
-          color: white;
-          border: none;
-          padding: 10px 24px;
-          border-radius: 100px;
-          font-weight: 600;
-          display: flex;
-          align-items: center;
-        }
-
-        .btn-pill-secondary {
-          background: none;
-          border: none;
-          color: var(--text-secondary);
-          font-weight: 600;
-        }
-
-        /* Comment Cards */
-        .comment-card-modern {
-          background: var(--surface-main);
-          border-radius: 20px;
-          padding: 24px;
-          box-shadow: var(--shadow-soft);
-          margin-bottom: 16px;
-          transition: transform 0.2s ease;
-        }
-
-        .comment-card-modern.is-admin {
-          background: var(--card-bg-admin);
-          border: 1px solid rgba(0, 102, 255, 0.1);
-        }
-
-        .avatar-circle-modern {
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          background: var(--surface-nested);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 700;
-          color: var(--enterprise-blue);
-        }
-
-        .avatar-admin {
-          background: var(--enterprise-blue);
-          color: white;
-        }
-
-        .author-name-group {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-
-        .author-name {
-          font-weight: 700;
-          color: var(--text-main);
-        }
-
-        .admin-badge-modern {
-          font-size: 0.65rem;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          background: var(--enterprise-blue);
-          color: white;
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-weight: 800;
-          white-space: nowrap;
-        }
-
-        .comment-date {
-          font-size: 0.75rem;
-          color: #a0aec0;
-          display: block;
-        }
-
-        .comment-body-modern {
-          padding: 12px 0;
-          font-size: 1.05rem;
-          line-height: 1.6;
-          color: var(--text-main);
-          opacity: 0.9;
-        }
-
-        .comment-footer-modern {
-          display: flex;
-          gap: 20px;
-          margin-top: 8px;
-        }
-
-        .action-pill {
-          background: none;
-          border: none;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          color: var(--text-secondary);
-          font-size: 0.85rem;
-          font-weight: 600;
-          padding: 6px 12px;
-          border-radius: 8px;
-          transition: all 0.2s ease;
-          min-width: 60px;
-        }
-
-        .action-pill span {
-          min-width: 14px;
-          text-align: left;
-          font-variant-numeric: tabular-nums;
-        }
-
-        .action-pill:hover {
-          color: var(--enterprise-blue);
-        }
-
-        .action-pill.is-liked {
-          color: #ef4444;
-        }
-
-        .comment-thread-node.is-nested {
-          margin-left: 24px;
-          padding-left: 24px;
-          border-left: 2px solid var(--border-light);
-          margin-top: 16px;
-        }
-
-        .loading-viewport {
-          height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: white;
-        }
-
-        .premium-loader {
-          width: 40px;
-          height: 40px;
-          border: 3px solid #f1f5f9;
-          border-top-color: var(--enterprise-blue);
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        @media (max-width: 768px) {
-          .premium-blog-card {
-            padding: 24px;
-            margin-bottom: 32px;
-            border-radius: 20px;
-          }
-          .blog-headline-modern {
-            font-size: 1.8rem;
-          }
-          .blog-featured-image-wrapper {
-            margin: 24px 0;
-            border-radius: 16px;
-          }
-          .blog-quote-pill {
-            font-size: 1.1rem;
-            padding: 20px;
-          }
-          .blog-body-article {
-            font-size: 1.1rem;
-            margin-bottom: 32px;
-          }
-          .interaction-bar-modern {
-            flex-direction: column;
-            gap: 20px;
-            align-items: flex-start;
-          }
-          .interaction-group {
-            width: 100%;
-            justify-content: space-between;
-          }
-          .comment-thread-node.is-nested {
-            margin-left: 10px;
-            padding-left: 10px;
-          }
-          .comment-card-modern {
-            padding: 16px;
-          }
-          .avatar-circle-modern {
-            width: 36px;
-            height: 36px;
-            font-size: 0.9rem;
-          }
-          .blog-details-viewport {
-            padding: 40px 0;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .blog-headline-modern {
-            font-size: 1.5rem;
-            max-width: 100%;
-          }
-          .premium-blog-card {
-            padding: 16px;
-          }
-        }
-      `}</style>
     </div>
   );
 }
