@@ -249,7 +249,10 @@ const CommentItem = memo(
 );
 CommentItem.displayName = "CommentItem";
 
-export default function BlogDetailsClient({ initialBlog }) {
+export default function BlogDetailsClient({
+  initialBlog,
+  initialComments = [],
+}) {
   const { id } = useParams();
   const { user: adminUser } = useSelector((state) => state.auth);
   const isAdmin = adminUser?.role === "admin";
@@ -268,7 +271,10 @@ export default function BlogDetailsClient({ initialBlog }) {
   const [likeComment] = useLikeCommentMutation();
 
   const blog = initialBlog || blogData?.data;
-  const comments = useMemo(() => commentsData?.data || [], [commentsData]);
+  const comments = useMemo(
+    () => commentsData?.data || initialComments,
+    [commentsData, initialComments],
+  );
 
   const [subscriberEmail, setSubscriberEmail] = useState(null);
   const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
@@ -293,11 +299,11 @@ export default function BlogDetailsClient({ initialBlog }) {
   );
 
   const handleLike = useCallback(async () => {
-    const execute = async () => {
+    const execute = async (emailOverride = null) => {
       try {
         await likeBlog({
           id,
-          email: subscriberEmail || adminUser.email,
+          email: emailOverride || subscriberEmail || adminUser?.email,
         }).unwrap();
       } catch (err) {
         console.error("Failed to like:", err);
@@ -348,11 +354,11 @@ export default function BlogDetailsClient({ initialBlog }) {
 
   const handleLikeComment = useCallback(
     async (commentId) => {
-      const execute = async () => {
+      const execute = async (emailOverride = null) => {
         try {
           await likeComment({
             commentId,
-            email: subscriberEmail || adminUser.email,
+            email: emailOverride || subscriberEmail || adminUser?.email,
             blogId: id,
           }).unwrap();
         } catch (err) {
@@ -384,7 +390,7 @@ export default function BlogDetailsClient({ initialBlog }) {
     (email) => {
       setSubscriberEmail(email);
       if (pendingAction) {
-        pendingAction();
+        pendingAction(email);
         setPendingAction(null);
       }
     },
@@ -488,8 +494,8 @@ export default function BlogDetailsClient({ initialBlog }) {
     <div className="blog-details-viewport">
       <div className="container">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           className="premium-blog-card"
         >
           <header className="blog-detail-header">
@@ -790,6 +796,9 @@ export default function BlogDetailsClient({ initialBlog }) {
           border-radius: 24px;
           overflow: hidden;
           box-shadow: 0 20px 80px -20px rgba(0, 0, 0, 0.15);
+          aspect-ratio: 2 / 1;
+          background: var(--surface-nested);
+          min-height: 200px;
         }
 
         .blog-featured-image {

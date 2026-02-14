@@ -1,34 +1,34 @@
 import BlogDetailsClient from "./BlogDetailsClient";
 
-// Server Component (no 'use client')
-async function getBlog(id) {
+async function getBlogData(id) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blogs/${id}`, {
-      cache: "no-store", // Ensure fresh data for dynamic blogs
-    });
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    const [blogRes, commentsRes] = await Promise.all([
+      fetch(`${baseUrl}/blogs/${id}`, { cache: "no-store" }),
+      fetch(`${baseUrl}/blogs/${id}/comments`, { cache: "no-store" }),
+    ]);
 
-    if (!res.ok) {
-      return null;
-    }
+    const blogData = blogRes.ok ? await blogRes.json() : null;
+    const commentsData = commentsRes.ok ? await commentsRes.json() : null;
 
-    const data = await res.json();
-    return data;
+    return {
+      blog: blogData?.data || null,
+      comments: commentsData?.data || [],
+    };
   } catch (error) {
-    console.error("Failed to fetch blog:", error);
-    return null;
+    console.error("Failed to fetch blog data on the server:", error);
+    return { blog: null, comments: [] };
   }
 }
 
 export async function generateMetadata({ params }) {
-  const blogData = await getBlog(params.id);
+  const { blog } = await getBlogData(params.id);
 
-  if (!blogData || !blogData.data) {
+  if (!blog) {
     return {
       title: "Blog Not Found | Nitish Kumar",
     };
   }
-
-  const blog = blogData.data;
 
   return {
     title: `${blog.title} | Nitish Kumar`,
@@ -43,8 +43,7 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function BlogDetailsPage({ params }) {
-  // Fetch data on the server
-  const blogData = await getBlog(params.id);
+  const { blog, comments } = await getBlogData(params.id);
 
-  return <BlogDetailsClient initialBlog={blogData?.data} />;
+  return <BlogDetailsClient initialBlog={blog} initialComments={comments} />;
 }

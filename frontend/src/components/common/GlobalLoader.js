@@ -11,13 +11,13 @@ const GlobalLoader = () => {
     if (document.readyState === "complete") {
       const timer = setTimeout(() => {
         setIsLoading(false);
-      }, 1500); // 1.5s delay to show the loader
+      }, 300); // Reduced delay for better performance
       return () => clearTimeout(timer);
     } else {
       const handleLoad = () => {
         setTimeout(() => {
           setIsLoading(false);
-        }, 1500);
+        }, 300);
       };
 
       window.addEventListener("load", handleLoad);
