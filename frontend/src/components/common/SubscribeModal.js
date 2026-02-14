@@ -11,6 +11,7 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isReturningUser, setIsReturningUser] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,6 +27,7 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
 
         setIsReturningUser(isReturning);
         setDisplayName(finalName);
+        setSuccessMessage(result.message);
         setIsSuccess(true);
 
         setTimeout(() => {
@@ -35,6 +37,7 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
             setIsSuccess(false);
             setIsReturningUser(false);
             setEmail("");
+            setSuccessMessage("");
           }, 500);
         }, 2000);
       }
@@ -72,7 +75,7 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
                     ? `Good to see you again, ${displayName}. Restoring your session...`
                     : isReturningUser
                       ? "Welcome back! Restoring your session..."
-                      : result.message ||
+                      : successMessage ||
                         "You're now subscribed. Check your email to verify!"}
                 </p>
               </div>
