@@ -24,6 +24,7 @@ import {
   IoCopyOutline,
 } from "react-icons/io5";
 import SubscribeModal from "@/components/common/SubscribeModal";
+import Toast from "@/components/common/Toast";
 import Prism from "prismjs/components/prism-core";
 import "prismjs/themes/prism-tomorrow.css";
 
@@ -61,6 +62,12 @@ const CommentForm = memo(
         if (onCancel) onCancel();
       } catch (err) {
         console.error("Failed to comment:", err);
+        if (err.status === 403 && err.data?.message) {
+          // Show toast via parent component
+          if (window.showToast) {
+            window.showToast(err.data.message, "error");
+          }
+        }
       }
     };
 
@@ -260,10 +267,19 @@ export default function BlogDetailsPage() {
   const [subscriberEmail, setSubscriberEmail] = useState(null);
   const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     const email = localStorage.getItem("blogSubscriberEmail");
     if (email) setSubscriberEmail(email);
+  }, []);
+
+  // Expose showToast for CommentForm
+  useEffect(() => {
+    window.showToast = (message, type) => setToast({ message, type });
+    return () => {
+      delete window.showToast;
+    };
   }, []);
 
   const checkSubscription = useCallback(
@@ -288,6 +304,9 @@ export default function BlogDetailsPage() {
         }).unwrap();
       } catch (err) {
         console.error("Failed to like:", err);
+        if (err.status === 403 && err.data?.message) {
+          setToast({ message: err.data.message, type: "error" });
+        }
       }
     };
 
@@ -330,7 +349,9 @@ export default function BlogDetailsPage() {
           }).unwrap();
         } catch (err) {
           console.error("Failed to like comment:", err);
-          if (err.data) console.error("Error details:", err.data);
+          if (err.status === 403 && err.data?.message) {
+            setToast({ message: err.data.message, type: "error" });
+          }
         }
       };
 
@@ -591,6 +612,14 @@ export default function BlogDetailsPage() {
         onClose={() => setIsSubscribeModalOpen(false)}
         onSuccess={onSubscribeSuccess}
       />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
 
       <style jsx global>{`
         pre {

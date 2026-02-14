@@ -72,7 +72,8 @@ export default function SubscribeModal({ isOpen, onClose, onSuccess }) {
                     ? `Good to see you again, ${displayName}. Restoring your session...`
                     : isReturningUser
                       ? "Welcome back! Restoring your session..."
-                      : "You're now subscribed. Unlocking your interaction..."}
+                      : result.message ||
+                        "You're now subscribed. Check your email to verify!"}
                 </p>
               </div>
             ) : (
