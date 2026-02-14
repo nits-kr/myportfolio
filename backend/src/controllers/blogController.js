@@ -273,10 +273,10 @@ export const addComment = async (req, res, next) => {
     // Check if it's an admin reply (protect/authorize middleware might have set req.user)
     const isAdminReply = req.user && req.user.role === "admin";
 
-    if (!isAdminReply && (!name || !email)) {
+    if (!isAdminReply && !email) {
       return res.status(400).json({
         success: false,
-        message: "Name and email are required (from BlogController)",
+        message: "Email is required",
       });
     }
 
@@ -300,7 +300,9 @@ export const addComment = async (req, res, next) => {
 
     const comment = await Comment.create({
       blogId,
-      name: isAdminReply ? req.user.name : name,
+      name: isAdminReply
+        ? req.user.name
+        : name || email.charAt(0).toUpperCase(),
       email: isAdminReply ? req.user.email : email,
       body,
       parentId: parentId || null,

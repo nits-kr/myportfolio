@@ -8,8 +8,10 @@ const commentSchema = new mongoose.Schema({
   },
   name: {
     type: String,
-    required: [true, "Please add a name"],
     trim: true,
+    default: function () {
+      return this.email ? this.email.charAt(0).toUpperCase() : "U";
+    },
   },
   email: {
     type: String,

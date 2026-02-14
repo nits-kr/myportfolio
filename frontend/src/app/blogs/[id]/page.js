@@ -51,9 +51,6 @@ const CommentForm = memo(
       try {
         await addComment({
           id: blogId,
-          name: isAdmin
-            ? adminUser.name
-            : localStorage.getItem("blogSubscriberName"),
           email: isAdmin ? adminUser.email : subscriberEmail,
           body,
           parentId,
