@@ -78,9 +78,9 @@ const interviewSessionSchema = new mongoose.Schema({
 });
 
 // Update timestamp on save
-interviewSessionSchema.pre("save", function (next) {
+// Update timestamp on save
+interviewSessionSchema.pre("save", async function () {
   this.updatedAt = Date.now();
-  next();
 });
 
 // Index for faster queries
