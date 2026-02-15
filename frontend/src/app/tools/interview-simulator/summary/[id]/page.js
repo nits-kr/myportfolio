@@ -24,15 +24,6 @@ export default function SessionSummaryPage({ params }) {
 
   const sessionId = params.id;
 
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    fetchSessionDetails();
-  }, [sessionId, user, router, fetchSessionDetails]);
-
   const fetchSessionDetails = useCallback(async () => {
     try {
       // 1. Get Session Data (includes metrics & overall score)
@@ -60,6 +51,15 @@ export default function SessionSummaryPage({ params }) {
       setIsLoading(false);
     }
   }, [sessionId, user]);
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    fetchSessionDetails();
+  }, [sessionId, user, router, fetchSessionDetails]);
 
   if (isLoading) {
     return (

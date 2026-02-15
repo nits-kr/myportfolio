@@ -38,15 +38,6 @@ export default function DashboardPage() {
   const [analytics, setAnalytics] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    fetchData();
-  }, [user, router, fetchData]);
-
   const fetchData = useCallback(async () => {
     try {
       const [sessionsRes, analyticsRes] = await Promise.all([
@@ -72,6 +63,15 @@ export default function DashboardPage() {
       setIsLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    fetchData();
+  }, [user, router, fetchData]);
 
   if (isLoading) {
     return (

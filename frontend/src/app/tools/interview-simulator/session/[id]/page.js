@@ -23,31 +23,6 @@ export default function InterviewSessionPage({ params }) {
 
   const sessionId = params.id;
 
-  // Fetch session and messages
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    fetchSession();
-    fetchMessages();
-
-    // Start timer
-    timerRef.current = setInterval(() => {
-      setElapsedTime((prev) => prev + 1);
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [sessionId, user, router, fetchSession, fetchMessages]);
-
-  // Auto-scroll to bottom
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
   const fetchSession = useCallback(async () => {
     try {
       const response = await fetch(
@@ -81,6 +56,31 @@ export default function InterviewSessionPage({ params }) {
       console.error("Fetch messages error:", error);
     }
   }, [sessionId, user]);
+
+  // Fetch session and messages
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    fetchSession();
+    fetchMessages();
+
+    // Start timer
+    timerRef.current = setInterval(() => {
+      setElapsedTime((prev) => prev + 1);
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [sessionId, user, router, fetchSession, fetchMessages]);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
