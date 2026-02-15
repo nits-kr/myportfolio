@@ -104,7 +104,7 @@ export default function StartInterviewPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`,
+            Authorization: `Bearer ${user.token || localStorage.getItem("token")}`,
           },
           body: JSON.stringify(payload),
         },

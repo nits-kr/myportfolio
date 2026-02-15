@@ -30,7 +30,9 @@ export default function SessionSummaryPage({ params }) {
       const sessionRes = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions/${sessionId}`,
         {
-          headers: { Authorization: `Bearer ${user.token}` },
+          headers: {
+            Authorization: `Bearer ${user.token || localStorage.getItem("token")}`,
+          },
         },
       );
       const sessionData = await sessionRes.json();

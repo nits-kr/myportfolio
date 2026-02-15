@@ -28,7 +28,9 @@ export default function InterviewSessionPage({ params }) {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions/${sessionId}`,
         {
-          headers: { Authorization: `Bearer ${user.token}` },
+          headers: {
+            Authorization: `Bearer ${user.token || localStorage.getItem("token")}`,
+          },
         },
       );
       const data = await response.json();
@@ -45,7 +47,9 @@ export default function InterviewSessionPage({ params }) {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions/${sessionId}/messages`,
         {
-          headers: { Authorization: `Bearer ${user.token}` },
+          headers: {
+            Authorization: `Bearer ${user.token || localStorage.getItem("token")}`,
+          },
         },
       );
       const data = await response.json();
@@ -97,7 +101,7 @@ export default function InterviewSessionPage({ params }) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`,
+            Authorization: `Bearer ${user.token || localStorage.getItem("token")}`,
           },
           body: JSON.stringify({ content: messageContent }),
         },
@@ -127,7 +131,9 @@ export default function InterviewSessionPage({ params }) {
         `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions/${sessionId}/end`,
         {
           method: "PATCH",
-          headers: { Authorization: `Bearer ${user.token}` },
+          headers: {
+            Authorization: `Bearer ${user.token || localStorage.getItem("token")}`,
+          },
         },
       );
 

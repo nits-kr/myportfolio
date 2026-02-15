@@ -44,11 +44,15 @@ export default function DashboardPage() {
         fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions?limit=10`,
           {
-            headers: { Authorization: `Bearer ${user.token}` },
+            headers: {
+              Authorization: `Bearer ${user.token || localStorage.getItem("token")}`,
+            },
           },
         ),
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/interview/analytics`, {
-          headers: { Authorization: `Bearer ${user.token}` },
+          headers: {
+            Authorization: `Bearer ${user.token || localStorage.getItem("token")}`,
+          },
         }),
       ]);
 
