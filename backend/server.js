@@ -79,6 +79,11 @@ if (!allowedOrigins.includes("http://localhost:3000")) {
   allowedOrigins.push("http://localhost:3000");
 }
 
+// Add Vercel deployment URL
+if (!allowedOrigins.includes("https://nitishportfolio-sigma.vercel.app")) {
+  allowedOrigins.push("https://nitishportfolio-sigma.vercel.app");
+}
+
 app.use(
   cors({
     origin: function (origin, callback) {
