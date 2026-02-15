@@ -1,0 +1,7 @@
+Error Message: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.
+Error Stack: Error: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.
+    at APIError.generate (file:///D:/myPortfolio/MyPortfolio/myportfolio/backend/node_modules/openai/error.mjs:59:20)
+    at OpenAI.makeStatusError (file:///D:/myPortfolio/MyPortfolio/myportfolio/backend/node_modules/openai/core.mjs:295:25)
+    at OpenAI.makeRequest (file:///D:/myPortfolio/MyPortfolio/myportfolio/backend/node_modules/openai/core.mjs:339:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async testOpenAI (file:///D:/myPortfolio/MyPortfolio/myportfolio/backend/test_openai_connection.js:19:24)
