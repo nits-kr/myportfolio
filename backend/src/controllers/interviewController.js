@@ -61,8 +61,9 @@ export const createSession = async (req, res) => {
     });
   } catch (error) {
     console.error("Create session error:", error);
-    console.error(error.stack);
-    res.status(500).json({ success: false, error: error.message });
+    res
+      .status(500)
+      .json({ success: false, error: error.message, stack: error.stack });
   }
 };
 
