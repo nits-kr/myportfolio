@@ -42,12 +42,12 @@ export default function DashboardPage() {
     try {
       const [sessionsRes, analyticsRes] = await Promise.all([
         fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/interview/sessions?limit=10`,
+          `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions?limit=10`,
           {
             headers: { Authorization: `Bearer ${user.token}` },
           },
         ),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interview/analytics`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/interview/analytics`, {
           headers: { Authorization: `Bearer ${user.token}` },
         }),
       ]);

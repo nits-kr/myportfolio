@@ -26,7 +26,7 @@ export default function InterviewSessionPage({ params }) {
   const fetchSession = useCallback(async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/interview/sessions/${sessionId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions/${sessionId}`,
         {
           headers: { Authorization: `Bearer ${user.token}` },
         },
@@ -43,7 +43,7 @@ export default function InterviewSessionPage({ params }) {
   const fetchMessages = useCallback(async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/interview/sessions/${sessionId}/messages`,
+        `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions/${sessionId}/messages`,
         {
           headers: { Authorization: `Bearer ${user.token}` },
         },
@@ -92,7 +92,7 @@ export default function InterviewSessionPage({ params }) {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/interview/sessions/${sessionId}/messages`,
+        `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions/${sessionId}/messages`,
         {
           method: "POST",
           headers: {
@@ -124,7 +124,7 @@ export default function InterviewSessionPage({ params }) {
     setIsEnding(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/interview/sessions/${sessionId}/end`,
+        `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions/${sessionId}/end`,
         {
           method: "PATCH",
           headers: { Authorization: `Bearer ${user.token}` },

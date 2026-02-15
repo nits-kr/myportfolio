@@ -99,7 +99,7 @@ export default function StartInterviewPage() {
       };
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/interview/sessions`,
+        `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions`,
         {
           method: "POST",
           headers: {

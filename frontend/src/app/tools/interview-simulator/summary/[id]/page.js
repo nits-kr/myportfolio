@@ -28,7 +28,7 @@ export default function SessionSummaryPage({ params }) {
     try {
       // 1. Get Session Data (includes metrics & overall score)
       const sessionRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/interview/sessions/${sessionId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions/${sessionId}`,
         {
           headers: { Authorization: `Bearer ${user.token}` },
         },
