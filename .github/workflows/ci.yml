@@ -35,6 +35,6 @@ jobs:
           cache: "npm"
           cache-dependency-path: backend/package-lock.json
       - name: Install dependencies
-        run: cd backend && npm ci
+        run: cd backend && npm install --legacy-peer-deps
       # - name: Test (Uncomment when tests are added)
       #   run: cd backend && npm test
