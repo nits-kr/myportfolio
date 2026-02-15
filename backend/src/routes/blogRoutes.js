@@ -22,7 +22,7 @@ const router = express.Router();
 
 router.route("/").get(getBlogs).post(protect, authorize("admin"), createBlog);
 
-router.route("/comments/:commentId/like").post(likeComment);
+router.route("/comments/:commentId/like").post(optionalProtect, likeComment);
 
 router
   .route("/:id")
@@ -30,7 +30,7 @@ router
   .put(protect, authorize("admin"), updateBlog)
   .delete(protect, authorize("admin"), deleteBlog);
 
-router.route("/:id/like").post(likeBlog);
+router.route("/:id/like").post(optionalProtect, likeBlog);
 
 router
   .route("/:id/comments")

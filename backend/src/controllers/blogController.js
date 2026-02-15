@@ -234,14 +234,17 @@ export const likeBlog = async (req, res, next) => {
         .json({ success: false, message: "Email is required" });
     }
 
-    // Check if user is verified
-    const subscriber = await Subscriber.findOne({ email });
-    if (!subscriber || !subscriber.isVerified) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Please verify your email before liking. Check your inbox for the verification link.",
-      });
+    // Check if user is verified (skip for admin)
+    const isAdmin = req.user && req.user.role === "admin";
+    if (!isAdmin) {
+      const subscriber = await Subscriber.findOne({ email });
+      if (!subscriber || !subscriber.isVerified) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Please verify your email before liking. Check your inbox for the verification link.",
+        });
+      }
     }
 
     const blog = await Blog.findById(req.params.id);
@@ -343,14 +346,17 @@ export const likeComment = async (req, res, next) => {
         .json({ success: false, message: "Email is required" });
     }
 
-    // Check if user is verified
-    const subscriber = await Subscriber.findOne({ email });
-    if (!subscriber || !subscriber.isVerified) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Please verify your email before liking. Check your inbox for the verification link.",
-      });
+    // Check if user is verified (skip for admin)
+    const isAdmin = req.user && req.user.role === "admin";
+    if (!isAdmin) {
+      const subscriber = await Subscriber.findOne({ email });
+      if (!subscriber || !subscriber.isVerified) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Please verify your email before liking. Check your inbox for the verification link.",
+        });
+      }
     }
 
     const comment = await Comment.findById(req.params.commentId);

@@ -121,9 +121,12 @@ function DashboardContent() {
     skip: !targetId || tab !== "projects",
   });
 
-  const { data: blogToEditData } = useGetBlogQuery(targetId, {
-    skip: !targetId || tab !== "blogs",
-  });
+  const { data: blogToEditData } = useGetBlogQuery(
+    { id: targetId, viewerEmail: user?.email },
+    {
+      skip: !targetId || tab !== "blogs",
+    },
+  );
 
   useEffect(() => {
     if (targetId && projectToEditData?.data) {

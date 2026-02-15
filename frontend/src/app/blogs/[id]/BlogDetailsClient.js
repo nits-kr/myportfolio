@@ -275,10 +275,16 @@ export default function BlogDetailsClient({
     data: blogData,
     error,
     isLoading,
-  } = useGetBlogQuery(id, {
-    skip: !shouldFetch,
+  } = useGetBlogQuery(
+    { id, viewerEmail: subscriberEmail || adminUser?.email },
+    {
+      skip: !shouldFetch,
+    },
+  );
+  const { data: commentsData } = useGetCommentsQuery({
+    id,
+    viewerEmail: subscriberEmail || adminUser?.email,
   });
-  const { data: commentsData } = useGetCommentsQuery(id);
   const [likeBlog, { isLoading: isLikingBlog }] = useLikeBlogMutation();
   const [addComment] = useAddCommentMutation();
   const [likeComment] = useLikeCommentMutation();

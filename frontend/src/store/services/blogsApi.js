@@ -7,17 +7,22 @@ export const blogsApi = apiSlice.injectEndpoints({
       providesTags: ["Blog"],
     }),
     getBlog: builder.query({
-      query: (id) => {
+      query: (arg) => {
+        const id = typeof arg === "string" ? arg : arg.id;
+        const viewerEmail = typeof arg === "object" ? arg.viewerEmail : null;
         const email =
-          typeof window !== "undefined"
+          viewerEmail ||
+          (typeof window !== "undefined"
             ? localStorage.getItem("blogSubscriberEmail")
-            : null;
+            : null);
         return {
           url: `/blogs/${id}`,
           params: email ? { viewerEmail: email } : {},
         };
       },
-      providesTags: (result, error, id) => [{ type: "Blog", id }],
+      providesTags: (result, error, arg) => [
+        { type: "Blog", id: typeof arg === "string" ? arg : arg.id },
+      ],
     }),
     addBlog: builder.mutation({
       query: (blog) => ({
@@ -72,17 +77,22 @@ export const blogsApi = apiSlice.injectEndpoints({
       invalidatesTags: (result, error, { id }) => [{ type: "Blog", id }],
     }),
     getComments: builder.query({
-      query: (id) => {
+      query: (arg) => {
+        const id = typeof arg === "string" ? arg : arg.id;
+        const viewerEmail = typeof arg === "object" ? arg.viewerEmail : null;
         const email =
-          typeof window !== "undefined"
+          viewerEmail ||
+          (typeof window !== "undefined"
             ? localStorage.getItem("blogSubscriberEmail")
-            : null;
+            : null);
         return {
           url: `/blogs/${id}/comments`,
           params: email ? { viewerEmail: email } : {},
         };
       },
-      providesTags: (result, error, id) => [{ type: "Comment", id }],
+      providesTags: (result, error, arg) => [
+        { type: "Comment", id: typeof arg === "string" ? arg : arg.id },
+      ],
     }),
     addComment: builder.mutation({
       query: ({ id, ...comment }) => ({
