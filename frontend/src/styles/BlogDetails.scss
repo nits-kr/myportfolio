@@ -1,3 +1,4 @@
+@use "sass:math";
 @import "./variables";
 
 .blog-details-viewport {
@@ -388,8 +389,7 @@ code {
   --surface-nested: #f3f4f9;
   --viewport-bg: #fbfbfc;
   --shadow-soft:
-    0 4px 24px -1px rgba(0, 0, 0, 0.04),
-    0 2px 8px -1px rgba(0, 0, 0, 0.02);
+    0 4px 24px -1px rgba(0, 0, 0, 0.04), 0 2px 8px -1px rgba(0, 0, 0, 0.02);
   --shadow-premium: 0 12px 48px -12px rgba(0, 0, 0, 0.08);
   --border-light: rgba(0, 0, 0, 0.06);
   --input-bg: #ffffff;
@@ -403,8 +403,7 @@ code {
   --surface-nested: #1f2937;
   --viewport-bg: #0a0a0b;
   --shadow-soft:
-    0 4px 24px -1px rgba(0, 0, 0, 0.2),
-    0 2px 8px -1px rgba(0, 0, 0, 0.1);
+    0 4px 24px -1px rgba(0, 0, 0, 0.2), 0 2px 8px -1px rgba(0, 0, 0, 0.1);
   --shadow-premium: 0 12px 48px -12px rgba(0, 0, 0, 0.3);
   --border-light: rgba(255, 255, 255, 0.08);
   --input-bg: #1f2937;
@@ -489,7 +488,7 @@ code {
     background: currentColor;
     left: 44%;
     top: 50%;
-    transform-origin: center -0.25em; 
+    transform-origin: center -0.25em;
     border-radius: 0.125em;
     animation: ios-spinner-fade 1s linear infinite;
     opacity: 0;
@@ -497,19 +496,23 @@ code {
 
   @for $i from 1 through 12 {
     div:nth-child(#{$i}) {
-      transform: rotate(#{($i - 1) * 30}deg) translateY(0.25em);
-      animation-delay: -#{1 - (1 / 12 * ($i - 1))}s;
+      animation-delay: -#{1 - (math.div(1, 12) * ($i - 1))}s;
     }
   }
 }
 
 @keyframes ios-spinner-fade {
-  0% { opacity: 1; }
-  100% { opacity: 0.1; }
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.1;
+  }
 }
 
 // Stable Interaction Containers
-.interact-btn-modern, .action-pill {
+.interact-btn-modern,
+.action-pill {
   .icon-wrapper {
     position: relative;
     display: inline-flex;
@@ -517,11 +520,13 @@ code {
     justify-content: center;
     width: 1.5em; // Stable width for the icon area
     height: 1.5em;
-    
+
     svg {
-      transition: opacity 0.2s ease, transform 0.2s ease;
+      transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
     }
-    
+
     .ios-spinner {
       position: absolute;
       left: 50%;
@@ -529,7 +534,7 @@ code {
       transform: translate(-50%, -50%);
     }
   }
-  
+
   &.is-loading {
     .icon-wrapper svg {
       opacity: 0;
