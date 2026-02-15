@@ -94,7 +94,6 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* Stats Cards */}
       <div className="row g-4 mb-5">
         <div className="col-md-4">
           <div className="glass-card p-4">
