@@ -146,7 +146,7 @@ export default function ServicesPage() {
               </div>
 
               <div className="border-top border-white border-opacity-10 pt-4 mb-4">
-                <h5 className="h6 fw-bold mb-3">What's Included:</h5>
+                <h5 className="h6 fw-bold mb-3">What&apos;s Included:</h5>
                 <ul className="list-unstyled">
                   {service.features.map((feature, idx) => (
                     <li
@@ -193,8 +193,8 @@ export default function ServicesPage() {
           className="text-muted mb-4"
           style={{ maxWidth: "600px", margin: "0 auto" }}
         >
-          Every project is unique. Let's discuss your specific requirements and
-          create a tailored solution that perfectly fits your needs.
+          Every project is unique. Let&apos;s discuss your specific requirements
+          and create a tailored solution that perfectly fits your needs.
         </p>
         <Link
           href="/contact"

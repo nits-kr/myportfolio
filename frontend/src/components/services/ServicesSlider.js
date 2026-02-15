@@ -190,7 +190,7 @@ export default function ServicesSlider({ services }) {
 
                   <div className="border-top border-white border-opacity-10 pt-4 mb-4">
                     <h5 className="h6 fw-bold mb-3 text-start">
-                      What's Included:
+                      What&apos;s Included:
                     </h5>
                     <ul className="list-unstyled text-start">
                       {service.features.map((feature, fIdx) => (

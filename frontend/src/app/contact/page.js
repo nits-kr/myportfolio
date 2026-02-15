@@ -107,10 +107,12 @@ export default function ContactPage() {
               Get In Touch
             </span>
             <h1 className="display-4 fw-bold mb-4">
-              Let's Discuss Your <span className="text-primary">Project</span>
+              Let&apos;s Discuss Your{" "}
+              <span className="text-primary">Project</span>
             </h1>
             <p className="lead text-muted">
-              Fill out the form below and I'll get back to you within 24 hours.
+              Fill out the form below and I&apos;ll get back to you within 24
+              hours.
             </p>
           </motion.div>
 
@@ -280,8 +282,8 @@ export default function ContactPage() {
                   <div className="col-12">
                     <div className="alert alert-success d-flex align-items-center gap-2 mb-0">
                       <FiMessageSquare />
-                      Thank you! I'll review your inquiry and get back to you
-                      within 24 hours.
+                      Thank you! I&apos;ll review your inquiry and get back to
+                      you within 24 hours.
                     </div>
                   </div>
                 )}

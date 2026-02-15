@@ -115,7 +115,7 @@ export default function SessionSummaryPage({ params }) {
         </div>
         <h1 className="h2 fw-bold mb-2">Interview Completed!</h1>
         <p className="text-muted">
-          Here's how you performed in your{" "}
+          Here&apos;s how you performed in your{" "}
           <span className="text-primary fw-bold text-capitalize">
             {session.role === "custom" && session.customData?.title
               ? session.customData.title
