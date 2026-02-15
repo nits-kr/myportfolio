@@ -1,4 +1,7 @@
-// ... imports
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { motion } from "framer-motion";
 import {
   FiCode,
   FiDatabase,
@@ -8,7 +11,46 @@ import {
   FiX,
 } from "react-icons/fi";
 
-// ... existing roles
+const interviewRoles = [
+  {
+    id: "frontend",
+    title: "Frontend Developer",
+    icon: <FiCode size={48} />,
+    color: "rgba(124, 58, 237, 0.1)",
+    gradient:
+      "linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)",
+    topics: ["React", "Next.js", "State Management", "Performance"],
+  },
+  {
+    id: "backend",
+    title: "Backend Developer",
+    icon: <FiDatabase size={48} />,
+    color: "rgba(59, 130, 246, 0.1)",
+    gradient:
+      "linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)",
+    topics: ["Node.js", "Express", "Databases", "System Design"],
+  },
+  {
+    id: "hr",
+    title: "HR / Behavioral",
+    icon: <FiUsers size={48} />,
+    color: "rgba(16, 185, 129, 0.1)",
+    gradient:
+      "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%)",
+    topics: [
+      "Communication",
+      "Leadership",
+      "Conflict Resolution",
+      "Culture Fit",
+    ],
+  },
+];
+
+const difficultyLevels = [
+  { id: "junior", label: "Junior", description: "Entry-level focus" },
+  { id: "mid", label: "Mid-Level", description: "Growth & complexity" },
+  { id: "senior", label: "Senior", description: "Architecture & impact" },
+];
 
 export default function StartInterviewPage() {
   const router = useRouter();

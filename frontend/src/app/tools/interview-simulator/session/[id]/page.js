@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiSend, FiClock, FiX, FiCheck, FiTrendingUp } from "react-icons/fi";
@@ -41,14 +41,14 @@ export default function InterviewSessionPage({ params }) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [sessionId, user]);
+  }, [sessionId, user, router, fetchSession, fetchMessages]);
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const fetchSession = async () => {
+  const fetchSession = useCallback(async () => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/interview/sessions/${sessionId}`,
@@ -63,9 +63,9 @@ export default function InterviewSessionPage({ params }) {
     } catch (error) {
       console.error("Fetch session error:", error);
     }
-  };
+  }, [sessionId, user]);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/interview/sessions/${sessionId}/messages`,
@@ -80,7 +80,7 @@ export default function InterviewSessionPage({ params }) {
     } catch (error) {
       console.error("Fetch messages error:", error);
     }
-  };
+  }, [sessionId, user]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();

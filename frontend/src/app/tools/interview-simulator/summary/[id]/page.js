@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -31,9 +31,9 @@ export default function SessionSummaryPage({ params }) {
     }
 
     fetchSessionDetails();
-  }, [sessionId, user]);
+  }, [sessionId, user, router, fetchSessionDetails]);
 
-  const fetchSessionDetails = async () => {
+  const fetchSessionDetails = useCallback(async () => {
     try {
       // 1. Get Session Data (includes metrics & overall score)
       const sessionRes = await fetch(
@@ -59,7 +59,7 @@ export default function SessionSummaryPage({ params }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [sessionId, user]);
 
   if (isLoading) {
     return (

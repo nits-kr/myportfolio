@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -45,9 +45,9 @@ export default function DashboardPage() {
     }
 
     fetchData();
-  }, [user]);
+  }, [user, router, fetchData]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [sessionsRes, analyticsRes] = await Promise.all([
         fetch(
@@ -71,7 +71,7 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   if (isLoading) {
     return (

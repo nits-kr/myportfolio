@@ -340,7 +340,7 @@ export default function ToolsPage() {
           style={{ maxWidth: "600px", margin: "0 auto" }}
         >
           I can build custom tools tailored to your specific needs. From data
-          processing to automation, let's discuss your requirements.
+          processing to automation, let&apos;s discuss your requirements.
         </p>
         <Link
           href="/contact?service=custom&message=I need a custom tool for..."
