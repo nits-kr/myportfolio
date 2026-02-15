@@ -27,7 +27,9 @@ export default function Navbar() {
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
     { name: "Services", path: "/services" },
-    ...(role === "admin" ? [{ name: "Tools", path: "/tools" }] : []),
+    ...(isMounted && role === "admin"
+      ? [{ name: "Tools", path: "/tools" }]
+      : []),
     { name: "Projects", path: "/projects" },
     { name: "Blogs", path: "/blogs" },
     { name: "Contact", path: "/contact" },

@@ -1137,7 +1137,9 @@ export default function DashboardPage() {
   return (
     <Suspense
       fallback={
-        <div className="container py-5 text-center">Loading dashboard...</div>
+        <div className="container py-5 text-center">
+          <p>Loading dashboard...</p>
+        </div>
       }
     >
       <DashboardContent />

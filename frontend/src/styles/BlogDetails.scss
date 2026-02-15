@@ -496,6 +496,7 @@ code {
 
   @for $i from 1 through 12 {
     div:nth-child(#{$i}) {
+      transform: translate(-50%, -50%) rotate(#{($i - 1) * 30}deg);
       animation-delay: -#{1 - (math.div(1, 12) * ($i - 1))}s;
     }
   }

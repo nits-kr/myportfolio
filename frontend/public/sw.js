@@ -36,6 +36,10 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
 
+  // Only handle http and https requests
+  // This prevents errors with chrome-extension:// and other unsupported schemes
+  if (url.protocol !== "http:" && url.protocol !== "https:") return;
+
   // EXCLUDE API requests from Service Worker caching
   // This ensures Redux/Dexie handling takes precedence and data is fresh
   if (url.pathname.startsWith("/api/")) {

@@ -272,6 +272,15 @@ export default function BlogDetailsClient({
   const { user: adminUser } = useSelector((state) => state.auth);
   const isAdmin = adminUser?.role === "admin";
 
+  const [subscriberEmail, setSubscriberEmail] = useState(null);
+  const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+
+  useEffect(() => {
+    const email = localStorage.getItem("blogSubscriberEmail");
+    if (email) setSubscriberEmail(email);
+  }, []);
+
   const [shouldFetch, setShouldFetch] = useState(!initialBlog);
   const {
     data: blogData,
@@ -297,15 +306,6 @@ export default function BlogDetailsClient({
     () => commentsData?.data || initialComments,
     [commentsData, initialComments],
   );
-
-  const [subscriberEmail, setSubscriberEmail] = useState(null);
-  const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null);
-
-  useEffect(() => {
-    const email = localStorage.getItem("blogSubscriberEmail");
-    if (email) setSubscriberEmail(email);
-  }, []);
 
   const checkSubscription = useCallback(
     (action) => {

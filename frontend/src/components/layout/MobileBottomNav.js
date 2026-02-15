@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/context/ThemeContext";
@@ -20,11 +21,15 @@ export default function MobileBottomNav() {
   const pathname = usePathname();
   const { theme } = useTheme();
   const { user } = useSelector((state) => state.auth);
-  const scrollDirection = useScrollDirection();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const navItems = [
     { name: "Home", path: "/", icon: <FaHome size={20} /> },
-    ...(user?.role === "admin"
+    ...(isMounted && user?.role === "admin"
       ? [{ name: "Tools", path: "/tools", icon: <FaTools size={20} /> }]
       : [{ name: "About", path: "/about", icon: <FaUser size={20} /> }]),
     {

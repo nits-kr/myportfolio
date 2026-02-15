@@ -24,8 +24,6 @@ const LogoLoader = () => {
     }
   }, []);
 
-  if (!isLoading) return null;
-
   return (
     <div
       style={{
@@ -39,7 +37,10 @@ const LogoLoader = () => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        transition: "opacity 0.5s ease-out",
+        transition: "opacity 0.5s ease-out, visibility 0.5s",
+        opacity: isLoading ? 1 : 0,
+        visibility: isLoading ? "visible" : "hidden",
+        pointerEvents: isLoading ? "all" : "none",
       }}
     >
       <div className="logo-loader-container">

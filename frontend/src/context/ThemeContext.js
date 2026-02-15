@@ -27,10 +27,6 @@ export function ThemeProvider({ children }) {
     document.documentElement.setAttribute("data-bs-theme", newTheme);
   };
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}
