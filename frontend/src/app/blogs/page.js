@@ -1,10 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
+import { useTheme } from "@/context/ThemeContext";
 import {
   useGetBlogsQuery,
   useUpdateBlogDeleteStatusMutation,
@@ -21,10 +22,10 @@ import {
 } from "react-icons/fi";
 
 export default function BlogsPage() {
-  const { user } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { data: blogsData, error, isLoading } = useGetBlogsQuery();
   const [deleteBlog] = useUpdateBlogDeleteStatusMutation();
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { theme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
 
@@ -178,7 +179,18 @@ export default function BlogsPage() {
                       className="btn btn-glass btn-icon-round"
                       title="Read More"
                     >
-                      <FiEye size={18} />
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={theme}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="d-flex align-items-center justify-content-center w-100 h-100"
+                        >
+                          <FiEye size={18} />
+                        </motion.div>
+                      </AnimatePresence>
                     </button>
                     {role === "admin" && (
                       <>

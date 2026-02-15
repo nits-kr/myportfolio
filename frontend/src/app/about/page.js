@@ -89,11 +89,7 @@ export default function AboutPage() {
                             {skills.map((tech, idx) => (
                               <span
                                 key={idx}
-                                className="badge bg-dark-subtle border border-secondary-subtle text-light py-2 px-3 fw-normal"
-                                style={{
-                                  borderRadius: "8px",
-                                  fontSize: "0.85rem",
-                                }}
+                                className="badge bg-dark-subtles border border-secondary-subtle text-light py-2 px-3 fw-normal"
                               >
                                 {tech}
                               </span>
@@ -156,10 +152,7 @@ export default function AboutPage() {
               >
                 <h3 className="h4 fw-bold mb-4">Key Achievements</h3>
                 <div className="d-flex flex-column gap-3">
-                  <div
-                    className="d-flex gap-3 align-items-start glass-card p-3 border-0"
-                    style={{ background: "rgba(168, 85, 247, 0.05)" }}
-                  >
+                  <div className="glass-achievement">
                     <div className="text-primary mt-1">
                       <svg
                         width="20"
@@ -171,16 +164,12 @@ export default function AboutPage() {
                         <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z" />
                       </svg>
                     </div>
-                    <span className="text-light">
+                    <span className="fw-medium">
                       Planning and Development Authority
                     </span>
                   </div>
                   {profile.achievements.map((achievement, idx) => (
-                    <div
-                      key={idx}
-                      className="d-flex gap-3 align-items-start glass-card p-3 border-0"
-                      style={{ background: "rgba(168, 85, 247, 0.05)" }}
-                    >
+                    <div key={idx} className="glass-achievement">
                       <div className="text-primary mt-1">
                         <svg
                           width="20"
@@ -192,7 +181,7 @@ export default function AboutPage() {
                           <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z" />
                         </svg>
                       </div>
-                      <span className="text-light-emphasis">{achievement}</span>
+                      <span className="fw-medium">{achievement}</span>
                     </div>
                   ))}
                 </div>
@@ -213,16 +202,14 @@ export default function AboutPage() {
                     .slice(2)
                     .map(([category, skills]) =>
                       skills.map((tech, idx) => (
-                        <span
+                        <motion.span
                           key={`${category}-${idx}`}
-                          className="glass-card py-2 px-3 d-inline-block border-0 opacity-75"
-                          style={{
-                            fontSize: "0.85rem",
-                            background: "rgba(255, 255, 255, 0.015)",
-                          }}
+                          whileHover={{ scale: 1.05 }}
+                          className="glass-tag"
+                          style={{ cursor: "default" }}
                         >
                           {tech}
-                        </span>
+                        </motion.span>
                       )),
                     )}
               </div>

@@ -8,6 +8,7 @@ import { logout } from "@/store/slices/authSlice";
 import { useTheme } from "@/context/ThemeContext";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
 import { FaUserCircle, FaSun, FaMoon } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -28,31 +29,64 @@ export default function Navbar() {
     { name: "Blogs", path: "/blogs" },
   ];
 
+  const closeMenu = () => {
+    const navbarCollapse = document.getElementById("navbarNav");
+    if (navbarCollapse && navbarCollapse.classList.contains("show")) {
+      const toggler = document.querySelector(".navbar-toggler");
+      if (toggler) toggler.click();
+    }
+  };
+
   return (
-    <nav className="navbar navbar-expand-lg fixed-top py-3">
+    <nav
+      className="navbar navbar-expand-lg fixed-top py-3"
+      style={{ zIndex: 10000 }}
+    >
       <div className="container glass-nav custom-nav-mobile d-flex justify-content-between align-items-center rounded-4">
         <Link
           href="/"
           className="navbar-brand fw-bold text-reset fs-4 d-none d-lg-block"
+          style={{ position: "relative", zIndex: 10 }}
         >
           Port<span className="text-accent">folio</span>.
         </Link>
         <Link
           href="/"
           className="navbar-brand fw-bold text-reset fs-5 d-lg-none"
+          style={{ position: "relative", zIndex: 10 }}
         >
           P<span className="text-accent">.</span>
         </Link>
 
         {/* Mobile Header Actions */}
-        <div className="d-lg-none d-flex align-items-center gap-2">
+        <div
+          className="d-lg-none d-flex align-items-center gap-2"
+          style={{ position: "relative", zIndex: 10 }}
+        >
           <button
             onClick={toggleTheme}
-            className="btn btn-link nav-link p-0 text-reset"
+            className="btn btn-link nav-link p-0 text-reset overflow-hidden"
             aria-label="Toggle theme"
-            suppressHydrationWarning
+            style={{ width: "32px", height: "32px", position: "relative" }}
           >
-            {theme === "dark" ? <FaSun size={20} /> : <FaMoon size={20} />}
+            <AnimatePresence mode="wait">
+              {isMounted && (
+                <motion.div
+                  key={theme}
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: 20, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="d-flex align-items-center justify-content-center w-100 h-100"
+                >
+                  {theme === "dark" ? (
+                    <FaSun size={20} />
+                  ) : (
+                    <FaMoon size={20} />
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </button>
 
           <button
@@ -73,13 +107,19 @@ export default function Navbar() {
         <div
           className="collapse navbar-collapse justify-content-end"
           id="navbarNav"
+          style={{ position: "relative", zIndex: 5 }}
         >
           <ul className="navbar-nav align-items-center gap-3">
             {navLinks.map((link) => (
-              <li className="nav-item" key={link.path}>
+              <li
+                className="nav-item"
+                key={link.path}
+                style={{ position: "relative", zIndex: 10 }}
+              >
                 <Link
                   href={link.path}
                   className={`nav-link ${pathname === link.path ? "fw-bold text-primary active-link" : ""}`}
+                  onClick={closeMenu}
                 >
                   {link.name}
                 </Link>
@@ -90,11 +130,28 @@ export default function Navbar() {
             <li className="nav-item d-none d-lg-block">
               <button
                 onClick={toggleTheme}
-                className="btn btn-link nav-link p-0"
+                className="btn btn-link nav-link p-0 overflow-hidden"
                 aria-label="Toggle theme"
-                suppressHydrationWarning
+                style={{ width: "32px", height: "32px", position: "relative" }}
               >
-                {theme === "dark" ? <FaSun size={20} /> : <FaMoon size={20} />}
+                <AnimatePresence mode="wait">
+                  {isMounted && (
+                    <motion.div
+                      key={theme}
+                      initial={{ y: -20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 20, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="d-flex align-items-center justify-content-center w-100 h-100"
+                    >
+                      {theme === "dark" ? (
+                        <FaSun size={20} />
+                      ) : (
+                        <FaMoon size={20} />
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </button>
             </li>
 
@@ -114,6 +171,7 @@ export default function Navbar() {
                     <Link
                       className="dropdown-item text-white"
                       href="/dashboard"
+                      onClick={closeMenu}
                     >
                       Dashboard
                     </Link>
@@ -123,6 +181,7 @@ export default function Navbar() {
                       <Link
                         className="dropdown-item text-white"
                         href="/dashboard/sub-users"
+                        onClick={closeMenu}
                       >
                         Manage Sub-Users
                       </Link>
@@ -143,7 +202,11 @@ export default function Navbar() {
               </li>
             ) : (
               <li className="nav-item ms-lg-2">
-                <Link href="/login" className="btn btn-premium btn-sm px-4">
+                <Link
+                  href="/login"
+                  className="btn btn-premium btn-sm px-4"
+                  onClick={closeMenu}
+                >
                   Login
                 </Link>
               </li>
