@@ -17,6 +17,7 @@ export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const scrollDirection = useScrollDirection();
   const [isMounted, setIsMounted] = useState(false);
+  const role = user?.role;
 
   useEffect(() => {
     setIsMounted(true);
@@ -25,8 +26,11 @@ export default function Navbar() {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
+    { name: "Services", path: "/services" },
+    ...(role === "admin" ? [{ name: "Tools", path: "/tools" }] : []),
     { name: "Projects", path: "/projects" },
     { name: "Blogs", path: "/blogs" },
+    { name: "Contact", path: "/contact" },
   ];
 
   const closeMenu = () => {

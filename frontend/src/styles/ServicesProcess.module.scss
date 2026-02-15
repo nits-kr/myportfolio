@@ -1,0 +1,174 @@
+.processContainer {
+  position: relative;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 0;
+}
+
+/* Hero Styles to match "Why Choose Me?" on mobile (Desktop unchanged) */
+.heroTitle {
+  @media (max-width: 991px) {
+    font-size: calc(
+      1.425rem + 2.1vw
+    ) !important; // Bootstrap display-5 equivalent
+    margin-bottom: 1rem !important; // mb-3 equivalent
+  }
+}
+
+.heroSpan {
+  @media (max-width: 991px) {
+    color: inherit !important; // Remove violet tint on mobile
+  }
+}
+
+.heroDesc {
+  @media (max-width: 991px) {
+    max-width: none !important; // Remove inline 700px restriction
+    color: var(--text-muted) !important; // Match .subtext color
+  }
+}
+
+.mobileScrollWrapper {
+  @media (max-width: 991px) {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2rem 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+
+    &::-webkit-scrollbar {
+      display: none; /* Chrome, Safari and Opera */
+    }
+  }
+}
+
+.progressLine {
+  position: absolute;
+  height: 4px;
+  background: rgba(168, 85, 247, 0.1);
+  top: 62px;
+  z-index: 0;
+  border-radius: 4px;
+
+  @media (max-width: 991px) {
+    width: 600px; /* Aligns perfectly with 4 steps: (4-1) * 200px */
+    left: 100px; /* Starts at center of Step 01 */
+  }
+
+  @media (min-width: 992px) {
+    display: block;
+    width: 75%;
+    left: 12.5%;
+  }
+}
+
+.progressGradient {
+  height: 100%;
+  width: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--primary) 0%, #a855f7 100%);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+}
+
+.processRow {
+  @media (max-width: 991px) {
+    flex-wrap: nowrap !important;
+    min-width: max-content;
+    padding: 0;
+  }
+}
+
+.stepColumn {
+  @media (max-width: 991px) {
+    width: fit-content;
+  }
+}
+
+.serviceSliderCard {
+  min-height: 580px;
+  display: flex !important;
+  flex-direction: column;
+  justify-content: space-between;
+
+  @media (max-width: 480px) {
+    min-height: 620px;
+  }
+}
+
+.stepCard {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 0 0.5rem;
+
+  @media (max-width: 991px) {
+    width: 200px; /* Reduced to fix large gaps between steps */
+    flex-shrink: 0; /* Ensure cards don't squish, enabling scroll */
+  }
+}
+
+.stepCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: var(--background); /* Solid color to obscure the line */
+  z-index: 2; /* Explicitly above the progress line */
+  border: 2px solid rgba(168, 85, 247, 0.4);
+  box-shadow: 0 10px 30px -10px rgba(168, 85, 247, 0.3);
+  margin-bottom: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+
+  /* Glassmorphism - limited to translucency if background allows, 
+     but here we prioritize hiding the line */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  &:hover {
+    transform: translateY(-5px) scale(1.05);
+    border-color: var(--primary);
+    box-shadow: 0 15px 35px -5px rgba(168, 85, 247, 0.5);
+
+    .stepIcon {
+      transform: scale(1.1);
+    }
+  }
+}
+
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stepIcon {
+  font-size: 1.75rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  transition: transform 0.3s ease;
+}
+
+.stepLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.stepTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.stepDesc {
+  color: var(--bs-secondary-color); /* Theme aware muted text */
+  font-size: 0.875rem;
+  margin-bottom: 0;
+  line-height: 1.5;
+}

@@ -24,8 +24,10 @@ import {
   IoCopyOutline,
 } from "react-icons/io5";
 import SubscribeModal from "@/components/common/SubscribeModal";
+import AdPlacement from "@/components/common/AdPlacement";
 import toast, { Toaster } from "react-hot-toast";
 import "@/styles/BlogDetails.scss";
+import "@/styles/AdPlacement.scss";
 
 const CommentForm = memo(
   ({
@@ -517,194 +519,251 @@ export default function BlogDetailsClient({
   return (
     <div className="blog-details-viewport">
       <div className="container">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="premium-blog-card"
-        >
-          <header className="blog-detail-header">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <span
-                className={`status-badge-modern ${blog?.status?.toLowerCase()}`}
-              >
-                {blog?.status}
-              </span>
-              <Link
-                href="/blogs"
-                className="back-link-pill"
-                aria-label="Back to blogs"
-              >
-                <IoArrowBack size={18} />
-              </Link>
-            </div>
-            <h1 className="blog-headline-modern">{blog?.title}</h1>
-            <div className="blog-meta-modern">
-              <span className="meta-item">
-                {blog?.createdAt &&
-                  new Date(blog.createdAt).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-              </span>
-              {blog?.author && <span className="meta-separator">•</span>}
-              {blog?.author && (
-                <span className="meta-item">By {blog.author.name}</span>
-              )}
-            </div>
-          </header>
-
-          {blog?.image && (
-            <figure className="blog-featured-image-wrapper">
-              <Image
-                src={blog.image}
-                alt={blog.title}
-                className="blog-featured-image"
-                width={1200}
-                height={686}
-                priority
-                fetchPriority="high"
-                decoding="sync"
-                sizes="(max-width: 768px) 100vw, 1200px"
-              />
-            </figure>
-          )}
-
-          {blog?.subheading && (
-            <blockquote className="blog-quote-pill">
-              {blog.subheading}
-            </blockquote>
-          )}
-
-          <article className="blog-body-article">
-            {blog?.body && (
-              <div dangerouslySetInnerHTML={{ __html: blog.body }} />
-            )}
-          </article>
-
-          <footer className="interaction-bar-modern">
-            <div className="interaction-group">
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                className={`interact-btn-modern ${isLiked ? "is-liked" : ""} ${isLikingBlog ? "is-loading" : ""}`}
-                onClick={() => !isLikingBlog && handleLike()}
-                disabled={isLikingBlog}
-                aria-label={isLiked ? "Unlike blog post" : "Like blog post"}
-              >
-                <span className="icon-wrapper">
-                  {isLikingBlog ? (
-                    <IOSSpinner />
-                  ) : isLiked ? (
-                    <IoHeart size={24} />
-                  ) : (
-                    <IoHeartOutline size={24} />
-                  )}
-                </span>
-                <span className="count">{blog?.likesCount || 0}</span>
-              </motion.button>
-
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                className="interact-btn-modern"
-                onClick={handleShare}
-                aria-label="Share blog post"
-              >
-                <IoShareOutline size={24} />
-              </motion.button>
-            </div>
-
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              className="comment-count-pill"
-              onClick={() =>
-                document
-                  .getElementById("main-comment-anchor")
-                  ?.scrollIntoView({ behavior: "smooth" })
-              }
-              aria-label={`Jump to comments, ${comments.length} total`}
+        <div className="row">
+          <div className="col-lg-12">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="premium-blog-card"
             >
-              <IoChatbubbleOutline size={20} className="me-2" />
-              <span>{comments.length} Comments</span>
-            </motion.button>
-          </footer>
-        </motion.div>
+              <header className="blog-detail-header">
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <span
+                    className={`status-badge-modern ${blog?.status?.toLowerCase()}`}
+                  >
+                    {blog?.status}
+                  </span>
+                  <Link
+                    href="/blogs"
+                    className="btn btn-outline-primary rounded-circle d-flex align-items-center justify-content-center p-0"
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      transition: "all 0.3s ease",
+                    }}
+                    aria-label="Back to blogs"
+                  >
+                    <IoArrowBack size={18} />
+                  </Link>
+                </div>
+                <h1 className="blog-headline-modern">{blog?.title}</h1>
+                <div className="blog-meta-modern">
+                  <span className="meta-item">
+                    {blog?.createdAt &&
+                      new Date(blog.createdAt).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                  </span>
+                  {blog?.author && <span className="meta-separator">•</span>}
+                  {blog?.author && (
+                    <span className="meta-item">By {blog.author.name}</span>
+                  )}
+                </div>
+              </header>
 
-        {/* Discussion Section */}
-        <div id="main-comment-anchor" className="discussion-section-modern">
-          <div className="discussion-header-modern">
-            <h3 className="section-title">Community Discussion</h3>
-            <span className="discussion-count">{comments.length}</span>
-          </div>
+              {blog?.image && (
+                <figure className="blog-featured-image-wrapper">
+                  <Image
+                    src={blog.image}
+                    alt={blog.title}
+                    className="blog-featured-image"
+                    width={1200}
+                    height={686}
+                    priority
+                    fetchPriority="high"
+                    decoding="sync"
+                    sizes="(max-width: 768px) 100vw, 1200px"
+                  />
+                </figure>
+              )}
 
-          <div className="primary-form-box">
-            <CommentForm
-              blogId={id}
-              adminUser={adminUser}
-              subscriberEmail={subscriberEmail}
-              isAdmin={isAdmin}
-              addComment={(args) => {
-                if (!shouldFetch) setShouldFetch(true);
-                addComment(args);
-              }}
-              checkSubscription={checkSubscription}
-              placeholder="Join the conversation..."
-            />
-          </div>
+              {blog?.subheading && (
+                <blockquote className="blog-quote-pill">
+                  {blog.subheading}
+                </blockquote>
+              )}
 
-          <div className="threaded-comments-list">
-            {rootComments.length === 0 ? (
-              <div className="empty-discussion-box">
-                <IoChatbubbleOutline size={48} className="mb-3 opacity-20" />
-                <p>
-                  No perspectives shared yet. Be the first to start the
-                  discussion.
-                </p>
+              {/* Top Ad Placement */}
+              {/* <AdPlacement slot="top" type="custom" /> */}
+
+              <article className="blog-body-article">
+                {blog?.body && (
+                  <div dangerouslySetInnerHTML={{ __html: blog.body }} />
+                )}
+              </article>
+
+              {/* Bottom Ad Placement */}
+              {/* <AdPlacement slot="bottom" type="custom" /> */}
+
+              <footer className="interaction-bar-modern">
+                <div className="interaction-group">
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    className={`interact-btn-modern ${isLiked ? "is-liked" : ""} ${isLikingBlog ? "is-loading" : ""}`}
+                    onClick={() => !isLikingBlog && handleLike()}
+                    disabled={isLikingBlog}
+                    aria-label={isLiked ? "Unlike blog post" : "Like blog post"}
+                  >
+                    <span className="icon-wrapper">
+                      {isLikingBlog ? (
+                        <IOSSpinner />
+                      ) : isLiked ? (
+                        <IoHeart size={24} />
+                      ) : (
+                        <IoHeartOutline size={24} />
+                      )}
+                    </span>
+                    <span className="count">{blog?.likesCount || 0}</span>
+                  </motion.button>
+
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    className="interact-btn-modern"
+                    onClick={handleShare}
+                    aria-label="Share blog post"
+                  >
+                    <IoShareOutline size={24} />
+                  </motion.button>
+                </div>
+
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  className="comment-count-pill"
+                  onClick={() =>
+                    document
+                      .getElementById("main-comment-anchor")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                  aria-label={`Jump to comments, ${comments.length} total`}
+                >
+                  <IoChatbubbleOutline size={20} className="me-2" />
+                  <span>{comments.length} Comments</span>
+                </motion.button>
+              </footer>
+            </motion.div>
+
+            {/* Discussion Section */}
+            <div id="main-comment-anchor" className="discussion-section-modern">
+              <div className="discussion-header-modern">
+                <h3 className="section-title">Community Discussion</h3>
+                <span className="discussion-count">{comments.length}</span>
               </div>
-            ) : (
-              rootComments.map((comment) => (
-                <CommentItem
-                  key={comment._id}
-                  comment={comment}
-                  comments={comments}
-                  subscriberEmail={subscriberEmail}
-                  adminUser={adminUser}
-                  handleLikeComment={handleLikeComment}
+
+              <div className="primary-form-box">
+                <CommentForm
                   blogId={id}
+                  adminUser={adminUser}
+                  subscriberEmail={subscriberEmail}
                   isAdmin={isAdmin}
                   addComment={(args) => {
                     if (!shouldFetch) setShouldFetch(true);
                     addComment(args);
                   }}
                   checkSubscription={checkSubscription}
-                  likingCommentId={likingCommentId}
+                  placeholder="Join the conversation..."
                 />
-              ))
-            )}
+              </div>
+
+              <div className="threaded-comments-list">
+                {rootComments.length === 0 ? (
+                  <div className="glass-card text-center py-5 mt-4">
+                    <div className="d-inline-flex align-items-center justify-content-center p-4 rounded-circle bg-primary bg-opacity-10 text-primary mb-3">
+                      <IoChatbubbleOutline size={32} />
+                    </div>
+                    <h4 className="h6 fw-bold mb-2">Start the Conversation</h4>
+                    <p className="text-muted small mb-0">
+                      No perspectives shared yet. Be the first to add your
+                      thoughts!
+                    </p>
+                  </div>
+                ) : (
+                  rootComments.map((comment) => (
+                    <CommentItem
+                      key={comment._id}
+                      comment={comment}
+                      comments={comments}
+                      subscriberEmail={subscriberEmail}
+                      adminUser={adminUser}
+                      handleLikeComment={handleLikeComment}
+                      blogId={id}
+                      isAdmin={isAdmin}
+                      addComment={(args) => {
+                        if (!shouldFetch) setShouldFetch(true);
+                        addComment(args);
+                      }}
+                      checkSubscription={checkSubscription}
+                      likingCommentId={likingCommentId}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar with Ads */}
+          <div className="col-lg-4 d-none d-lg-block">
+            <div className="blog-sidebar">
+              {/* Sidebar Ad */}
+              {/* <AdPlacement slot="sidebar" type="custom" className="mb-4" /> */}
+
+              {/* Newsletter CTA */}
+              <div className="glass-card p-4 mb-4 d-none">
+                <h4 className="h6 fw-bold mb-3">📬 Stay Updated</h4>
+                <p className="small text-muted mb-3">
+                  Get the latest articles and insights delivered to your inbox.
+                </p>
+                <button
+                  onClick={() => setIsSubscribeModalOpen(true)}
+                  className="btn btn-primary btn-sm w-100"
+                >
+                  Subscribe Now
+                </button>
+              </div>
+
+              {/* Sponsor CTA */}
+              <div
+                className="glass-card p-4 d-none"
+                style={{ background: "rgba(124, 58, 237, 0.03)" }}
+              >
+                <h4 className="h6 fw-bold mb-3">💼 Sponsor This Blog</h4>
+                <p className="small text-muted mb-3">
+                  Reach thousands of engaged developers and tech professionals.
+                </p>
+                <a
+                  href="/contact?service=custom&message=I'm interested in sponsoring your blog"
+                  className="btn btn-outline-light btn-sm w-100"
+                >
+                  Learn More
+                </a>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <SubscribeModal
-        isOpen={isSubscribeModalOpen}
-        onClose={() => setIsSubscribeModalOpen(false)}
-        onSuccess={onSubscribeSuccess}
-      />
+        <SubscribeModal
+          isOpen={isSubscribeModalOpen}
+          onClose={() => setIsSubscribeModalOpen(false)}
+          onSuccess={onSubscribeSuccess}
+        />
 
-      <Toaster
-        toastOptions={{
-          style: {
-            background: "var(--surface-main)",
-            color: "var(--text-main)",
-            border: "1px solid var(--border-light)",
-          },
-          error: {
-            iconTheme: {
-              primary: "#ef4444",
-              secondary: "#fff",
+        <Toaster
+          toastOptions={{
+            style: {
+              background: "var(--surface-main)",
+              color: "var(--text-main)",
+              border: "1px solid var(--border-light)",
             },
-          },
-        }}
-      />
+            error: {
+              iconTheme: {
+                primary: "#ef4444",
+                secondary: "#fff",
+              },
+            },
+          }}
+        />
+      </div>
     </div>
   );
 }

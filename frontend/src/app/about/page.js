@@ -72,6 +72,55 @@ export default function AboutPage() {
                 </span>
                 Core Tech Stack
               </h3>
+
+              {/* Expertise Indicators */}
+              <div className="mb-4">
+                <div className="mb-3">
+                  <div className="d-flex justify-content-between mb-1">
+                    <span className="fw-medium small text-light opacity-75">
+                      Frontend Development
+                    </span>
+                    <span className="fw-bold small text-primary">
+                      {profile.expertise?.frontend}%
+                    </span>
+                  </div>
+                  <div
+                    className="progress bg-dark-subtle"
+                    style={{ height: "6px" }}
+                  >
+                    <motion.div
+                      className="progress-bar bg-primary"
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${profile.expertise?.frontend}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                    ></motion.div>
+                  </div>
+                </div>
+                <div>
+                  <div className="d-flex justify-content-between mb-1">
+                    <span className="fw-medium small text-light opacity-75">
+                      Backend Development
+                    </span>
+                    <span className="fw-bold small text-info">
+                      {profile.expertise?.backend}%
+                    </span>
+                  </div>
+                  <div
+                    className="progress bg-dark-subtle"
+                    style={{ height: "6px" }}
+                  >
+                    <motion.div
+                      className="progress-bar bg-info"
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${profile.expertise?.backend}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1, delay: 0.7 }}
+                    ></motion.div>
+                  </div>
+                </div>
+              </div>
+
               <div className="row g-4">
                 {profile.skills &&
                   Object.entries(profile.skills)
@@ -152,22 +201,6 @@ export default function AboutPage() {
               >
                 <h3 className="h4 fw-bold mb-4">Key Achievements</h3>
                 <div className="d-flex flex-column gap-3">
-                  <div className="glass-achievement">
-                    <div className="text-primary mt-1">
-                      <svg
-                        width="20"
-                        height="20"
-                        fill="currentColor"
-                        viewBox="0 0 16 16"
-                      >
-                        <path d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z" />
-                        <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z" />
-                      </svg>
-                    </div>
-                    <span className="fw-medium">
-                      Planning and Development Authority
-                    </span>
-                  </div>
                   {profile.achievements.map((achievement, idx) => (
                     <div key={idx} className="glass-achievement">
                       <div className="text-primary mt-1">
@@ -196,22 +229,29 @@ export default function AboutPage() {
               viewport={{ once: true }}
             >
               <h3 className="h4 fw-bold mb-4">Additional Technologies</h3>
-              <div className="d-flex flex-wrap gap-2">
+              <div className="row g-4">
                 {profile.skills &&
                   Object.entries(profile.skills)
                     .slice(2)
-                    .map(([category, skills]) =>
-                      skills.map((tech, idx) => (
-                        <motion.span
-                          key={`${category}-${idx}`}
-                          whileHover={{ scale: 1.05 }}
-                          className="glass-tag"
-                          style={{ cursor: "default" }}
-                        >
-                          {tech}
-                        </motion.span>
-                      )),
-                    )}
+                    .map(([category, skills]) => (
+                      <div className="col-12" key={category}>
+                        <h6 className="text-muted text-uppercase ls-1 mb-2 small fw-bold">
+                          {category}
+                        </h6>
+                        <div className="d-flex flex-wrap gap-2">
+                          {skills.map((tech, idx) => (
+                            <motion.span
+                              key={`${category}-${idx}`}
+                              whileHover={{ scale: 1.05 }}
+                              className="glass-tag"
+                              style={{ cursor: "default" }}
+                            >
+                              {tech}
+                            </motion.span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
               </div>
             </motion.div>
           </div>

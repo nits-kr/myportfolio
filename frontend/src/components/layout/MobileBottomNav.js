@@ -10,17 +10,23 @@ import {
   FaProjectDiagram,
   FaThLarge,
   FaBookOpen,
+  FaTools,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
+
+import { useSelector } from "react-redux";
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const { theme } = useTheme();
+  const { user } = useSelector((state) => state.auth);
   const scrollDirection = useScrollDirection();
 
   const navItems = [
     { name: "Home", path: "/", icon: <FaHome size={20} /> },
-    { name: "About", path: "/about", icon: <FaUser size={20} /> },
+    ...(user?.role === "admin"
+      ? [{ name: "Tools", path: "/tools", icon: <FaTools size={20} /> }]
+      : [{ name: "About", path: "/about", icon: <FaUser size={20} /> }]),
     {
       name: "Projects",
       path: "/projects",

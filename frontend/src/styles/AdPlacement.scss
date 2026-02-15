@@ -1,0 +1,123 @@
+/* Ad Placement Styles */
+.ad-container {
+  margin: 2rem 0;
+  position: relative;
+}
+
+.ad-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.ad-placeholder {
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ad-skeleton {
+  width: 100%;
+  height: 250px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02) 25%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.02) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.ad-sidebar {
+  position: sticky;
+  top: 100px;
+}
+
+.ad-inline {
+  margin: 3rem 0;
+}
+
+.ad-top {
+  margin-bottom: 2rem;
+}
+
+.ad-bottom {
+  margin-top: 3rem;
+}
+
+.ad-custom .custom-ad-content {
+  background: rgba(124, 58, 237, 0.03);
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  transition: all 0.3s ease;
+}
+
+.ad-custom .custom-ad-content:hover {
+  background: rgba(124, 58, 237, 0.05);
+  border-color: rgba(124, 58, 237, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Affiliate Link Styles */
+.affiliate-link {
+  position: relative;
+  color: var(--primary);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--primary);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.affiliate-link:hover {
+  color: var(--primary-hover);
+  border-bottom-style: solid;
+}
+
+.affiliate-badge {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.affiliate-link:hover .affiliate-badge {
+  opacity: 1;
+}
+
+/* Responsive Ad Styles */
+@media (max-width: 768px) {
+  .ad-sidebar {
+    position: relative;
+    top: 0;
+    margin: 2rem 0;
+  }
+  
+  .ad-skeleton {
+    height: 200px;
+  }
+}
+
+/* Carbon Ads Specific */
+.carbon-ads #carbonads {
+  font-family: inherit;
+  --carbon-background: rgba(255, 255, 255, 0.02);
+  --carbon-text: var(--text-main);
+  --carbon-link: var(--primary);
+}
