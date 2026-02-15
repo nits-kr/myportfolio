@@ -40,7 +40,8 @@ export const createSession = async (req, res) => {
     });
 
     // Generate initial interviewer greeting
-    const greeting = await generateInterviewerResponse(role, [], customData);
+    // const greeting = await generateInterviewerResponse(role, [], customData);
+    const greeting = "Hello, I am your interviewer. Let's start.";
 
     await InterviewMessage.create({
       sessionId: session._id,
@@ -60,6 +61,7 @@ export const createSession = async (req, res) => {
     });
   } catch (error) {
     console.error("Create session error:", error);
+    console.error(error.stack);
     res.status(500).json({ success: false, error: error.message });
   }
 };
