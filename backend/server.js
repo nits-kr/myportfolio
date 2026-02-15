@@ -20,6 +20,7 @@ import uploadRoutes from "./src/routes/uploadRoutes.js"; // Import Upload routes
 import subUserRoutes from "./src/routes/subUser.routes.js"; // Import SubUser routes
 import analyticsRoutes from "./src/routes/analyticsRoutes.js";
 import subscriberRoutes from "./src/routes/subscriberRoutes.js"; // Import Subscriber routes
+import interviewRoutes from "./src/routes/interviewRoutes.js"; // Import Interview routes
 import { scheduleReminderJob } from "./src/utils/reminderScheduler.js"; // Import Reminder Scheduler
 import errorHandler from "./src/middleware/errorMiddleware.js"; // Import Error Handler
 
@@ -101,6 +102,7 @@ app.use("/api/upload", uploadRoutes); // Mount Upload routes
 app.use("/api/sub-users", subUserRoutes); // Mount SubUser routes
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/subscribers", subscriberRoutes); // Mount Subscriber routes
+app.use("/api/interview", interviewRoutes); // Mount Interview routes
 
 app.use(errorHandler);
 
