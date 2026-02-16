@@ -183,22 +183,40 @@ export default function EmailValidator() {
                   <FiInbox className="text-muted" />
                   <span className="small">Inbox Existence</span>
                 </div>
-                {result.details.mailbox ? (
+                {result.details.mailbox === true ? (
                   <span className="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
                     Active
                   </span>
-                ) : (
+                ) : result.details.mailbox === false ? (
                   <span className="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">
-                    Unknown / No Inbox
+                    No Inbox Found
+                  </span>
+                ) : (
+                  <span className="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25">
+                    Skipped (Restricted)
                   </span>
                 )}
               </div>
             </div>
 
-            {result.details.mailbox && result.details.dns && (
-              <div className="mt-4 p-3 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-25 text-center">
-                <p className="small text-success mb-0 fw-bold">
-                  Verified: This person has an active inbox.
+            {result.details.dns && (
+              <div
+                className={`mt-4 p-3 rounded-3 text-center border ${
+                  result.details.mailbox === true
+                    ? "bg-success bg-opacity-10 border-success border-opacity-25"
+                    : "bg-info bg-opacity-10 border-info border-opacity-25"
+                }`}
+              >
+                <p
+                  className={`small mb-0 fw-bold ${
+                    result.details.mailbox === true
+                      ? "text-success"
+                      : "text-info"
+                  }`}
+                >
+                  {result.details.mailbox === true
+                    ? "Verified: This person has an active inbox."
+                    : "Partial Verify: Syntax & Domain are valid (Deep check restricted)."}
                 </p>
               </div>
             )}
