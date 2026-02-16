@@ -11,42 +11,17 @@ import {
   FiServer,
   FiShield,
 } from "react-icons/fi";
-import axios from "axios";
+import { useValidateEmailMutation } from "@/store/services/toolsApi";
 
 export default function EmailValidator() {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
+  const [validateEmail, { isLoading: loading, data, error: rtkError }] =
+    useValidateEmailMutation();
 
-  const validateEmail = async (e) => {
+  const handleValidate = async (e) => {
     e.preventDefault();
     if (!email) return;
-
-    setLoading(true);
-    setError(null);
-    setResult(null);
-
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/tools/validate-email`,
-        { email },
-      );
-      setResult(response.data.validation);
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "Failed to validate email. Please try again.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusColor = (isValid, details) => {
-    if (isValid) return "text-success";
-    if (details?.disposable) return "text-warning";
-    return "text-danger";
+    validateEmail({ email });
   };
 
   const getStatusIcon = (isValid, details) => {
@@ -56,10 +31,13 @@ export default function EmailValidator() {
     return <FiX className="text-danger" size={24} />;
   };
 
+  const result = data?.validation;
+  const error = rtkError?.data?.message || rtkError?.error;
+
   return (
     <div className="w-100" style={{ maxWidth: "600px", margin: "0 auto" }}>
       <div className="glass-card p-4 mb-4">
-        <form onSubmit={validateEmail} className="d-flex flex-column gap-3">
+        <form onSubmit={handleValidate} className="d-flex flex-column gap-3">
           <div className="form-group">
             <label
               htmlFor="emailInput"
