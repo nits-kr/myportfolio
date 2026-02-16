@@ -10,6 +10,7 @@ import {
   FiLoader,
   FiServer,
   FiShield,
+  FiInbox,
 } from "react-icons/fi";
 import { useValidateEmailMutation } from "@/store/services/toolsApi";
 
@@ -28,6 +29,7 @@ export default function EmailValidator() {
     if (isValid) return <FiCheck className="text-success" size={24} />;
     if (details?.disposable)
       return <FiAlertTriangle className="text-warning" size={24} />;
+    if (!details?.mailbox) return <FiX className="text-danger" size={24} />;
     return <FiX className="text-danger" size={24} />;
   };
 
@@ -69,7 +71,7 @@ export default function EmailValidator() {
           >
             {loading ? (
               <>
-                <FiLoader className="spin" /> Validating...
+                <FiLoader className="spin" /> Deep Validating...
               </>
             ) : (
               "Validate Email"
@@ -108,7 +110,7 @@ export default function EmailValidator() {
                 {getStatusIcon(result.isValid, result.details)}
               </div>
               <h3 className="h5 fw-bold mb-1">{result.message}</h3>
-              <p className="text-muted small mb-0">{result.email}</p>
+              <p className="text-muted small mb-0 text-break">{result.email}</p>
             </div>
 
             <div className="d-flex flex-column gap-2">
@@ -171,7 +173,35 @@ export default function EmailValidator() {
                   </span>
                 )}
               </div>
+
+              {/* Mailbox Check */}
+              <div
+                className="d-flex align-items-center justify-content-between p-3 rounded-3"
+                style={{ background: "rgba(255,255,255,0.03)" }}
+              >
+                <div className="d-flex align-items-center gap-3">
+                  <FiInbox className="text-muted" />
+                  <span className="small">Inbox Existence</span>
+                </div>
+                {result.details.mailbox ? (
+                  <span className="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                    Active
+                  </span>
+                ) : (
+                  <span className="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">
+                    Unknown / No Inbox
+                  </span>
+                )}
+              </div>
             </div>
+
+            {result.details.mailbox && result.details.dns && (
+              <div className="mt-4 p-3 rounded-3 bg-success bg-opacity-10 border border-success border-opacity-25 text-center">
+                <p className="small text-success mb-0 fw-bold">
+                  Verified: This person has an active inbox.
+                </p>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

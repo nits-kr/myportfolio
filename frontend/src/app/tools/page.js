@@ -106,7 +106,7 @@ const tools = [
       enterprise: "Unlimited",
     },
     status: "available",
-    demoUrl: "/tools/email-validator/demo",
+    demoUrl: "/tools/email-validator",
   },
   {
     id: "data-porter",
