@@ -12,6 +12,7 @@ import {
   FiZap,
   FiCheck,
 } from "react-icons/fi";
+import ToolsSlider from "@/components/tools/ToolsSlider";
 
 const tools = [
   {
@@ -207,7 +208,7 @@ export default function ToolsPage() {
       </motion.div>
 
       {/* Tools Grid */}
-      <div className="row g-4 mb-5">
+      <div className="d-none d-md-flex row g-4 mb-5">
         {tools.map((tool, index) => (
           <motion.div
             key={tool.id}
@@ -322,6 +323,8 @@ export default function ToolsPage() {
           </motion.div>
         ))}
       </div>
+
+      <ToolsSlider tools={tools} selectedTier={selectedTier} />
 
       {/* Custom Tool CTA */}
       <motion.div
