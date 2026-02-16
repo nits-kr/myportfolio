@@ -55,12 +55,15 @@ const getMxRecords = async (domain) => {
  */
 const validateSMTP = (mxHost, email) => {
   return new Promise((resolve) => {
-    const socket = net.createConnection(25, mxHost);
+    // Standard MX servers only listen on Port 25 for incoming mail relay.
+    // However, we'll allow an override if the user has a special setup.
+    const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 25;
+    const socket = net.createConnection(port, mxHost);
     let step = 0;
-    let result = { mailbox: false, message: "" };
+    let result = { mailbox: null, message: "", restricted: false };
     let buffer = "";
 
-    socket.setTimeout(10000); // 10 second timeout
+    socket.setTimeout(8000); // 8 second timeout
 
     const send = (data) => {
       if (socket.writable) {
@@ -70,16 +73,13 @@ const validateSMTP = (mxHost, email) => {
 
     socket.on("data", (data) => {
       buffer += data.toString();
-
-      // Standard SMTP responses end with a newline. Multiline responses have a '-' after the code.
-      // We wait for the final line (space after code).
       const lines = buffer.split("\r\n");
-      const lastLine = lines[lines.length - 2] || ""; // The buffer might end with \r\n, so the last element is empty
+      const lastLine = lines[lines.length - 2] || "";
 
-      if (!lastLine || lastLine[3] === "-") return; // Wait for the full response
+      if (!lastLine || lastLine[3] === "-") return;
 
       const responseCode = lastLine.substring(0, 3);
-      buffer = ""; // Clear buffer for next step
+      buffer = "";
 
       if (step === 0 && responseCode === "220") {
         send(`HELO ${process.env.SMTP_HELO_DOMAIN || "portfolio.com"}`);
@@ -100,7 +100,7 @@ const validateSMTP = (mxHost, email) => {
           result.mailbox = false;
           result.message = "Mailbox does not exist (User Unknown)";
         } else {
-          result.mailbox = false;
+          result.mailbox = null;
           result.message = `Mailbox verification rejected (Code ${responseCode})`;
         }
         send("QUIT");
@@ -109,19 +109,21 @@ const validateSMTP = (mxHost, email) => {
     });
 
     socket.on("error", (err) => {
+      result.mailbox = null;
+      result.restricted = true;
       let msg = err.message || "Unknown socket error";
-      if (err.code === "ECONNREFUSED")
-        msg = "Connection refused (Port 25 might be blocked)";
-      if (err.code === "ETIMEDOUT")
-        msg = "Connection timed out (Port 25 might be blocked)";
-
-      result.message = `SMTP Error: ${msg}`;
+      if (err.code === "ECONNREFUSED" || err.code === "ETIMEDOUT") {
+        msg = `Port ${port} blocked or timed out (Network restriction)`;
+      }
+      result.message = `Deep check skipped: ${msg}`;
       socket.destroy();
       resolve(result);
     });
 
     socket.on("timeout", () => {
-      result.message = "SMTP Connection timeout (Check if Port 25 is open)";
+      result.mailbox = null;
+      result.restricted = true;
+      result.message = `Deep check timed out on port ${port} (Likely blocked)`;
       socket.destroy();
       resolve(result);
     });
@@ -143,7 +145,7 @@ export const validateEmail = async (email) => {
       syntax: false,
       disposable: false,
       dns: false,
-      mailbox: false,
+      mailbox: null, // null = unknown/skipped
     },
     message: "",
   };
@@ -176,10 +178,13 @@ export const validateEmail = async (email) => {
   result.message = smtpResult.message;
 
   // Final Decision
-  // We consider it "Valid" only if syntax, DNS and Mailbox are true
-  // Disposable is a "Risky" flag but might still be valid
-  result.isValid =
-    result.details.syntax && result.details.dns && result.details.mailbox;
+  // If syntax and DNS pass, it's "Valid" even if the deep check is restricted
+  result.isValid = result.details.syntax && result.details.dns;
+
+  // If we know for a fact the mailbox doesn't exist, it's invalid
+  if (result.details.mailbox === false) {
+    result.isValid = false;
+  }
 
   if (result.isValid && result.details.disposable) {
     result.message = "Valid but uses a disposable provider";
