@@ -57,8 +57,8 @@ const validateSMTP = (mxHost, email) => {
   return new Promise((resolve) => {
     const socket = net.createConnection(25, mxHost);
     let step = 0;
-    let response = "";
     let result = { mailbox: false, message: "" };
+    let buffer = "";
 
     socket.setTimeout(10000); // 10 second timeout
 
@@ -69,30 +69,39 @@ const validateSMTP = (mxHost, email) => {
     };
 
     socket.on("data", (data) => {
-      response = data.toString();
-      // console.log('SMTP:', response);
+      buffer += data.toString();
 
-      if (step === 0 && response.startsWith("220")) {
+      // Standard SMTP responses end with a newline. Multiline responses have a '-' after the code.
+      // We wait for the final line (space after code).
+      const lines = buffer.split("\r\n");
+      const lastLine = lines[lines.length - 2] || ""; // The buffer might end with \r\n, so the last element is empty
+
+      if (!lastLine || lastLine[3] === "-") return; // Wait for the full response
+
+      const responseCode = lastLine.substring(0, 3);
+      buffer = ""; // Clear buffer for next step
+
+      if (step === 0 && responseCode === "220") {
         send(`HELO ${process.env.SMTP_HELO_DOMAIN || "portfolio.com"}`);
         step++;
-      } else if (step === 1 && response.startsWith("250")) {
+      } else if (step === 1 && responseCode === "250") {
         send(
           `MAIL FROM:<${process.env.SMTP_FROM_EMAIL || "verify@portfolio.com"}>`,
         );
         step++;
-      } else if (step === 2 && response.startsWith("250")) {
+      } else if (step === 2 && responseCode === "250") {
         send(`RCPT TO:<${email}>`);
         step++;
       } else if (step === 3) {
-        if (response.startsWith("250")) {
+        if (responseCode === "250") {
           result.mailbox = true;
-          result.message = "Mailbox exists";
-        } else if (response.startsWith("550")) {
+          result.message = "Mailbox exists and is active";
+        } else if (responseCode === "550") {
           result.mailbox = false;
-          result.message = "Mailbox does not exist";
+          result.message = "Mailbox does not exist (User Unknown)";
         } else {
           result.mailbox = false;
-          result.message = "Mailbox status unknown or restricted";
+          result.message = `Mailbox verification rejected (Code ${responseCode})`;
         }
         send("QUIT");
         socket.end();
@@ -100,13 +109,19 @@ const validateSMTP = (mxHost, email) => {
     });
 
     socket.on("error", (err) => {
-      result.message = `SMTP Error: ${err.message}`;
+      let msg = err.message || "Unknown socket error";
+      if (err.code === "ECONNREFUSED")
+        msg = "Connection refused (Port 25 might be blocked)";
+      if (err.code === "ETIMEDOUT")
+        msg = "Connection timed out (Port 25 might be blocked)";
+
+      result.message = `SMTP Error: ${msg}`;
       socket.destroy();
       resolve(result);
     });
 
     socket.on("timeout", () => {
-      result.message = "SMTP Connection timeout";
+      result.message = "SMTP Connection timeout (Check if Port 25 is open)";
       socket.destroy();
       resolve(result);
     });
