@@ -21,6 +21,7 @@ import subUserRoutes from "./src/routes/subUser.routes.js"; // Import SubUser ro
 import analyticsRoutes from "./src/routes/analyticsRoutes.js";
 import subscriberRoutes from "./src/routes/subscriberRoutes.js"; // Import Subscriber routes
 import interviewRoutes from "./src/routes/interviewRoutes.js"; // Import Interview routes
+import toolRoutes from "./src/routes/toolRoutes.js"; // Import Tool routes
 import { scheduleReminderJob } from "./src/utils/reminderScheduler.js"; // Import Reminder Scheduler
 import errorHandler from "./src/middleware/errorMiddleware.js"; // Import Error Handler
 
@@ -109,6 +110,7 @@ app.use("/api/sub-users", subUserRoutes); // Mount SubUser routes
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/subscribers", subscriberRoutes); // Mount Subscriber routes
 app.use("/api/interview", interviewRoutes); // Mount Interview routes
+app.use("/api/tools", toolRoutes); // Mount Tool routes
 
 app.use(errorHandler);
 
