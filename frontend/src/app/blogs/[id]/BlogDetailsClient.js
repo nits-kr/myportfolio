@@ -533,9 +533,9 @@ export default function BlogDetailsClient({
   );
 
   const filteredSidebarBlogs = useMemo(() => {
-    // We can rely entirely on backend filtering now, but we keep a fallback just in case
-    return allBlogs.filter((b) => b.status === "Published");
-  }, [allBlogs]);
+    // Include Draft blogs if user is admin
+    return allBlogs.filter((b) => isAdmin || b.status === "Published");
+  }, [allBlogs, isAdmin]);
 
   const isActuallyLoading = !blog && isLoading;
 
@@ -691,9 +691,13 @@ export default function BlogDetailsClient({
                         year: "numeric",
                       })}
                   </span>
-                  {blog?.author && <span className="meta-separator">•</span>}
                   {blog?.author && (
-                    <span className="meta-item">By {blog.author.name}</span>
+                    <span className="meta-separator d-none">•</span>
+                  )}
+                  {blog?.author && (
+                    <span className="meta-item d-none">
+                      By {blog.author.name}
+                    </span>
                   )}
                 </div>
               </header>
