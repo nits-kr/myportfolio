@@ -86,13 +86,11 @@ export default function GlobalPullToRefresh({ children }) {
         setIsRefreshing(true);
         setPullDistance(REFRESH_THRESHOLD); // Lock it at the threshold while refreshing
 
-        // Use router.refresh() for a soft-reload of Server Components, or hard reload
-        // A hard reload is often better for a true "PWA" refresh feel to clear all cache states
-        window.location.reload();
-
-        // If using window.location.reload(), the page just unloads.
-        // If we were using router.refresh():
-        // setTimeout(() => { setIsRefreshing(false); setPullDistance(0); }, 1000);
+        // Use router.refresh() for a soft-reload or window.location.reload() for a full PWA refresh.
+        // We add a tiny delay so the "Active" spin animation can be seen before the browser freezes the UI to reload.
+        setTimeout(() => {
+          window.location.reload();
+        }, 150);
       } else {
         // Snap back if threshold not met
         setPullDistance(0);
@@ -127,6 +125,7 @@ export default function GlobalPullToRefresh({ children }) {
         style={{
           transform: `translateY(${pullDistance}px)`,
           opacity: pullDistance > 20 ? 1 : 0,
+          display: pullDistance > 0 || isRefreshing ? "flex" : "none",
           transition: isDragging
             ? "none"
             : "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s",
