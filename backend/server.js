@@ -94,7 +94,8 @@ app.use(
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        logger.error(`CORS Error: Origin ${origin} not allowed`);
+        callback(new Error(`Not allowed by CORS: ${origin}`));
       }
     },
     credentials: true, // Allow cookies
