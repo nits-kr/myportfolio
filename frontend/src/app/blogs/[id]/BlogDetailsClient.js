@@ -329,7 +329,7 @@ export default function BlogDetailsClient({
     () => commentsData?.data || initialComments,
     [commentsData, initialComments],
   );
-  const allBlogs = allBlogsData?.data || [];
+  const allBlogs = useMemo(() => allBlogsData?.data || [], [allBlogsData]);
   // Mobile Drawer State
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 

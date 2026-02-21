@@ -324,7 +324,7 @@ export default function BlogsPage() {
                 <IOSSpinner active={false} />
                 <div
                   className="small text-muted mt-2"
-                  style={{ fontSize: "0.8rem" }}
+                  style={{ fontSize: "0.8rem", display: "none" }}
                 >
                   Pull down to refresh
                 </div>

@@ -75,6 +75,7 @@ export default function ImageWithSpinner({
           <IOSSpinner />
         </div>
       )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={imgRef}
         src={src}
