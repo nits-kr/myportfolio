@@ -35,15 +35,16 @@ const IOSSpinner = ({ active = false }) => (
   </svg>
 );
 
+// Constants
+const MAX_PULL = 100;
+const REFRESH_THRESHOLD = 70;
+
 export default function GlobalPullToRefresh({ children }) {
   const router = useRouter();
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef(null);
-
-  // Constants
-  const MAX_PULL = 100;
-  const REFRESH_THRESHOLD = 70;
 
   // Interaction State
   const startY = useRef(0);
@@ -55,6 +56,7 @@ export default function GlobalPullToRefresh({ children }) {
       if (window.scrollY === 0) {
         startY.current = e.touches[0].clientY;
         isPulling.current = true;
+        setIsDragging(true);
       }
     };
 
@@ -78,6 +80,7 @@ export default function GlobalPullToRefresh({ children }) {
     const handleTouchEnd = async () => {
       if (!isPulling.current) return;
       isPulling.current = false;
+      setIsDragging(false);
 
       if (pullDistance >= REFRESH_THRESHOLD) {
         setIsRefreshing(true);
@@ -124,7 +127,7 @@ export default function GlobalPullToRefresh({ children }) {
         style={{
           transform: `translateY(${pullDistance}px)`,
           opacity: pullDistance > 20 ? 1 : 0,
-          transition: isPulling.current
+          transition: isDragging
             ? "none"
             : "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s",
         }}
@@ -141,7 +144,7 @@ export default function GlobalPullToRefresh({ children }) {
         style={{
           transform:
             pullDistance !== 0 ? `translateY(${pullDistance}px)` : "none",
-          transition: isPulling.current
+          transition: isDragging
             ? "none"
             : "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
         }}
