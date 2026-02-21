@@ -70,11 +70,17 @@ export default function GlobalPullToRefresh({ children }) {
 
   useEffect(() => {
     const handleTouchStart = (e) => {
-      // Only allow pull-to-refresh if we are at the very top of the page
-      // AND no modal/drawer is open (standard convention is setting overflow: hidden on body)
-      const isBodyLocked = document.body.style.overflow === "hidden";
+      // Only allow pull-to-refresh if we are at the very top
+      if (window.scrollY > 0 || isRefreshing) return;
 
-      if (window.scrollY === 0 && !isRefreshing && !isBodyLocked) {
+      // Safety: Prevent trigger if body is locked (drawer open) or if an input is focused (keyboard open)
+      const isBodyLocked = document.body.style.overflow === "hidden";
+      const activeEl = document.activeElement;
+      const isInputFocused =
+        activeEl &&
+        (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
+
+      if (!isBodyLocked && !isInputFocused) {
         startY.current = e.touches[0].clientY;
         isPulling.current = true;
         setIsDragging(true);
@@ -87,14 +93,18 @@ export default function GlobalPullToRefresh({ children }) {
       const currentY = e.touches[0].clientY;
       const deltaY = currentY - startY.current;
 
-      // Ensure we are pulling downwards, not scrolling upwards
-      if (deltaY > 0 && window.scrollY === 0) {
-        // Apply friction to the pull distance
-        const distance = Math.min(deltaY * 0.4, MAX_PULL);
+      // Only handle downward pulls
+      if (deltaY > 0) {
+        // Logarithmic-style dampening for a more professional "resistive" feel
+        // This makes it harder to pull as you get closer to the limit
+        const resistance = 0.4;
+        const distance = Math.min(deltaY * resistance, MAX_PULL);
         setPullDistance(distance);
 
-        // Prevent default browser refresh/scroll behavior during our custom interaction
-        if (e.cancelable) e.preventDefault();
+        // Prevent browser's native pull-to-refresh if we've started our own
+        if (deltaY > 10 && e.cancelable) {
+          e.preventDefault();
+        }
       }
     };
 
@@ -105,29 +115,26 @@ export default function GlobalPullToRefresh({ children }) {
 
       if (pullDistance >= REFRESH_THRESHOLD) {
         setIsRefreshing(true);
-        setPullDistance(REFRESH_THRESHOLD); // Lock it at the threshold while refreshing
+        // We set it slightly lower than threshold for the "pulsing" reload feel
+        setPullDistance(REFRESH_THRESHOLD - 5);
 
-        // Set a flag in session storage so the new page load knows it was a PWA refresh
         try {
           sessionStorage.setItem("pwa_refresh_active", "true");
         } catch (err) {
-          console.error("Session storage not available", err);
+          console.error("Session storage unavailable", err);
         }
 
-        // Use router.refresh() for a soft-reload or window.location.reload() for a full PWA refresh.
-        // We add a tiny delay so the "Active" spin animation can be seen before the browser freezes the UI to reload.
+        // Small delay to let the user see the "Active" spinner trigger before reload
         setTimeout(() => {
           window.location.reload();
-        }, 150);
+        }, 200);
       } else {
-        // Snap back if threshold not met
         setPullDistance(0);
       }
     };
 
     const container = containerRef.current;
     if (container) {
-      // Need passive: false to be able to call e.preventDefault()
       container.addEventListener("touchstart", handleTouchStart, {
         passive: true,
       });
@@ -148,36 +155,40 @@ export default function GlobalPullToRefresh({ children }) {
 
   return (
     <div ref={containerRef} className="ptr-global-wrapper">
+      {/* 
+          Spinner Container: Pulled down over the content.
+          We don't shift the content anymore to avoid stacking context 'trapping' 
+          for fixed elements like the Bottom Nav and FABs. 
+      */}
       <div
         className="ptr-indicator"
         style={{
           transform: `translateY(${pullDistance}px)`,
-          opacity: pullDistance > 20 ? 1 : 0,
+          opacity: pullDistance > 15 ? 1 : 0,
           display: pullDistance > 0 || isRefreshing ? "flex" : "none",
           transition: isDragging
             ? "none"
-            : "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s",
+            : "transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.2s",
+          pointerEvents: "none",
         }}
       >
-        <div className="ptr-content">
+        <div
+          className="ptr-content"
+          style={{
+            // Add a subtle scale effect as we reach threshold
+            scale: Math.min(
+              1.1,
+              0.8 + (pullDistance / REFRESH_THRESHOLD) * 0.3,
+            ),
+          }}
+        >
           <IOSSpinner
-            active={pullDistance >= REFRESH_THRESHOLD || isRefreshing}
+            active={pullDistance >= REFRESH_THRESHOLD - 10 || isRefreshing}
           />
         </div>
       </div>
 
-      <div
-        className="ptr-children"
-        style={{
-          transform:
-            pullDistance !== 0 ? `translateY(${pullDistance}px)` : "none",
-          transition: isDragging
-            ? "none"
-            : "transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
-        }}
-      >
-        {children}
-      </div>
+      <div className="ptr-children">{children}</div>
     </div>
   );
 }
