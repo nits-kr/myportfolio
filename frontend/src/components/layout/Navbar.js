@@ -10,6 +10,8 @@ import { useTheme } from "@/context/ThemeContext";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
 import { FaUserCircle, FaSun, FaMoon } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import { useGetPublicProfileQuery } from "@/store/services/portfolioApi";
+import { updateProfile } from "@/store/slices/contentSlice";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -23,6 +25,16 @@ export default function Navbar() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const { data: publicProfileData } = useGetPublicProfileQuery(undefined, {
+    skip: !isMounted,
+  });
+
+  useEffect(() => {
+    if (publicProfileData?.success && publicProfileData?.data) {
+      dispatch(updateProfile(publicProfileData.data));
+    }
+  }, [publicProfileData, dispatch]);
 
   const navLinks = [
     { name: "Home", path: "/" },

@@ -22,9 +22,7 @@ export const getBlogs = async (req, res, next) => {
       query._id = { $ne: req.query.excludeId };
     }
 
-    let blogsQuery = Blog.find(query)
-      .select("-body -likes") // Exclude heavy body and sensitive likes from list view
-      .sort({ createdAt: -1 });
+    let blogsQuery = Blog.find(query).sort({ createdAt: -1 });
 
     // Pagination
     const page = parseInt(req.query.page, 10);
@@ -41,11 +39,32 @@ export const getBlogs = async (req, res, next) => {
 
     const blogs = await blogsQuery;
 
+    // Get comment counts for all fetched blogs
+    const blogIds = blogs.map((b) => b._id);
+    const commentCounts = await Comment.aggregate([
+      { $match: { blogId: { $in: blogIds } } },
+      { $group: { _id: "$blogId", count: { $sum: 1 } } },
+    ]);
+
+    const commentCountsMap = commentCounts.reduce((acc, cur) => {
+      acc[cur._id.toString()] = cur.count;
+      return acc;
+    }, {});
+
+    const blogsWithCounts = blogs.map((blog) => {
+      const blogObj = blog.toObject();
+      blogObj.likesCount = blogObj.likes?.length || 0;
+      blogObj.commentsCount = commentCountsMap[blog._id.toString()] || 0;
+      delete blogObj.likes; // Important: hide sensitive email list
+      delete blogObj.body; // Still exclude body for list view
+      return blogObj;
+    });
+
     const response = {
       success: true,
       message: "Blogs fetched successfully",
-      count: blogs.length,
-      data: blogs,
+      count: blogsWithCounts.length,
+      data: blogsWithCounts,
     };
 
     if (page && limit) {

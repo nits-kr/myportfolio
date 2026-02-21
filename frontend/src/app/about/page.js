@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useSelector } from "react-redux";
+import Image from "next/image";
 
 export default function AboutPage() {
   const { profile } = useSelector((state) => state.content);
@@ -19,28 +20,54 @@ export default function AboutPage() {
               transition={{ duration: 0.6 }}
               className="position-relative"
             >
-              <div
-                className="glass-card p-4 p-md-5 position-relative z-1 border-0 shadow-lg mb-4 mb-lg-0"
-                style={{
-                  background: "rgba(255, 255, 255, 0.03)",
-                  border: "1px solid rgba(255, 255, 255, 0.05) !important",
-                }}
-              >
-                <span
-                  className="text-primary fw-bold text-uppercase mb-2 d-block ls-2"
-                  style={{ fontSize: "0.7rem" }}
-                >
-                  Get to know me
-                </span>
-                <h1 className="display-4 display-md-3 fw-bold mb-4 gradient-text">
-                  About Me
-                </h1>
-                <p className="lead fw-medium mb-4 text-light">
-                  I&apos;m <span className="text-primary">{profile.name}</span>,{" "}
-                  {profile.title}.
-                </p>
-                <div className="subtext opacity-75 fs-5 leading-relaxed">
-                  {profile.longBio || profile.bio}
+              <div className="row g-4 align-items-center">
+                <div className="col-12">
+                  <div
+                    className="glass-card p-4 p-md-5 position-relative z-1 border-0 shadow-lg mb-4 mb-lg-0 overflow-hidden"
+                    style={{
+                      background: "rgba(255, 255, 255, 0.03)",
+                      border: "1px solid rgba(255, 255, 255, 0.05) !important",
+                    }}
+                  >
+                    <div className="row align-items-center">
+                      <div
+                        className={profile.profileImage ? "col-md-8" : "col-12"}
+                      >
+                        <span
+                          className="text-primary fw-bold text-uppercase mb-2 d-block ls-2"
+                          style={{ fontSize: "0.7rem" }}
+                        >
+                          Get to know me
+                        </span>
+                        <h1 className="display-4 display-md-3 fw-bold mb-4 gradient-text">
+                          About Me
+                        </h1>
+                        <p className="lead fw-medium mb-4 text-light">
+                          I&apos;m{" "}
+                          <span className="text-primary">{profile.name}</span>,{" "}
+                          {profile.title}.
+                        </p>
+                        <div className="subtext opacity-75 fs-5 leading-relaxed mb-0">
+                          {profile.longBio || profile.bio}
+                        </div>
+                      </div>
+                      {profile.profileImage && (
+                        <div className="col-md-4 mt-4 mt-md-0">
+                          <div
+                            className="position-relative rounded-4 overflow-hidden shadow-lg border border-white border-opacity-10"
+                            style={{ height: "240px" }}
+                          >
+                            <Image
+                              src={profile.profileImage}
+                              alt={profile.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 

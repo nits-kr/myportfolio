@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useSelector } from "react-redux";
+import Image from "next/image";
 
 import { GoVerified } from "react-icons/go";
 
@@ -65,36 +66,56 @@ export default function Hero() {
             </div>
           </div>
         </div>
-        <div className="col-lg-6">
+        <div className="col-lg-6 ps-lg-5">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="glass-card position-relative"
+            className="position-relative"
           >
-            <div className="position-absolute top-0 start-0 w-100 h-100 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-4 z-index-minus-1"></div>
-            {/* Abstract Code/Visual Mockup */}
-            <div className="rounded-3 overflow-hidden shadow-lg border border-white border-opacity-10">
-              <div className="bg-dark p-2 d-flex gap-2 border-bottom border-secondary">
-                <div className="rounded-circle bg-danger mockup-dot"></div>
-                <div className="rounded-circle bg-warning mockup-dot"></div>
-                <div className="rounded-circle bg-success mockup-dot"></div>
+            {profile.profileImage ? (
+              <div className="profile-image-wrapper p-2 glass-card rounded-4 shadow-2xl overflow-hidden group">
+                <div
+                  className="overflow-hidden rounded-3 position-relative"
+                  style={{ height: "500px" }}
+                >
+                  <Image
+                    src={profile.profileImage}
+                    alt={profile.name}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
               </div>
-              <div className="bg-dark p-4 font-monospace text-success bg-opacity-75">
-                <p className="mb-0">
-                  <span className="text-secondary">const</span>{" "}
-                  <span className="text-warning">portfolio</span> ={" "}
-                  <span className="text-info">new</span>{" "}
-                  <span className="text-primary">Masterpiece</span>();
-                  <br />
-                  <span className="text-warning">portfolio</span>.
-                  <span className="text-light">optimize</span>();
-                  <br />
-                  <span className="text-warning">portfolio</span>.
-                  <span className="text-light">deploy</span>();
-                </p>
+            ) : (
+              <div className="glass-card position-relative">
+                <div className="position-absolute top-0 start-0 w-100 h-100 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-4 z-index-minus-1"></div>
+                {/* Abstract Code/Visual Mockup */}
+                <div className="rounded-3 overflow-hidden shadow-lg border border-white border-opacity-10">
+                  <div className="bg-dark p-2 d-flex gap-2 border-bottom border-secondary">
+                    <div className="rounded-circle bg-danger mockup-dot"></div>
+                    <div className="rounded-circle bg-warning mockup-dot"></div>
+                    <div className="rounded-circle bg-success mockup-dot"></div>
+                  </div>
+                  <div className="bg-dark p-4 font-monospace text-success bg-opacity-75">
+                    <p className="mb-0">
+                      <span className="text-secondary">const</span>{" "}
+                      <span className="text-warning">portfolio</span> ={" "}
+                      <span className="text-info">new</span>{" "}
+                      <span className="text-primary">Masterpiece</span>();
+                      <br />
+                      <span className="text-warning">portfolio</span>.
+                      <span className="text-light">optimize</span>();
+                      <br />
+                      <span className="text-warning">portfolio</span>.
+                      <span className="text-light">deploy</span>();
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </motion.div>
         </div>
       </div>

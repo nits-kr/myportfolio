@@ -333,3 +333,29 @@ export const updateProfile = async (req, res) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+// @desc    Get public profile (admin user)
+// @route   GET /api/auth/profile/public
+// @access  Public
+export const getPublicProfile = async (req, res) => {
+  try {
+    const adminUser = await User.findOne({ role: "admin" }).select(
+      "name title bio profileImage email",
+    );
+
+    if (!adminUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Portfolio owner profile not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Public profile fetched successfully",
+      data: adminUser,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};

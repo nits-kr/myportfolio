@@ -72,6 +72,9 @@ export const portfolioApi = createApi({
         body: userData,
       }),
     }),
+    getPublicProfile: builder.query({
+      query: () => "auth/profile/public",
+    }),
   }),
 });
 export const {
@@ -83,4 +86,5 @@ export const {
   useVerifyOtpMutation,
   useResetPasswordMutation,
   useUpdateProfileMutation,
+  useGetPublicProfileQuery,
 } = portfolioApi;

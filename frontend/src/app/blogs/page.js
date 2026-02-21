@@ -21,6 +21,8 @@ import {
   FiBookOpen,
   FiChevronLeft,
   FiChevronRight,
+  FiHeart,
+  FiMessageSquare,
 } from "react-icons/fi";
 import InfiniteScroll from "react-infinite-scroll-component";
 
@@ -467,13 +469,46 @@ const BlogCard = ({
       </p>
     </div>
 
-    <div className="mt-auto pt-4 border-top border-white border-opacity-5 text-end">
-      <Link
-        href={`/blogs/${blog._id}`}
-        className="btn btn-link btn-sm text-secondary text-decoration-none fw-bold p-0"
-      >
-        Read Article &rarr;
-      </Link>
+    <div className="mt-auto pt-4 border-top border-white border-opacity-5">
+      <div className="d-flex align-items-center justify-content-between">
+        <div className="d-flex align-items-center gap-4">
+          <div className="position-relative" title="Likes">
+            <FiHeart className="text-secondary" size={18} />
+            <span
+              className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary text-white fw-bold d-flex align-items-center justify-content-center"
+              style={{
+                fontSize: "0.6rem",
+                height: "18px",
+                minWidth: "18px",
+                padding: "0",
+              }}
+            >
+              {blog.likesCount || 0}
+            </span>
+          </div>
+          <div className="position-relative" title="Comments">
+            <FiMessageSquare className="text-secondary" size={18} />
+            <span
+              className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary text-white fw-bold d-flex align-items-center justify-content-center"
+              style={{
+                fontSize: "0.6rem",
+                height: "18px",
+                minWidth: "18px",
+                padding: "0",
+              }}
+            >
+              {blog.commentsCount || 0}
+            </span>
+          </div>
+        </div>
+        <Link
+          href={`/blogs/${blog._id}`}
+          className="btn btn-link btn-sm text-secondary text-decoration-none fw-bold p-0 text-uppercase tracking-wider"
+          style={{ fontSize: "0.75rem" }}
+        >
+          Read Article &rarr;
+        </Link>
+      </div>
     </div>
   </div>
 );
