@@ -9,28 +9,54 @@ export const getBlogs = async (req, res, next) => {
   try {
     let query = { deleteStatus: { $ne: true } };
 
-    // If query param 'mode' is 'admin' (and verified by middleware potentially, but here we trust the filter logic for now), we might show drafts.
-    // For public API, we usually only show Published.
-    // However, to keep it simple and reusable for admin dashboard without complex logic here:
-    // We will return all for now, and frontend can filter, OR we verify role.
-    // Let's stick to: Public API gets Published. Admin API (protected) gets all.
-    // But since this is a shared endpoint potentially, let's look at req.user (populated by middleware if token present)
+    // Search functionality text matching
+    if (req.query.search) {
+      query.$or = [
+        { title: { $regex: req.query.search, $options: "i" } },
+        { subheading: { $regex: req.query.search, $options: "i" } },
+      ];
+    }
 
-    // UPDATE: To mirror projectController, it returns everything and Frontend filters?
-    // projectController: const projects = await Project.find({ deleteStatus: { $ne: true } })
-    // It returns ALL projects regardless of status "In Progress" etc.
-    // So we will do the same here.
+    // Exclude specific ID
+    if (req.query.excludeId) {
+      query._id = { $ne: req.query.excludeId };
+    }
 
-    const blogs = await Blog.find({ deleteStatus: { $ne: true } })
+    let blogsQuery = Blog.find(query)
       .select("-body -likes") // Exclude heavy body and sensitive likes from list view
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
+    // Pagination
+    const page = parseInt(req.query.page, 10);
+    const limit = parseInt(req.query.limit, 10);
+
+    let total = 0;
+    if (page && limit) {
+      total = await Blog.countDocuments(query);
+      const startIndex = (page - 1) * limit;
+      blogsQuery = blogsQuery.skip(startIndex).limit(limit);
+    } else if (limit) {
+      blogsQuery = blogsQuery.limit(limit);
+    }
+
+    const blogs = await blogsQuery;
+
+    const response = {
       success: true,
       message: "Blogs fetched successfully",
       count: blogs.length,
       data: blogs,
-    });
+    };
+
+    if (page && limit) {
+      response.pagination = {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+      };
+    }
+
+    res.status(200).json(response);
   } catch (err) {
     res.status(500).json({
       success: false,

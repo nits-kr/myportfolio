@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import {
   useGetBlogQuery,
+  useGetBlogsQuery,
   useLikeBlogMutation,
   useGetCommentsQuery,
   useAddCommentMutation,
@@ -22,6 +23,10 @@ import {
   IoSend,
   IoReturnDownForward,
   IoCopyOutline,
+  IoSearch,
+  IoCalendarOutline,
+  IoChevronBack,
+  IoChevronForward,
 } from "react-icons/io5";
 import SubscribeModal from "@/components/common/SubscribeModal";
 import AdPlacement from "@/components/common/AdPlacement";
@@ -300,12 +305,30 @@ export default function BlogDetailsClient({
   const [addComment] = useAddCommentMutation();
   const [likeComment] = useLikeCommentMutation();
   const [likingCommentId, setLikingCommentId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sidebarPage, setSidebarPage] = useState(1);
+  const sidebarLimit = 6;
+
+  // Reset page when search changes to avoid empty pages
+  useEffect(() => {
+    setSidebarPage(1);
+  }, [searchQuery]);
+
+  const { data: allBlogsData, isFetching: isSidebarFetching } =
+    useGetBlogsQuery({
+      search: searchQuery,
+      limit: sidebarLimit,
+      page: sidebarPage,
+      excludeId: id,
+    });
 
   const blog = initialBlog || blogData?.data;
   const comments = useMemo(
     () => commentsData?.data || initialComments,
     [commentsData, initialComments],
   );
+  const allBlogs = allBlogsData?.data || [];
+  const sidebarPagination = allBlogsData?.pagination;
 
   const checkSubscription = useCallback(
     (action) => {
@@ -491,6 +514,11 @@ export default function BlogDetailsClient({
     [comments],
   );
 
+  const filteredSidebarBlogs = useMemo(() => {
+    // We can rely entirely on backend filtering now, but we keep a fallback just in case
+    return allBlogs.filter((b) => b.status === "Published");
+  }, [allBlogs]);
+
   const isActuallyLoading = !blog && isLoading;
 
   if (isActuallyLoading) {
@@ -520,7 +548,7 @@ export default function BlogDetailsClient({
     <div className="blog-details-viewport">
       <div className="container">
         <div className="row">
-          <div className="col-lg-12">
+          <div className="col-lg-8">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -705,6 +733,104 @@ export default function BlogDetailsClient({
           {/* Sidebar with Ads */}
           <div className="col-lg-4 d-none d-lg-block">
             <div className="blog-sidebar">
+              {/* Modern Blog Listing */}
+              <div className="modern-sidebar-widget">
+                <h3 className="widget-title">Discover More</h3>
+
+                <div className="sidebar-search-wrapper">
+                  <IoSearch className="search-icon" size={18} />
+                  <input
+                    type="text"
+                    placeholder="Search articles..."
+                    className="sidebar-search-input"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                <div className="sidebar-blog-list">
+                  {isSidebarFetching && allBlogs.length === 0 ? (
+                    <div className="text-center py-5">
+                      <div
+                        className="spinner-border text-primary spinner-border-sm"
+                        role="status"
+                      ></div>
+                    </div>
+                  ) : filteredSidebarBlogs.length > 0 ? (
+                    filteredSidebarBlogs.map((sideBlog) => (
+                      <Link
+                        href={`/blogs/${sideBlog._id}`}
+                        key={sideBlog._id}
+                        className="sidebar-blog-card group"
+                      >
+                        <div className="sidebar-card-thumbnail">
+                          {sideBlog.image ? (
+                            <Image
+                              src={sideBlog.image}
+                              alt={sideBlog.title}
+                              fill
+                              sizes="80px"
+                              style={{ objectFit: "cover" }}
+                            />
+                          ) : (
+                            <div className="placeholder-thumbnail"></div>
+                          )}
+                        </div>
+                        <div className="sidebar-card-content">
+                          <h4 className="sidebar-blog-title line-clamp-2">
+                            {sideBlog.title}
+                          </h4>
+                          <div className="sidebar-blog-meta">
+                            <IoCalendarOutline size={14} />
+                            <span>
+                              {new Date(sideBlog.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                },
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="sidebar-no-results text-center py-4">
+                      <p className="text-muted small mb-0">
+                        No matching articles found.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {sidebarPagination && sidebarPagination.pages > 1 && (
+                  <div className="sidebar-pagination mt-4 d-flex justify-content-between align-items-center">
+                    <button
+                      className="btn-pill-secondary btn-sm"
+                      disabled={sidebarPage === 1 || isSidebarFetching}
+                      onClick={() => setSidebarPage((p) => p - 1)}
+                    >
+                      <IoChevronBack size={16} /> Prev
+                    </button>
+                    <span className="small text-muted fw-medium">
+                      Page {sidebarPagination.page} of {sidebarPagination.pages}
+                    </span>
+                    <button
+                      className="btn-pill-secondary btn-sm"
+                      disabled={
+                        sidebarPage === sidebarPagination.pages ||
+                        isSidebarFetching
+                      }
+                      onClick={() => setSidebarPage((p) => p + 1)}
+                    >
+                      Next <IoChevronForward size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Sidebar Ad */}
               {/* <AdPlacement slot="sidebar" type="custom" className="mb-4" /> */}
 

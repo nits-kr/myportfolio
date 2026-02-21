@@ -3,7 +3,17 @@ import { apiSlice } from "./apiSlice";
 export const blogsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getBlogs: builder.query({
-      query: () => "/blogs",
+      query: (params) => {
+        if (!params) return "/blogs";
+        const queryParams = new URLSearchParams();
+        if (params.page) queryParams.append("page", params.page);
+        if (params.limit) queryParams.append("limit", params.limit);
+        if (params.search) queryParams.append("search", params.search);
+        if (params.excludeId) queryParams.append("excludeId", params.excludeId);
+
+        const queryString = queryParams.toString();
+        return queryString ? `/blogs?${queryString}` : "/blogs";
+      },
       providesTags: ["Blog"],
     }),
     getBlog: builder.query({
