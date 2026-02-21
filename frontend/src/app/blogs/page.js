@@ -29,8 +29,14 @@ export default function BlogsPage() {
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
 
-  const blogs = blogsData?.data || [];
+  const rawBlogs = blogsData?.data || [];
   const role = user?.role;
+
+  // Only admins can see drafts. Public users only see published blogs.
+  const blogs =
+    role === "admin"
+      ? rawBlogs
+      : rawBlogs.filter((b) => b.status === "Published");
 
   useEffect(() => {
     setIsMounted(true);
