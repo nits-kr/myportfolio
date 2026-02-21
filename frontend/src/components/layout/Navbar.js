@@ -27,7 +27,10 @@ export default function Navbar() {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
-    { name: "Services", path: "/services" },
+    // { name: "Services", path: "/services" },
+    ...(isMounted && role === "admin"
+      ? [{ name: "Services", path: "/services" }]
+      : []),
     ...(isMounted && role === "admin"
       ? [{ name: "Tools", path: "/tools" }]
       : []),
