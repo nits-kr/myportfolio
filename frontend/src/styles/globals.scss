@@ -67,9 +67,10 @@ body,
     color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
   svg {
-    transition: fill 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                stroke 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+      fill 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      stroke 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+      color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
   font-family: -apple-system, system-ui, sans-serif !important;
   min-height: 100vh;
@@ -595,8 +596,9 @@ body,
     background: rgba(124, 58, 237, 0.12);
     border-color: rgba(124, 58, 237, 0.4);
     transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(124, 58, 237, 0.2),
-                inset 0 0 10px rgba(124, 58, 237, 0.1);
+    box-shadow:
+      0 5px 15px rgba(124, 58, 237, 0.2),
+      inset 0 0 10px rgba(124, 58, 237, 0.1);
   }
 
   [data-bs-theme="dark"] & {
@@ -635,4 +637,45 @@ body,
       border-color: rgba(124, 58, 237, 0.4);
     }
   }
+}
+
+/* ==========================================================================
+   Global PWA Pull-to-Refresh
+   ========================================================================== */
+.ptr-global-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.ptr-indicator {
+  position: absolute;
+  top: 60px; // Offset below the navbar slightly
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+
+  .ptr-content {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.ptr-children {
+  width: 100%;
+  position: relative;
+  z-index: 5;
+  background-color: var(--body-bg);
 }

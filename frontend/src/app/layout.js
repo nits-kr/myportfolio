@@ -14,6 +14,7 @@ import ServiceWorkerRegistration from "@/components/common/ServiceWorkerRegistra
 import GlobalLoader from "@/components/common/GlobalLoader";
 import LogoLoader from "@/components/common/LogoLoader";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
+import GlobalPullToRefresh from "@/components/common/GlobalPullToRefresh";
 
 export const metadata = {
   title: "Nitish Kumar | Full Stack Developer",
@@ -57,7 +58,9 @@ export default function RootLayout({ children }) {
           </Suspense>
           <BootstrapClient />
           <Navbar />
-          <main className="main-content">{children}</main>
+          <GlobalPullToRefresh>
+            <main className="main-content">{children}</main>
+          </GlobalPullToRefresh>
           <Footer />
           <MobileBottomNav />
         </Providers>

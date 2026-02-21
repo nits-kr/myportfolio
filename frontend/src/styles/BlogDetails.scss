@@ -618,6 +618,7 @@ code {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin-bottom: 20px;
 }
 
 .sidebar-blog-card {
@@ -742,6 +743,60 @@ code {
     font-size: 1.05rem;
     letter-spacing: 0.3px;
     white-space: nowrap;
+  }
+}
+
+// ----------------------------------------------------
+// BLOG LIST PAGE: DESKTOP PAGINATION
+// ----------------------------------------------------
+.modern-pagination {
+  .btn-pagination {
+    background: var(--surface-light);
+    border: 1px solid var(--border-light);
+    color: var(--text-color);
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    transition: all 0.3s ease;
+
+    &:hover:not(:disabled) {
+      background: rgba(0, 102, 255, 0.1);
+      border-color: var(--enterprise-blue);
+      color: var(--enterprise-blue);
+      transform: translateY(-2px);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &.active {
+      background: var(--enterprise-blue);
+      color: #fff;
+      border-color: var(--enterprise-blue);
+      box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+    }
+  }
+
+  .nav-btn {
+    padding: 8px 16px;
+    gap: 6px;
+  }
+
+  .num-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    font-weight: 700;
   }
 }
 

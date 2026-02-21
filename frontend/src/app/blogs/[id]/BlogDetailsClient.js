@@ -31,6 +31,7 @@ import {
 } from "react-icons/io5";
 import SubscribeModal from "@/components/common/SubscribeModal";
 import AdPlacement from "@/components/common/AdPlacement";
+import ImageWithSpinner from "@/components/common/ImageWithSpinner";
 import toast, { Toaster } from "react-hot-toast";
 import "@/styles/BlogDetails.scss";
 import "@/styles/AdPlacement.scss";
@@ -594,13 +595,7 @@ export default function BlogDetailsClient({
             >
               <div className="sidebar-card-thumbnail">
                 {sideBlog.image ? (
-                  <Image
-                    src={sideBlog.image}
-                    alt={sideBlog.title}
-                    fill
-                    sizes="80px"
-                    style={{ objectFit: "cover" }}
-                  />
+                  <ImageWithSpinner src={sideBlog.image} alt={sideBlog.title} />
                 ) : (
                   <div className="placeholder-thumbnail"></div>
                 )}
