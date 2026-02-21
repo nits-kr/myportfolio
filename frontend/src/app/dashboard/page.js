@@ -1031,6 +1031,7 @@ function DashboardContent() {
                         <th>Blog</th>
                         <th>Subheading</th>
                         <th>Status</th>
+                        <th>Impressions</th>
                         <th>Date</th>
                         <th>Action</th>
                       </tr>
@@ -1062,6 +1063,11 @@ function DashboardContent() {
                                 className={`badge bg-${blog.status === "Published" ? "success" : "warning"}`}
                               >
                                 {blog.status}
+                              </span>
+                            </td>
+                            <td>
+                              <span className="fw-bold text-accent">
+                                {blog.views || 0}
                               </span>
                             </td>
                             <td>
@@ -1126,16 +1132,21 @@ function DashboardContent() {
                             </span>
                           </div>
                           <div className="d-flex justify-content-between align-items-center">
-                            <small className="text-muted">
-                              {new Date(blog.createdAt).toLocaleDateString(
-                                "en-US",
-                                {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                },
-                              )}
-                            </small>
+                            <div className="d-flex align-items-center gap-3">
+                              <small className="text-muted">
+                                {new Date(blog.createdAt).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  },
+                                )}
+                              </small>
+                              <small className="text-accent fw-bold d-flex align-items-center gap-1">
+                                <i className="bi bi-eye"></i> {blog.views || 0}
+                              </small>
+                            </div>
                             <div className="d-flex gap-2">
                               <button
                                 onClick={() => handleEditBlogClick(blog)}

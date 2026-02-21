@@ -2,6 +2,7 @@ import crypto from "crypto";
 import AnalyticsSession from "../models/AnalyticsSession.js";
 import PageView from "../models/PageView.js";
 import Project from "../models/Project.js";
+import Blog from "../models/Blog.js";
 
 const ANALYTICS_SALT =
   process.env.ANALYTICS_SALT || "dev_analytics_salt_change_me";
@@ -18,16 +19,16 @@ const getClientIp = (req) => {
     return normalizeIp(header.split(",")[0].trim());
   }
   return normalizeIp(
-    req.ip ||
-    req.connection?.remoteAddress ||
-    req.socket?.remoteAddress ||
-    "",
+    req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || "",
   );
 };
 
 const hashIp = (ip) => {
   if (!ip) return "unknown";
-  return crypto.createHash("sha256").update(ip + ANALYTICS_SALT).digest("hex");
+  return crypto
+    .createHash("sha256")
+    .update(ip + ANALYTICS_SALT)
+    .digest("hex");
 };
 
 const isLocalhostIp = (ip) => {
@@ -50,7 +51,13 @@ const shouldSkipTracking = (req) => {
   return isLocalhostIp(ip);
 };
 
-const touchSession = async ({ sessionId, ipHash, userAgent, referrer, path }) => {
+const touchSession = async ({
+  sessionId,
+  ipHash,
+  userAgent,
+  referrer,
+  path,
+}) => {
   const now = new Date();
   await AnalyticsSession.findOneAndUpdate(
     { sessionId },
@@ -99,11 +106,17 @@ export const trackPageView = async (req, res) => {
 
     await touchSession({ sessionId, ipHash, userAgent, referrer, path });
 
+    // Increment blog views if path follows /blogs/[slug]
+    if (path.startsWith("/blogs/")) {
+      const slug = path.split("/").pop();
+      if (slug && slug !== "blogs") {
+        await Blog.findOneAndUpdate({ slug }, { $inc: { views: 1 } });
+      }
+    }
+
     return res.status(201).json({ success: true });
   } catch (err) {
-    return res
-      .status(500)
-      .json({ success: false, message: "Server Error" });
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
@@ -151,16 +164,15 @@ export const heartbeat = async (req, res) => {
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    return res
-      .status(500)
-      .json({ success: false, message: "Server Error" });
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
 export const getAnalyticsStats = async (req, res) => {
   try {
     const windowParam = String(req.query.window || "7d");
-    const windowDays = windowParam === "1d" ? 1 : windowParam === "30d" ? 30 : 7;
+    const windowDays =
+      windowParam === "1d" ? 1 : windowParam === "30d" ? 30 : 7;
     const windowMs = windowDays * 24 * 60 * 60 * 1000;
     const now = new Date();
     const currentStart = new Date(now.getTime() - windowMs);
@@ -174,12 +186,16 @@ export const getAnalyticsStats = async (req, res) => {
 
     const [currentViews, prevViews, currentProjects, prevProjects] =
       await Promise.all([
-        PageView.countDocuments({ createdAt: { $gte: currentStart, $lt: now } }),
+        PageView.countDocuments({
+          createdAt: { $gte: currentStart, $lt: now },
+        }),
         PageView.countDocuments({
           createdAt: { $gte: prevStart, $lt: prevEnd },
         }),
         Project.countDocuments({ createdAt: { $gte: currentStart, $lt: now } }),
-        Project.countDocuments({ createdAt: { $gte: prevStart, $lt: prevEnd } }),
+        Project.countDocuments({
+          createdAt: { $gte: prevStart, $lt: prevEnd },
+        }),
       ]);
 
     const timeAgg = await AnalyticsSession.aggregate([
@@ -222,9 +238,7 @@ export const getAnalyticsStats = async (req, res) => {
       },
     });
   } catch (err) {
-    return res
-      .status(500)
-      .json({ success: false, message: "Server Error" });
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
@@ -235,10 +249,7 @@ export const getAnalyticsSessions = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const [sessions, total] = await Promise.all([
-      AnalyticsSession.find()
-        .sort({ lastSeenAt: -1 })
-        .skip(skip)
-        .limit(limit),
+      AnalyticsSession.find().sort({ lastSeenAt: -1 }).skip(skip).limit(limit),
       AnalyticsSession.countDocuments(),
     ]);
 
@@ -250,8 +261,6 @@ export const getAnalyticsSessions = async (req, res) => {
       totalPages: Math.ceil(total / limit) || 1,
     });
   } catch (err) {
-    return res
-      .status(500)
-      .json({ success: false, message: "Server Error" });
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };

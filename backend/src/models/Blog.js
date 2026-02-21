@@ -55,6 +55,10 @@ const blogSchema = new mongoose.Schema({
     type: [String], // Array of subscriber emails
     default: [],
   },
+  views: {
+    type: Number,
+    default: 0,
+  },
 });
 
 blogSchema.pre("save", async function () {
