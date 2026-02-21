@@ -52,10 +52,10 @@ export default function AboutPage() {
                         </div>
                       </div>
                       {profile.profileImage && (
-                        <div className="col-md-4 mt-4 mt-md-0">
+                        <div className="col-md-4 mt-4 mt-md-0 d-flex align-items-center justify-content-center">
                           <div
-                            className="position-relative rounded-4 overflow-hidden shadow-lg border border-white border-opacity-10"
-                            style={{ height: "240px" }}
+                            className="position-relative rounded-4 overflow-hidden shadow-lg border border-white border-opacity-10 w-100"
+                            style={{ height: "100px", maxWidth: "100px" }}
                           >
                             <Image
                               src={profile.profileImage}
