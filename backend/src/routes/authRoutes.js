@@ -7,6 +7,7 @@ import {
   sendOTP,
   verifyOTP,
   resetPassword,
+  updateProfile,
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import validateRequest from "../middleware/validateRequest.js";
@@ -31,5 +32,7 @@ router.post(
   validateRequest(resetPasswordSchema),
   resetPassword,
 );
+
+router.put("/profile", protect, updateProfile);
 
 export default router;

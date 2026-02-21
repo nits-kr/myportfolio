@@ -65,6 +65,13 @@ export const portfolioApi = createApi({
     getMe: builder.query({
       query: () => "auth/me",
     }),
+    updateProfile: builder.mutation({
+      query: (userData) => ({
+        url: "auth/profile",
+        method: "PUT",
+        body: userData,
+      }),
+    }),
   }),
 });
 export const {
@@ -75,4 +82,5 @@ export const {
   useSendOtpMutation,
   useVerifyOtpMutation,
   useResetPasswordMutation,
+  useUpdateProfileMutation,
 } = portfolioApi;

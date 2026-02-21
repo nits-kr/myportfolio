@@ -64,6 +64,18 @@ const authSlice = createSlice({
         (state, { payload }) => {
           state.user = payload.data;
           state.isAuthenticated = true;
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(payload.data));
+          }
+        },
+      )
+      .addMatcher(
+        portfolioApi.endpoints.updateProfile.matchFulfilled,
+        (state, { payload }) => {
+          state.user = payload.data;
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(payload.data));
+          }
         },
       );
   },

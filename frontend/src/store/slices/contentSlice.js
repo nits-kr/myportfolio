@@ -9,6 +9,7 @@ const initialState = {
     bio: "Experienced Full-Stack Developer with 3+ years building scalable web applications using React.js, Next.js, and modern JavaScript. Specialized in enterprise solutions, real-time features, and AI integration.",
     longBio:
       "Delivered 25+ successful projects including complex admin panels and multi-branch management platforms. Building scalable web applications with cutting-edge technologies. Passionate about solving complex problems through innovative technical solutions.",
+    profileImage: "",
     expertise: {
       frontend: 95,
       backend: 88,

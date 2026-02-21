@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "@/store/slices/authSlice";
 import { useTheme } from "@/context/ThemeContext";
@@ -169,7 +170,35 @@ export default function Navbar() {
                   role="button"
                   data-bs-toggle="dropdown"
                 >
-                  <FaUserCircle size={24} />
+                  {user?.profileImage ? (
+                    <div
+                      className="rounded-circle overflow-hidden border border-primary"
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        position: "relative",
+                      }}
+                    >
+                      <Image
+                        src={user.profileImage}
+                        alt={user.name}
+                        fill
+                        style={{ objectFit: "cover" }}
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className="rounded-circle d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary fw-bold"
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        fontSize: "12px",
+                        border: "1px solid var(--primary-color)",
+                      }}
+                    >
+                      {user?.name?.charAt(0).toUpperCase() || "?"}
+                    </div>
+                  )}
                   <span>{user?.name}</span>
                 </a>
                 <ul className="dropdown-menu dropdown-menu-end glass-card border-0 mt-2">

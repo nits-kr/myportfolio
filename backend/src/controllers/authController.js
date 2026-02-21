@@ -25,6 +25,9 @@ const sendTokenResponse = (user, statusCode, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        profileImage: user.profileImage,
+        title: user.title,
+        bio: user.bio,
       },
     });
 };
@@ -301,4 +304,32 @@ export const logout = async (req, res) => {
     success: true,
     data: {},
   });
+};
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, title, bio, profileImage } = req.body;
+
+    const fieldsToUpdate = {};
+    if (name) fieldsToUpdate.name = name;
+    if (title !== undefined) fieldsToUpdate.title = title;
+    if (bio !== undefined) fieldsToUpdate.bio = bio;
+    if (profileImage !== undefined) fieldsToUpdate.profileImage = profileImage;
+
+    const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+      new: true,
+      runValidators: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: user,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
 };

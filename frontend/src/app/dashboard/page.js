@@ -28,6 +28,10 @@ import {
   useUpdateBlogDeleteStatusMutation,
   useUploadImageMutation,
 } from "@/store/services/blogsApi";
+import {
+  useUpdateProfileMutation,
+  useGetMeQuery,
+} from "@/store/services/portfolioApi";
 
 import { useSearchParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -59,6 +63,7 @@ function DashboardContent() {
       { page: 1, limit: 20 },
       { skip: user?.role !== "admin" },
     );
+  const { data: meData } = useGetMeQuery();
   const [addProject, { isLoading: isAdding }] = useAddProjectMutation();
   const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
   const [deleteProject] = useUpdateDeleteStatusMutation();
@@ -72,10 +77,45 @@ function DashboardContent() {
   const projects = projectsData?.data || [];
   const blogs = blogsData?.data || [];
 
-  const { register: registerProfile, handleSubmit: handleSubmitProfile } =
-    useForm({
-      defaultValues: profile,
-    });
+  const {
+    register: registerProfile,
+    handleSubmit: handleSubmitProfile,
+    watch: watchProfile,
+    setValue: setProfileValue,
+    reset: resetProfileForm,
+  } = useForm({
+    defaultValues: profile,
+  });
+
+  const [updateProfileApi, { isLoading: isUpdatingProfile }] =
+    useUpdateProfileMutation();
+  const [profileImagePreview, setProfileImagePreview] = useState(
+    profile?.profileImage || null,
+  );
+
+  // Sync profile form when profile data changes (e.g. from backend)
+  useEffect(() => {
+    if (profile) {
+      resetProfileForm(profile);
+      setProfileImagePreview(profile.profileImage);
+    }
+  }, [profile, resetProfileForm]);
+
+  // Sync profile from backend data (getMe)
+  useEffect(() => {
+    if (meData?.data) {
+      dispatch(updateProfile(meData.data));
+    }
+  }, [meData, dispatch]);
+
+  const watchedProfileImage = watchProfile("profileImage");
+  useEffect(() => {
+    if (watchedProfileImage && watchedProfileImage[0] instanceof File) {
+      const imageUrl = URL.createObjectURL(watchedProfileImage[0]);
+      setProfileImagePreview(imageUrl);
+      return () => URL.revokeObjectURL(imageUrl);
+    }
+  }, [watchedProfileImage]);
 
   const {
     register: registerProject,
@@ -158,9 +198,33 @@ function DashboardContent() {
     }
   }, [watchedBlogImage]);
 
-  const onUpdateProfile = (data) => {
-    dispatch(updateProfile(data));
-    toast.success("Profile Updated successfully");
+  const onUpdateProfile = async (data) => {
+    try {
+      let finalData = { ...data };
+
+      // Handle image upload if a file is selected
+      if (data.profileImage && data.profileImage[0] instanceof File) {
+        const formData = new FormData();
+        formData.append("image", data.profileImage[0]);
+        const uploadResult = await uploadImage(formData).unwrap();
+        if (uploadResult.success) {
+          finalData.profileImage = uploadResult.url;
+        }
+      } else {
+        // preserve current image if no new file selected
+        finalData.profileImage = profile.profileImage;
+      }
+
+      const result = await updateProfileApi(finalData).unwrap();
+      if (result.success) {
+        // Update bothslices to keep them in sync
+        dispatch(updateProfile(result.data));
+        toast.success("Profile Updated successfully");
+      }
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+      toast.error(err?.data?.message || "Failed to update profile");
+    }
   };
 
   const onSubmitProject = async (data) => {
@@ -340,7 +404,48 @@ function DashboardContent() {
                   <h4 className="mb-3">Edit Profile</h4>
                   <form onSubmit={handleSubmitProfile(onUpdateProfile)}>
                     <div className="row g-3">
+                      <div className="col-md-12">
+                        <label className="form-label">Profile Image</label>
+                        <div className="d-flex align-items-center gap-4 mb-3">
+                          <div
+                            className="profile-preview-container overflow-hidden rounded-circle border border-secondary d-flex align-items-center justify-content-center bg-primary bg-opacity-10"
+                            style={{
+                              width: "100px",
+                              height: "100px",
+                              position: "relative",
+                            }}
+                          >
+                            {profileImagePreview ? (
+                              <Image
+                                src={profileImagePreview}
+                                alt="Profile Preview"
+                                fill
+                                sizes="100px"
+                                style={{ objectFit: "cover" }}
+                              />
+                            ) : (
+                              <span className="text-primary fw-bold display-6">
+                                {profile?.name?.charAt(0).toUpperCase() ||
+                                  user?.name?.charAt(0).toUpperCase() ||
+                                  "?"}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-grow-1">
+                            <input
+                              type="file"
+                              {...registerProfile("profileImage")}
+                              className="form-control bg-transparent"
+                              accept="image/*"
+                            />
+                            <small className="text-muted mt-1 d-block">
+                              Recommended: Square image, max 2MB
+                            </small>
+                          </div>
+                        </div>
+                      </div>
                       <div className="col-md-6">
+                        <label className="form-label">Full Name</label>
                         <input
                           {...registerProfile("name")}
                           className="form-control bg-transparent"
@@ -348,6 +453,7 @@ function DashboardContent() {
                         />
                       </div>
                       <div className="col-md-6">
+                        <label className="form-label">Job Title</label>
                         <input
                           {...registerProfile("title")}
                           className="form-control bg-transparent"
@@ -355,6 +461,7 @@ function DashboardContent() {
                         />
                       </div>
                       <div className="col-12">
+                        <label className="form-label">Bio</label>
                         <textarea
                           {...registerProfile("bio")}
                           className="form-control bg-transparent"
@@ -363,8 +470,23 @@ function DashboardContent() {
                         ></textarea>
                       </div>
                       <div className="col-12 text-end">
-                        <button type="submit" className="btn btn-primary">
-                          Update Profile
+                        <button
+                          type="submit"
+                          className="btn btn-primary"
+                          disabled={isUpdatingProfile || isUploadingImage}
+                        >
+                          {isUpdatingProfile || isUploadingImage ? (
+                            <>
+                              <span
+                                className="spinner-border spinner-border-sm me-2"
+                                role="status"
+                                aria-hidden="true"
+                              ></span>
+                              Updating...
+                            </>
+                          ) : (
+                            "Update Profile"
+                          )}
                         </button>
                       </div>
                     </div>
