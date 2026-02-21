@@ -172,7 +172,7 @@ export default function Navbar() {
                 >
                   {user?.profileImage ? (
                     <div
-                      className="rounded-circle overflow-hidden border border-primary"
+                      className="rounded-circle overflow-hidden border border-primary flex-shrink-0"
                       style={{
                         width: "24px",
                         height: "24px",
@@ -188,7 +188,7 @@ export default function Navbar() {
                     </div>
                   ) : (
                     <div
-                      className="rounded-circle d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary fw-bold"
+                      className="rounded-circle d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary fw-bold flex-shrink-0"
                       style={{
                         width: "24px",
                         height: "24px",

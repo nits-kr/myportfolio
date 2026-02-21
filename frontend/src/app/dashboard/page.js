@@ -408,7 +408,7 @@ function DashboardContent() {
                         <label className="form-label">Profile Image</label>
                         <div className="d-flex align-items-center gap-4 mb-3">
                           <div
-                            className="profile-preview-container overflow-hidden rounded-circle border border-secondary d-flex align-items-center justify-content-center bg-primary bg-opacity-10"
+                            className="profile-preview-container overflow-hidden rounded-circle border border-secondary d-flex align-items-center justify-content-center bg-primary bg-opacity-10 flex-shrink-0"
                             style={{
                               width: "100px",
                               height: "100px",
