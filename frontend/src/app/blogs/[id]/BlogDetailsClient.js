@@ -27,6 +27,7 @@ import {
   IoCalendarOutline,
   IoChevronBack,
   IoChevronForward,
+  IoClose,
 } from "react-icons/io5";
 import SubscribeModal from "@/components/common/SubscribeModal";
 import AdPlacement from "@/components/common/AdPlacement";
@@ -328,6 +329,21 @@ export default function BlogDetailsClient({
     [commentsData, initialComments],
   );
   const allBlogs = allBlogsData?.data || [];
+  // Mobile Drawer State
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
+  // Prevent background scrolling when drawer is open
+  useEffect(() => {
+    if (isMobileDrawerOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileDrawerOpen]);
+
   const sidebarPagination = allBlogsData?.pagination;
 
   const checkSubscription = useCallback(
@@ -544,6 +560,101 @@ export default function BlogDetailsClient({
 
   const isLiked = blog?.hasLiked;
 
+  // Reusable Sidebar Content (Search + List + Pagination)
+  const renderSidebarContent = () => (
+    <>
+      <h3 className="widget-title">Discover More</h3>
+
+      <div className="sidebar-search-wrapper">
+        <IoSearch className="search-icon" size={18} />
+        <input
+          type="text"
+          placeholder="Search articles..."
+          className="sidebar-search-input"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      <div className="sidebar-blog-list">
+        {isSidebarFetching && allBlogs.length === 0 ? (
+          <div className="text-center py-5">
+            <div
+              className="spinner-border text-primary spinner-border-sm"
+              role="status"
+            ></div>
+          </div>
+        ) : filteredSidebarBlogs.length > 0 ? (
+          filteredSidebarBlogs.map((sideBlog) => (
+            <Link
+              href={`/blogs/${sideBlog._id}`}
+              key={sideBlog._id}
+              className="sidebar-blog-card group"
+              onClick={() => setIsMobileDrawerOpen(false)}
+            >
+              <div className="sidebar-card-thumbnail">
+                {sideBlog.image ? (
+                  <Image
+                    src={sideBlog.image}
+                    alt={sideBlog.title}
+                    fill
+                    sizes="80px"
+                    style={{ objectFit: "cover" }}
+                  />
+                ) : (
+                  <div className="placeholder-thumbnail"></div>
+                )}
+              </div>
+              <div className="sidebar-card-content">
+                <h4 className="sidebar-blog-title line-clamp-2">
+                  {sideBlog.title}
+                </h4>
+                <div className="sidebar-blog-meta">
+                  <IoCalendarOutline size={14} />
+                  <span>
+                    {new Date(sideBlog.createdAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ))
+        ) : (
+          <div className="sidebar-no-results text-center py-4">
+            <p className="text-muted small mb-0">No matching articles found.</p>
+          </div>
+        )}
+      </div>
+
+      {sidebarPagination && sidebarPagination.pages > 1 && (
+        <div className="sidebar-pagination mt-4 d-flex justify-content-between align-items-center">
+          <button
+            className="btn-pill-secondary btn-sm"
+            disabled={sidebarPage === 1 || isSidebarFetching}
+            onClick={() => setSidebarPage((p) => p - 1)}
+          >
+            <IoChevronBack size={16} /> Prev
+          </button>
+          <span className="small text-muted fw-medium">
+            Page {sidebarPagination.page} of {sidebarPagination.pages}
+          </span>
+          <button
+            className="btn-pill-secondary btn-sm"
+            disabled={
+              sidebarPage === sidebarPagination.pages || isSidebarFetching
+            }
+            onClick={() => setSidebarPage((p) => p + 1)}
+          >
+            Next <IoChevronForward size={16} />
+          </button>
+        </div>
+      )}
+    </>
+  );
+
   return (
     <div className="blog-details-viewport">
       <div className="container">
@@ -730,105 +841,12 @@ export default function BlogDetailsClient({
             </div>
           </div>
 
-          {/* Sidebar with Ads */}
+          {/* Sidebar with Ads (Desktop Only) */}
           <div className="col-lg-4 d-none d-lg-block">
             <div className="blog-sidebar">
               {/* Modern Blog Listing */}
               <div className="modern-sidebar-widget">
-                <h3 className="widget-title">Discover More</h3>
-
-                <div className="sidebar-search-wrapper">
-                  <IoSearch className="search-icon" size={18} />
-                  <input
-                    type="text"
-                    placeholder="Search articles..."
-                    className="sidebar-search-input"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-
-                <div className="sidebar-blog-list">
-                  {isSidebarFetching && allBlogs.length === 0 ? (
-                    <div className="text-center py-5">
-                      <div
-                        className="spinner-border text-primary spinner-border-sm"
-                        role="status"
-                      ></div>
-                    </div>
-                  ) : filteredSidebarBlogs.length > 0 ? (
-                    filteredSidebarBlogs.map((sideBlog) => (
-                      <Link
-                        href={`/blogs/${sideBlog._id}`}
-                        key={sideBlog._id}
-                        className="sidebar-blog-card group"
-                      >
-                        <div className="sidebar-card-thumbnail">
-                          {sideBlog.image ? (
-                            <Image
-                              src={sideBlog.image}
-                              alt={sideBlog.title}
-                              fill
-                              sizes="80px"
-                              style={{ objectFit: "cover" }}
-                            />
-                          ) : (
-                            <div className="placeholder-thumbnail"></div>
-                          )}
-                        </div>
-                        <div className="sidebar-card-content">
-                          <h4 className="sidebar-blog-title line-clamp-2">
-                            {sideBlog.title}
-                          </h4>
-                          <div className="sidebar-blog-meta">
-                            <IoCalendarOutline size={14} />
-                            <span>
-                              {new Date(sideBlog.createdAt).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                },
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    ))
-                  ) : (
-                    <div className="sidebar-no-results text-center py-4">
-                      <p className="text-muted small mb-0">
-                        No matching articles found.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {sidebarPagination && sidebarPagination.pages > 1 && (
-                  <div className="sidebar-pagination mt-4 d-flex justify-content-between align-items-center">
-                    <button
-                      className="btn-pill-secondary btn-sm"
-                      disabled={sidebarPage === 1 || isSidebarFetching}
-                      onClick={() => setSidebarPage((p) => p - 1)}
-                    >
-                      <IoChevronBack size={16} /> Prev
-                    </button>
-                    <span className="small text-muted fw-medium">
-                      Page {sidebarPagination.page} of {sidebarPagination.pages}
-                    </span>
-                    <button
-                      className="btn-pill-secondary btn-sm"
-                      disabled={
-                        sidebarPage === sidebarPagination.pages ||
-                        isSidebarFetching
-                      }
-                      onClick={() => setSidebarPage((p) => p + 1)}
-                    >
-                      Next <IoChevronForward size={16} />
-                    </button>
-                  </div>
-                )}
+                {renderSidebarContent()}
               </div>
 
               {/* Sidebar Ad */}
@@ -889,6 +907,77 @@ export default function BlogDetailsClient({
             },
           }}
         />
+
+        {/* Mobile Floating Action Button */}
+        <div className="d-lg-none">
+          <AnimatePresence>
+            {!isMobileDrawerOpen && (
+              <motion.button
+                className="mobile-discover-fab"
+                whileTap={{ scale: 0.95 }}
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                onClick={() => setIsMobileDrawerOpen(true)}
+              >
+                <div className="fab-content">
+                  <IoSearch size={20} className="fab-icon" />
+                  <span className="fab-text">Discover More</span>
+                </div>
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Mobile Bottom Sheet Drawer */}
+        <AnimatePresence>
+          {isMobileDrawerOpen && (
+            <>
+              <motion.div
+                className="mobile-drawer-overlay d-lg-none"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMobileDrawerOpen(false)}
+              />
+              <motion.div
+                className="mobile-drawer-container d-lg-none"
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={0.2}
+                onDragEnd={(e, info) => {
+                  if (info.offset.y > 100) {
+                    setIsMobileDrawerOpen(false);
+                  }
+                }}
+              >
+                <div className="drawer-drag-handle">
+                  <div className="handle-bar"></div>
+                </div>
+
+                <div className="drawer-header">
+                  <button
+                    className="drawer-close-btn"
+                    onClick={() => setIsMobileDrawerOpen(false)}
+                  >
+                    <IoClose size={24} />
+                  </button>
+                </div>
+
+                <div className="drawer-content-scrollable">
+                  <div className="modern-sidebar-widget mobile-variant">
+                    {renderSidebarContent()}
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
