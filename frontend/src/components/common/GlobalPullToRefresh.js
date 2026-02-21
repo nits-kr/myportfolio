@@ -50,10 +50,31 @@ export default function GlobalPullToRefresh({ children }) {
   const startY = useRef(0);
   const isPulling = useRef(false);
 
+  // Handle persistent refresh state across page reloads
+  useEffect(() => {
+    const isPWARefreshing = sessionStorage.getItem("pwa_refresh_active");
+    if (isPWARefreshing === "true") {
+      setIsRefreshing(true);
+      setPullDistance(REFRESH_THRESHOLD);
+
+      // Clear the flag after a delay to allow the user to see the "load complete" transition
+      const timer = setTimeout(() => {
+        setIsRefreshing(false);
+        setPullDistance(0);
+        sessionStorage.removeItem("pwa_refresh_active");
+      }, 1000); // 1s is usually enough for hydration and initial data check
+
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   useEffect(() => {
     const handleTouchStart = (e) => {
       // Only allow pull-to-refresh if we are at the very top of the page
-      if (window.scrollY === 0) {
+      // AND no modal/drawer is open (standard convention is setting overflow: hidden on body)
+      const isBodyLocked = document.body.style.overflow === "hidden";
+
+      if (window.scrollY === 0 && !isRefreshing && !isBodyLocked) {
         startY.current = e.touches[0].clientY;
         isPulling.current = true;
         setIsDragging(true);
@@ -85,6 +106,13 @@ export default function GlobalPullToRefresh({ children }) {
       if (pullDistance >= REFRESH_THRESHOLD) {
         setIsRefreshing(true);
         setPullDistance(REFRESH_THRESHOLD); // Lock it at the threshold while refreshing
+
+        // Set a flag in session storage so the new page load knows it was a PWA refresh
+        try {
+          sessionStorage.setItem("pwa_refresh_active", "true");
+        } catch (err) {
+          console.error("Session storage not available", err);
+        }
 
         // Use router.refresh() for a soft-reload or window.location.reload() for a full PWA refresh.
         // We add a tiny delay so the "Active" spin animation can be seen before the browser freezes the UI to reload.

@@ -11,6 +11,7 @@ import {
 } from "@/store/services/blogsApi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback, memo, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useSelector } from "react-redux";
 import Link from "next/link";
 import Image from "next/image";
@@ -925,54 +926,60 @@ export default function BlogDetailsClient({
           </AnimatePresence>
         </div>
 
-        {/* Mobile Bottom Sheet Drawer */}
-        <AnimatePresence>
-          {isMobileDrawerOpen && (
-            <>
-              <motion.div
-                className="mobile-drawer-overlay d-lg-none"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsMobileDrawerOpen(false)}
-              />
-              <motion.div
-                className="mobile-drawer-container d-lg-none"
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                drag="y"
-                dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={0.2}
-                onDragEnd={(e, info) => {
-                  if (info.offset.y > 100) {
-                    setIsMobileDrawerOpen(false);
-                  }
-                }}
-              >
-                <div className="drawer-drag-handle">
-                  <div className="handle-bar"></div>
-                </div>
-
-                <div className="drawer-header">
-                  <button
-                    className="drawer-close-btn"
+        {/* Mobile Bottom Sheet Drawer - Rendered in Portal to avoid stacking context issues */}
+        {typeof document !== "undefined" &&
+          createPortal(
+            <AnimatePresence>
+              {isMobileDrawerOpen && (
+                <>
+                  <motion.div
+                    className="mobile-drawer-overlay d-lg-none"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     onClick={() => setIsMobileDrawerOpen(false)}
+                    style={{ zIndex: 10000 }} // Increased z-index
+                  />
+                  <motion.div
+                    className="mobile-drawer-container d-lg-none"
+                    initial={{ y: "100%" }}
+                    animate={{ y: 0 }}
+                    exit={{ y: "100%" }}
+                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                    drag="y"
+                    dragConstraints={{ top: 0, bottom: 0 }}
+                    dragElastic={0.2}
+                    onDragEnd={(e, info) => {
+                      if (info.offset.y > 100) {
+                        setIsMobileDrawerOpen(false);
+                      }
+                    }}
+                    style={{ zIndex: 10001 }} // Increased z-index
                   >
-                    <IoClose size={24} />
-                  </button>
-                </div>
+                    <div className="drawer-drag-handle">
+                      <div className="handle-bar"></div>
+                    </div>
 
-                <div className="drawer-content-scrollable">
-                  <div className="modern-sidebar-widget mobile-variant">
-                    {renderSidebarContent()}
-                  </div>
-                </div>
-              </motion.div>
-            </>
+                    <div className="drawer-header">
+                      <button
+                        className="drawer-close-btn"
+                        onClick={() => setIsMobileDrawerOpen(false)}
+                      >
+                        <IoClose size={24} />
+                      </button>
+                    </div>
+
+                    <div className="drawer-content-scrollable">
+                      <div className="modern-sidebar-widget mobile-variant">
+                        {renderSidebarContent()}
+                      </div>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>,
+            document.body,
           )}
-        </AnimatePresence>
       </div>
     </div>
   );
