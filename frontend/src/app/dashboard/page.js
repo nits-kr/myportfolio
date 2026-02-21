@@ -52,6 +52,11 @@ function DashboardContent() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { data: projectsData, isLoading: isProjectsLoading } =
     useGetProjectsQuery();
@@ -1104,14 +1109,22 @@ function DashboardContent() {
                           </td>
                           <td>{Math.round(session.totalTimeSeconds || 0)}s</td>
                           <td>
-                            {new Date(session.lastSeenAt).toLocaleString(
-                              "en-US",
-                            )}
+                            {mounted && session.lastSeenAt
+                              ? new Date(session.lastSeenAt).toLocaleString(
+                                  "en-US",
+                                )
+                              : session.lastSeenAt
+                                ? "Loading..."
+                                : "-"}
                           </td>
                           <td>
-                            {new Date(session.firstSeenAt).toLocaleString(
-                              "en-US",
-                            )}
+                            {mounted && session.firstSeenAt
+                              ? new Date(session.firstSeenAt).toLocaleString(
+                                  "en-US",
+                                )
+                              : session.firstSeenAt
+                                ? "Loading..."
+                                : "-"}
                           </td>
                         </tr>
                       ))
