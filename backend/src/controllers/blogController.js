@@ -262,6 +262,7 @@ export const likeBlog = async (req, res, next) => {
 
     // Check if user is verified (skip for admin)
     const isAdmin = req.user && req.user.role === "admin";
+    /*
     if (!isAdmin) {
       const subscriber = await Subscriber.findOne({ email });
       if (!subscriber || !subscriber.isVerified) {
@@ -272,6 +273,7 @@ export const likeBlog = async (req, res, next) => {
         });
       }
     }
+    */
 
     const blog = await Blog.findById(req.params.id);
     if (!blog) {
@@ -328,6 +330,8 @@ export const addComment = async (req, res, next) => {
     // Check if user is verified (skip for admin)
     if (!isAdminReply) {
       const subscriber = await Subscriber.findOne({ email });
+      // Skip verification check as per user request
+      /*
       if (!subscriber || !subscriber.isVerified) {
         return res.status(403).json({
           success: false,
@@ -335,6 +339,7 @@ export const addComment = async (req, res, next) => {
             "Please verify your email before commenting. Check your inbox for the verification link.",
         });
       }
+      */
     }
 
     const comment = await Comment.create({
@@ -374,6 +379,7 @@ export const likeComment = async (req, res, next) => {
 
     // Check if user is verified (skip for admin)
     const isAdmin = req.user && req.user.role === "admin";
+    /*
     if (!isAdmin) {
       const subscriber = await Subscriber.findOne({ email });
       if (!subscriber || !subscriber.isVerified) {
@@ -384,6 +390,7 @@ export const likeComment = async (req, res, next) => {
         });
       }
     }
+    */
 
     const comment = await Comment.findById(req.params.commentId);
     if (!comment) {

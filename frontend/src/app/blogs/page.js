@@ -320,7 +320,7 @@ export default function BlogsPage() {
             pullDownToRefreshThreshold={70}
             refreshFunction={handleRefresh}
             pullDownToRefreshContent={
-              <div className="text-center py-3">
+              <div className="text-center py-3 d-none">
                 <IOSSpinner active={false} />
                 <div
                   className="small text-muted mt-2"
