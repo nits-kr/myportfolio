@@ -204,7 +204,7 @@ export default function Navbar() {
                 <ul className="dropdown-menu dropdown-menu-end glass-card border-0 mt-2">
                   <li>
                     <Link
-                      className="dropdown-item text-white"
+                      className="dropdown-item"
                       href="/dashboard"
                       onClick={closeMenu}
                     >
@@ -214,7 +214,7 @@ export default function Navbar() {
                   {user?.role === "admin" && (
                     <li>
                       <Link
-                        className="dropdown-item text-white"
+                        className="dropdown-item"
                         href="/dashboard/sub-users"
                         onClick={closeMenu}
                       >
@@ -223,7 +223,7 @@ export default function Navbar() {
                     </li>
                   )}
                   <li>
-                    <hr className="dropdown-divider bg-white" />
+                    <hr className="dropdown-divider opacity-50" />
                   </li>
                   <li>
                     <button
