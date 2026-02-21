@@ -679,3 +679,34 @@ body,
   z-index: 5;
   background-color: var(--body-bg);
 }
+
+/* ==========================================================================
+   Global Toast Styles (react-hot-toast & SweetAlert2 Fix)
+   ========================================================================== */
+.glass-toast {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  color: var(--body-color) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+  border-radius: 12px !important;
+  font-weight: 500 !important;
+  font-size: 0.9rem !important;
+
+  [data-bs-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.8) !important;
+  }
+
+  [data-bs-theme="light"] & {
+    background: rgba(255, 255, 255, 0.8) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+  }
+}
+
+/* Force SweetAlert2 Toast to stay on top of navbar */
+.swal2-container.swal2-top-end,
+.swal2-container.swal2-top-right {
+  z-index: 20000 !important;
+  padding-top: 80px !important; // Offset for navbar
+}

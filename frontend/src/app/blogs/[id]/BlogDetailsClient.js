@@ -33,7 +33,7 @@ import {
 import SubscribeModal from "@/components/common/SubscribeModal";
 import AdPlacement from "@/components/common/AdPlacement";
 import ImageWithSpinner from "@/components/common/ImageWithSpinner";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import "@/styles/BlogDetails.scss";
 import "@/styles/AdPlacement.scss";
 
@@ -890,22 +890,6 @@ export default function BlogDetailsClient({
           isOpen={isSubscribeModalOpen}
           onClose={() => setIsSubscribeModalOpen(false)}
           onSuccess={onSubscribeSuccess}
-        />
-
-        <Toaster
-          toastOptions={{
-            style: {
-              background: "var(--surface-main)",
-              color: "var(--text-main)",
-              border: "1px solid var(--border-light)",
-            },
-            error: {
-              iconTheme: {
-                primary: "#ef4444",
-                secondary: "#fff",
-              },
-            },
-          }}
         />
 
         {/* Mobile Floating Action Button */}

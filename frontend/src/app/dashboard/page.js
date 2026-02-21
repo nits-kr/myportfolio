@@ -30,21 +30,7 @@ import {
 } from "@/store/services/blogsApi";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import Swal from "sweetalert2";
-
-const Toast = Swal.mixin({
-  toast: true,
-  position: "top-end",
-  showConfirmButton: false,
-  timer: 3000,
-  timerProgressBar: true,
-  didOpen: (toast) => {
-    toast.onmouseenter = Swal.stopTimer;
-    toast.onmouseleave = Swal.resumeTimer;
-  },
-  background: "rgba(255, 255, 255, 0.9)",
-  color: "#333",
-});
+import toast from "react-hot-toast";
 
 function DashboardContent() {
   const { user } = useSelector((state) => state.auth);
@@ -174,29 +160,20 @@ function DashboardContent() {
 
   const onUpdateProfile = (data) => {
     dispatch(updateProfile(data));
-    Toast.fire({
-      icon: "success",
-      title: "Profile Updated successfully",
-    });
+    toast.success("Profile Updated successfully");
   };
 
   const onSubmitProject = async (data) => {
     try {
       if (editingProject) {
         await updateProject({ id: editingProject._id, ...data }).unwrap();
-        Toast.fire({
-          icon: "success",
-          title: "Project Updated successfully",
-        });
+        toast.success("Project Updated successfully");
         setEditingProject(null);
         // Navigate to the public projects page as requested
         router.push("/projects");
       } else {
         await addProject(data).unwrap();
-        Toast.fire({
-          icon: "success",
-          title: "Project Added successfully",
-        });
+        toast.success("Project Added successfully");
         // Remove this router.push since we are already on the dashboard and want to stay or reset
         router.push("/projects");
       }
@@ -210,10 +187,7 @@ function DashboardContent() {
           : err.data.error
         : "Failed to save project";
 
-      Toast.fire({
-        icon: "error",
-        title: errorMessage,
-      });
+      toast.error(errorMessage);
     }
   };
 
@@ -263,18 +237,12 @@ function DashboardContent() {
 
       if (editingBlog) {
         await updateBlog({ id: editingBlog._id, ...finalData }).unwrap();
-        Toast.fire({
-          icon: "success",
-          title: "Blog Updated successfully",
-        });
+        toast.success("Blog Updated successfully");
         setEditingBlog(null);
         router.push("/blogs");
       } else {
         await addBlog(finalData).unwrap();
-        Toast.fire({
-          icon: "success",
-          title: "Blog Added successfully",
-        });
+        toast.success("Blog Added successfully");
         router.push("/blogs");
       }
       resetBlog();
@@ -294,10 +262,7 @@ function DashboardContent() {
         errorMessage = err.error;
       }
 
-      Toast.fire({
-        icon: "error",
-        title: errorMessage,
-      });
+      toast.error(errorMessage);
     }
   };
 

@@ -15,6 +15,7 @@ import GlobalLoader from "@/components/common/GlobalLoader";
 import LogoLoader from "@/components/common/LogoLoader";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 import GlobalPullToRefresh from "@/components/common/GlobalPullToRefresh";
+import { Toaster } from "react-hot-toast";
 
 export const metadata = {
   title: "Nitish Kumar | Full Stack Developer",
@@ -61,6 +62,17 @@ export default function RootLayout({ children }) {
           <GlobalPullToRefresh>
             <main className="main-content">{children}</main>
           </GlobalPullToRefresh>
+          <Toaster
+            position="top-right"
+            containerStyle={{
+              top: 90,
+              zIndex: 20000,
+            }}
+            toastOptions={{
+              className: "glass-toast",
+              duration: 4000,
+            }}
+          />
           <Footer />
           <MobileBottomNav />
         </Providers>
