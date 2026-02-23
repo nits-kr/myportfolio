@@ -35,7 +35,7 @@ export default function Hero() {
             <div className="d-flex flex-column flex-md-row gap-3 justify-content-center justify-content-lg-start w-100">
               <Link
                 href="/services"
-                className="btn btn-primary btn-lg px-5 px-lg-4 d-flex align-items-center justify-content-center gap-2 shadow-lg"
+                className="btn btn-primary btn-lg px-5 px-lg-4 d-flex align-items-center justify-content-center gap-2 shadow-lg d-none"
               >
                 <svg
                   width="20"
