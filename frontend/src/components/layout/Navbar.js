@@ -48,7 +48,9 @@ export default function Navbar() {
       : []),
     { name: "Projects", path: "/projects" },
     { name: "Blogs", path: "/blogs" },
-    { name: "Contact", path: "/contact" },
+    ...(isMounted && role === "admin"
+      ? [{ name: "Contact", path: "/contact" }]
+      : []),
   ];
 
   const closeMenu = () => {

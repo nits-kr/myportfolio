@@ -25,6 +25,8 @@ import {
   FiMessageSquare,
 } from "react-icons/fi";
 import InfiniteScroll from "react-infinite-scroll-component";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 export default function BlogsPage() {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -203,14 +205,26 @@ export default function BlogsPage() {
       </motion.div>
 
       {isLoading && (
-        <div className="d-flex flex-column align-items-center justify-content-center py-5">
-          <div
-            className="spinner-border text-secondary mb-3"
-            style={{ width: "3rem", height: "3rem" }}
-            role="status"
-          />
-          <p className="text-muted">Loading articles...</p>
-        </div>
+        <SkeletonTheme baseColor="#1a1c23" highlightColor="#2d303b">
+          <div className="d-none d-lg-block">
+            <div className="row g-4 lg:g-5">
+              {[...Array(6)].map((_, index) => (
+                <div key={`skel-${index}`} className="col-lg-4 col-md-6">
+                  <BlogCardSkeleton />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="d-block d-lg-none">
+            <div className="row g-4">
+              {[...Array(3)].map((_, index) => (
+                <div key={`skel-mob-${index}`} className="col-12">
+                  <BlogCardSkeleton />
+                </div>
+              ))}
+            </div>
+          </div>
+        </SkeletonTheme>
       )}
 
       {error && (
@@ -508,6 +522,48 @@ const BlogCard = ({
         >
           Read Article &rarr;
         </Link>
+      </div>
+    </div>
+  </div>
+);
+
+// Skeleton loader that mimics BlogCard
+const BlogCardSkeleton = () => (
+  <div className="glass-card h-100 p-4 d-flex flex-column border-1 border-white border-opacity-5">
+    {/* Header Actions */}
+    <div className="d-flex justify-content-between align-items-center mb-4">
+      <Skeleton width={100} height={20} />
+      <div className="d-flex gap-2">
+        <Skeleton circle width={36} height={36} />
+      </div>
+    </div>
+
+    <div className="flex-grow-1">
+      <div className="mb-2">
+        <Skeleton width={60} height={24} borderRadius={20} />
+      </div>
+      <div
+        className="mb-3"
+        style={{ borderRadius: "12px", overflow: "hidden", height: "200px" }}
+      >
+        <Skeleton height="100%" />
+      </div>
+      <h3 className="h4 fw-bold mb-3">
+        <Skeleton count={2} />
+      </h3>
+
+      <p className="small mb-4">
+        <Skeleton count={3} />
+      </p>
+    </div>
+
+    <div className="mt-auto pt-4 border-top border-white border-opacity-5">
+      <div className="d-flex align-items-center justify-content-between">
+        <div className="d-flex align-items-center gap-4">
+          <Skeleton width={30} height={20} />
+          <Skeleton width={30} height={20} />
+        </div>
+        <Skeleton width={80} height={20} />
       </div>
     </div>
   </div>

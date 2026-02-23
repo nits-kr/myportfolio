@@ -29,43 +29,50 @@ export default function AboutPage() {
                       border: "1px solid rgba(255, 255, 255, 0.05) !important",
                     }}
                   >
-                    <div className="row align-items-center">
-                      <div
-                        className={profile.profileImage ? "col-md-8" : "col-12"}
-                      >
-                        <span
-                          className="text-primary fw-bold text-uppercase mb-2 d-block ls-2"
-                          style={{ fontSize: "0.7rem" }}
-                        >
-                          Get to know me
-                        </span>
-                        <h1 className="display-4 display-md-3 fw-bold mb-4 gradient-text">
-                          About Me
-                        </h1>
-                        <p className="lead fw-medium mb-4 text-light">
-                          I&apos;m{" "}
-                          <span className="text-primary">{profile.name}</span>,{" "}
-                          {profile.title}.
-                        </p>
-                        <div className="subtext opacity-75 fs-5 leading-relaxed mb-0">
+                    <div className="row">
+                      <div className="col-12">
+                        <div className="d-flex justify-content-between align-items-start flex-wrap gap-4">
+                          <div>
+                            <span
+                              className="text-primary fw-bold text-uppercase mb-2 d-block ls-2"
+                              style={{ fontSize: "0.7rem" }}
+                            >
+                              Get to know me
+                            </span>
+                            <div className="d-flex align-items-center justify-content-between gap-3 mb-4">
+                              <h1 className="display-4 display-md-3 fw-bold gradient-text mb-0">
+                                About Me
+                              </h1>
+                              {profile.profileImage && (
+                                <div className="flex-shrink-0">
+                                  <div
+                                    className="position-relative rounded-circle overflow-hidden shadow-sm border border-white border-opacity-10"
+                                    style={{ height: "80px", width: "80px" }}
+                                  >
+                                    <Image
+                                      src={profile.profileImage}
+                                      alt={profile.name}
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <p className="lead fw-medium text-light mb-0">
+                              I&apos;m{" "}
+                              <span className="text-primary">
+                                {profile.name}
+                              </span>
+                              , {profile.title}.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="subtext opacity-75 fs-5 leading-relaxed mt-4">
                           {profile.longBio || profile.bio}
                         </div>
                       </div>
-                      {profile.profileImage && (
-                        <div className="col-md-4 mt-4 mt-md-0 d-flex align-items-center justify-content-center">
-                          <div
-                            className="position-relative rounded-4 overflow-hidden shadow-lg border border-white border-opacity-10 w-100"
-                            style={{ height: "100px", maxWidth: "100px" }}
-                          >
-                            <Image
-                              src={profile.profileImage}
-                              alt={profile.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
