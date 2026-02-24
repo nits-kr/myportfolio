@@ -81,7 +81,7 @@ export default function SubUserModal({
                   {...register("role", { required: true })}
                   className="form-select bg-transparent text-light"
                 >
-                  <option className="text-dark" value="user">
+                  <option className="text-dark" value="sub-admin">
                     Sub-Admin
                   </option>
                   <option className="text-dark" value="editor">

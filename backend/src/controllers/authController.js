@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import SubUser from "../models/subUser.modal.js";
 import jwt from "jsonwebtoken";
 
 // Helper to create token and send cookie
@@ -25,9 +26,9 @@ const sendTokenResponse = (user, statusCode, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        profileImage: user.profileImage,
-        title: user.title,
-        bio: user.bio,
+        profileImage: user.profileImage || "",
+        title: user.title || "",
+        bio: user.bio || "",
       },
     });
 };
@@ -84,7 +85,12 @@ export const login = async (req, res) => {
     }
 
     // Check for user
-    const user = await User.findOne({ email }).select("+password");
+    let user = await User.findOne({ email }).select("+password");
+
+    // If no main User, check SubUser
+    if (!user) {
+      user = await SubUser.findOne({ email }).select("+password");
+    }
 
     if (!user) {
       return res.status(401).json({ success: false, message: "Invalid email" });
@@ -278,7 +284,17 @@ export const resetPassword = async (req, res) => {
 // @access  Private
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    let user = await User.findById(req.user.id);
+
+    if (!user) {
+      user = await SubUser.findById(req.user.id);
+    }
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
 
     res.status(200).json({
       success: true,

@@ -42,8 +42,8 @@ const subUserSchema = new mongoose.Schema({
   role: {
     type: String,
     required: true,
-    enum: ["admin", "user"],
-    default: "user",
+    enum: ["sub-admin", "editor", "viewer", "admin", "user"],
+    default: "sub-admin",
     message: (props) => `${props.value} is not a valid role!`,
   },
   permissions: {
@@ -86,5 +86,10 @@ subUserSchema.pre("save", async function (next) {
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
+
+// Match sub user entered password to hashed password in database
+subUserSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 export default mongoose.model("SubUser", subUserSchema);

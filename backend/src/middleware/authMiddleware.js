@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import SubUser from "../models/subUser.modal.js";
 
 export const protect = async (req, res, next) => {
   let token;
@@ -27,7 +28,12 @@ export const protect = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = await User.findById(decoded.id).select("-password");
+    let user = await User.findById(decoded.id).select("-password");
+    if (!user) {
+      user = await SubUser.findById(decoded.id).select("-password");
+    }
+
+    req.user = user;
 
     if (!req.user) {
       return res
@@ -63,7 +69,11 @@ export const optionalProtect = async (req, res, next) => {
   if (token) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select("-password");
+      let user = await User.findById(decoded.id).select("-password");
+      if (!user) {
+        user = await SubUser.findById(decoded.id).select("-password");
+      }
+      req.user = user;
     } catch (err) {
       console.error("Optional Auth Error:", err);
     }
