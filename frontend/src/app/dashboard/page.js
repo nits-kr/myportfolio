@@ -384,12 +384,15 @@ function DashboardContent() {
 
             {/* Tab Navigation */}
             <div className="d-flex gap-3 mb-4">
-              <button
-                className={`btn ${tab === "projects" ? "btn-primary" : "btn-outline-light"}`}
-                onClick={() => router.push("/dashboard?tab=projects")}
-              >
-                Projects
-              </button>
+              {user?.role === "admin" && (
+                <button
+                  className={`btn ${tab === "projects" ? "btn-primary" : "btn-outline-light"}`}
+                  onClick={() => router.push("/dashboard?tab=projects")}
+                >
+                  Projects
+                </button>
+              )}
+
               <button
                 className={`btn ${tab === "blogs" ? "btn-primary" : "btn-outline-light"}`}
                 onClick={() => router.push("/dashboard?tab=blogs")}
@@ -398,8 +401,8 @@ function DashboardContent() {
               </button>
             </div>
 
-            {user?.role === "admin" && (
-              <div className="d-flex flex-column gap-5">
+            <div className="d-flex flex-column gap-5">
+              {user?.role === "admin" && (
                 <div className="glass-card p-4">
                   <h4 className="mb-3">Edit Profile</h4>
                   <form onSubmit={handleSubmitProfile(onUpdateProfile)}>
@@ -492,248 +495,246 @@ function DashboardContent() {
                     </div>
                   </form>
                 </div>
+              )}
 
-                {tab === "projects" && (
-                  <div className="glass-card p-4">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <h4 className="mb-0">
-                        {editingProject ? "Edit Project" : "Add New Project"}
-                      </h4>
-                      {editingProject && (
-                        <button
-                          onClick={handleCancelEdit}
-                          className="btn btn-outline-light btn-sm"
-                        >
-                          Cancel Edit
-                        </button>
-                      )}
-                    </div>
-                    <form onSubmit={handleSubmitProject(onSubmitProject)}>
-                      <div className="row g-3">
-                        <div className="col-md-6">
-                          <input
-                            {...registerProject("title")}
-                            className="form-control bg-transparent"
-                            placeholder="Project Title"
-                            required
-                          />
-                        </div>
-                        <div className="col-md-6">
-                          <select
-                            {...registerProject("status")}
-                            className="form-select bg-transparent"
-                          >
-                            <option className="text-dark" value="In Progress">
-                              In Progress
-                            </option>
-                            <option className="text-dark" value="Completed">
-                              Completed
-                            </option>
-                          </select>
-                        </div>
-                        <div className="col-md-12">
-                          <input
-                            {...registerProject("subheading")}
-                            className="form-control bg-transparent"
-                            placeholder="Subheading (Short Description)"
-                          />
-                        </div>
-                        <div className="col-12">
-                          <label className="form-label">Description</label>
-                          <div
-                            className="form-control bg-transparent"
-                            style={{
-                              minHeight: "100px",
-                              cursor: "pointer",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                              background: "rgba(0,0,0,0.1) !important",
-                            }}
-                            onClick={() => setShowProjectEditor(true)}
-                          >
-                            {projectBody ? (
-                              <div
-                                dangerouslySetInnerHTML={{
-                                  __html: projectBody,
-                                }}
-                              />
-                            ) : (
-                              <span className="text-secondary opacity-50">
-                                Click to add description...
-                              </span>
-                            )}
-                          </div>
-                          <input type="hidden" {...registerProject("body")} />
-                        </div>
-                        {showProjectEditor && (
-                          <RichTextEditor
-                            value={projectBody}
-                            onChange={(content) =>
-                              setProjectValue("body", content)
-                            }
-                            onClose={() => setShowProjectEditor(false)}
-                          />
-                        )}
-                        <div className="col-12 text-end">
-                          <button
-                            type="submit"
-                            className="btn btn-success"
-                            disabled={isAdding || isUpdating}
-                          >
-                            {isAdding || isUpdating
-                              ? editingProject
-                                ? "Updating..."
-                                : "Adding..."
-                              : editingProject
-                                ? "Update Project"
-                                : "Add Project"}
-                          </button>
-                        </div>
-                      </div>
-                    </form>
+              {tab === "projects" && user?.role === "admin" && (
+                <div className="glass-card p-4">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h4 className="mb-0">
+                      {editingProject ? "Edit Project" : "Add New Project"}
+                    </h4>
+                    {editingProject && (
+                      <button
+                        onClick={handleCancelEdit}
+                        className="btn btn-outline-light btn-sm"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
                   </div>
-                )}
-
-                {tab === "blogs" && (
-                  <div className="glass-card p-4">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                      <h4 className="mb-0">
-                        {editingBlog ? "Edit Blog" : "Add New Blog"}
-                      </h4>
-                      {editingBlog && (
-                        <button
-                          onClick={handleCancelEditBlog}
-                          className="btn btn-outline-light btn-sm"
+                  <form onSubmit={handleSubmitProject(onSubmitProject)}>
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <input
+                          {...registerProject("title")}
+                          className="form-control bg-transparent"
+                          placeholder="Project Title"
+                          required
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <select
+                          {...registerProject("status")}
+                          className="form-select bg-transparent"
                         >
-                          Cancel Edit
-                        </button>
-                      )}
-                    </div>
-                    <form onSubmit={handleSubmitBlog(onSubmitBlog)}>
-                      <div className="row g-3">
-                        <div className="col-md-6">
-                          <input
-                            {...registerBlog("title")}
-                            className="form-control bg-transparent"
-                            placeholder="Blog Title"
-                            required
-                          />
-                        </div>
-                        <div className="col-md-6">
-                          <select
-                            {...registerBlog("status")}
-                            className="form-select bg-transparent"
-                          >
-                            <option className="text-dark" value="Draft">
-                              Draft
-                            </option>
-                            <option className="text-dark" value="Published">
-                              Published
-                            </option>
-                          </select>
-                        </div>
-                        <div className="col-md-12">
-                          <label className="form-label">Blog Image</label>
-                          {blogImagePreview && (
-                            <div className="mb-3">
-                              <Image
-                                src={blogImagePreview}
-                                alt="Blog Preview"
-                                className="img-thumbnail bg-transparent border-secondary"
-                                width={300}
-                                height={200}
-                                style={{
-                                  maxHeight: "200px",
-                                  objectFit: "cover",
-                                }}
-                              />
-                            </div>
+                          <option className="text-dark" value="In Progress">
+                            In Progress
+                          </option>
+                          <option className="text-dark" value="Completed">
+                            Completed
+                          </option>
+                        </select>
+                      </div>
+                      <div className="col-md-12">
+                        <input
+                          {...registerProject("subheading")}
+                          className="form-control bg-transparent"
+                          placeholder="Subheading (Short Description)"
+                        />
+                      </div>
+                      <div className="col-12">
+                        <label className="form-label">Description</label>
+                        <div
+                          className="form-control bg-transparent"
+                          style={{
+                            minHeight: "100px",
+                            cursor: "pointer",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                            background: "rgba(0,0,0,0.1) !important",
+                          }}
+                          onClick={() => setShowProjectEditor(true)}
+                        >
+                          {projectBody ? (
+                            <div
+                              dangerouslySetInnerHTML={{
+                                __html: projectBody,
+                              }}
+                            />
+                          ) : (
+                            <span className="text-secondary opacity-50">
+                              Click to add description...
+                            </span>
                           )}
-                          <input
-                            type="file"
-                            {...registerBlog("image")}
-                            className="form-control bg-transparent"
-                            accept="image/*"
-                          />
                         </div>
-                        <div className="col-md-12">
-                          <input
-                            {...registerBlog("subheading")}
-                            className="form-control bg-transparent"
-                            placeholder="Subheading (Short Description)"
-                          />
-                        </div>
-                        <div className="col-12">
-                          <label className="form-label">Body</label>
-                          <div
-                            className="form-control bg-transparent"
-                            style={{
-                              minHeight: "100px",
-                              cursor: "pointer",
-                              border: "1px solid rgba(255, 255, 255, 0.1)",
-                              background: "rgba(0,0,0,0.1) !important",
-                            }}
-                            onClick={() => setShowBlogEditor(true)}
-                          >
-                            {blogBody ? (
-                              <div
-                                dangerouslySetInnerHTML={{ __html: blogBody }}
-                              />
-                            ) : (
-                              <span className="text-secondary opacity-50">
-                                Click to add body content...
-                              </span>
-                            )}
-                          </div>
-                          <input type="hidden" {...registerBlog("body")} />
-                        </div>
-                        {showBlogEditor && (
-                          <RichTextEditor
-                            value={blogBody}
-                            onChange={(content) =>
-                              setBlogValue("body", content)
-                            }
-                            onClose={() => setShowBlogEditor(false)}
-                          />
-                        )}
-                        <div className="col-12 text-end">
-                          <button
-                            type="submit"
-                            className="btn btn-success"
-                            disabled={
-                              isAddingBlog || isUpdatingBlog || isUploadingImage
-                            }
-                          >
-                            {isUploadingImage ? (
-                              <>
-                                <span
-                                  className="spinner-border spinner-border-sm me-2"
-                                  role="status"
-                                  aria-hidden="true"
-                                ></span>
-                                Uploading Image...
-                              </>
-                            ) : isAddingBlog || isUpdatingBlog ? (
-                              <>
-                                <span
-                                  className="spinner-border spinner-border-sm me-2"
-                                  role="status"
-                                  aria-hidden="true"
-                                ></span>
-                                {editingBlog ? "Updating..." : "Adding..."}
-                              </>
-                            ) : editingBlog ? (
-                              "Update Blog"
-                            ) : (
-                              "Add Blog"
-                            )}
-                          </button>
-                        </div>
+                        <input type="hidden" {...registerProject("body")} />
                       </div>
-                    </form>
+                      {showProjectEditor && (
+                        <RichTextEditor
+                          value={projectBody}
+                          onChange={(content) =>
+                            setProjectValue("body", content)
+                          }
+                          onClose={() => setShowProjectEditor(false)}
+                        />
+                      )}
+                      <div className="col-12 text-end">
+                        <button
+                          type="submit"
+                          className="btn btn-success"
+                          disabled={isAdding || isUpdating}
+                        >
+                          {isAdding || isUpdating
+                            ? editingProject
+                              ? "Updating..."
+                              : "Adding..."
+                            : editingProject
+                              ? "Update Project"
+                              : "Add Project"}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {tab === "blogs" && (
+                <div className="glass-card p-4">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h4 className="mb-0">
+                      {editingBlog ? "Edit Blog" : "Add New Blog"}
+                    </h4>
+                    {editingBlog && (
+                      <button
+                        onClick={handleCancelEditBlog}
+                        className="btn btn-outline-light btn-sm"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
                   </div>
-                )}
-              </div>
-            )}
+                  <form onSubmit={handleSubmitBlog(onSubmitBlog)}>
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <input
+                          {...registerBlog("title")}
+                          className="form-control bg-transparent"
+                          placeholder="Blog Title"
+                          required
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <select
+                          {...registerBlog("status")}
+                          className="form-select bg-transparent"
+                        >
+                          <option className="text-dark" value="Draft">
+                            Draft
+                          </option>
+                          <option className="text-dark" value="Published">
+                            Published
+                          </option>
+                        </select>
+                      </div>
+                      <div className="col-md-12">
+                        <label className="form-label">Blog Image</label>
+                        {blogImagePreview && (
+                          <div className="mb-3">
+                            <Image
+                              src={blogImagePreview}
+                              alt="Blog Preview"
+                              className="img-thumbnail bg-transparent border-secondary"
+                              width={300}
+                              height={200}
+                              style={{
+                                maxHeight: "200px",
+                                objectFit: "cover",
+                              }}
+                            />
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          {...registerBlog("image")}
+                          className="form-control bg-transparent"
+                          accept="image/*"
+                        />
+                      </div>
+                      <div className="col-md-12">
+                        <input
+                          {...registerBlog("subheading")}
+                          className="form-control bg-transparent"
+                          placeholder="Subheading (Short Description)"
+                        />
+                      </div>
+                      <div className="col-12">
+                        <label className="form-label">Body</label>
+                        <div
+                          className="form-control bg-transparent"
+                          style={{
+                            minHeight: "100px",
+                            cursor: "pointer",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                            background: "rgba(0,0,0,0.1) !important",
+                          }}
+                          onClick={() => setShowBlogEditor(true)}
+                        >
+                          {blogBody ? (
+                            <div
+                              dangerouslySetInnerHTML={{ __html: blogBody }}
+                            />
+                          ) : (
+                            <span className="text-secondary opacity-50">
+                              Click to add body content...
+                            </span>
+                          )}
+                        </div>
+                        <input type="hidden" {...registerBlog("body")} />
+                      </div>
+                      {showBlogEditor && (
+                        <RichTextEditor
+                          value={blogBody}
+                          onChange={(content) => setBlogValue("body", content)}
+                          onClose={() => setShowBlogEditor(false)}
+                        />
+                      )}
+                      <div className="col-12 text-end">
+                        <button
+                          type="submit"
+                          className="btn btn-success"
+                          disabled={
+                            isAddingBlog || isUpdatingBlog || isUploadingImage
+                          }
+                        >
+                          {isUploadingImage ? (
+                            <>
+                              <span
+                                className="spinner-border spinner-border-sm me-2"
+                                role="status"
+                                aria-hidden="true"
+                              ></span>
+                              Uploading Image...
+                            </>
+                          ) : isAddingBlog || isUpdatingBlog ? (
+                            <>
+                              <span
+                                className="spinner-border spinner-border-sm me-2"
+                                role="status"
+                                aria-hidden="true"
+                              ></span>
+                              {editingBlog ? "Updating..." : "Adding..."}
+                            </>
+                          ) : editingBlog ? (
+                            "Update Blog"
+                          ) : (
+                            "Add Blog"
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -935,18 +936,24 @@ function DashboardContent() {
                               )}
                             </td>
                             <td>
-                              <button
-                                onClick={() => handleEditClick(project)}
-                                className="btn btn-outline-info btn-sm py-0 px-2 me-2"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteProject(project._id)}
-                                className="btn btn-outline-danger btn-sm py-0 px-2"
-                              >
-                                &times;
-                              </button>
+                              {user?.role === "admin" && (
+                                <>
+                                  <button
+                                    onClick={() => handleEditClick(project)}
+                                    className="btn btn-outline-info btn-sm py-0 px-2 me-2"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteProject(project._id)
+                                    }
+                                    className="btn btn-outline-danger btn-sm py-0 px-2"
+                                  >
+                                    &times;
+                                  </button>
+                                </>
+                              )}
                             </td>
                           </tr>
                         ))
@@ -999,18 +1006,24 @@ function DashboardContent() {
                               )}
                             </small>
                             <div className="d-flex gap-2">
-                              <button
-                                onClick={() => handleEditClick(project)}
-                                className="btn btn-premium btn-sm py-1 px-3"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteProject(project._id)}
-                                className="btn btn-outline-danger btn-sm py-1"
-                              >
-                                Delete
-                              </button>
+                              {user?.role === "admin" && (
+                                <>
+                                  <button
+                                    onClick={() => handleEditClick(project)}
+                                    className="btn btn-premium btn-sm py-1 px-3"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteProject(project._id)
+                                    }
+                                    className="btn btn-outline-danger btn-sm py-1"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>

@@ -20,15 +20,15 @@ import {
 
 const router = express.Router();
 
-router.route("/").get(getBlogs).post(protect, authorize("admin"), createBlog);
+router.route("/").get(getBlogs).post(protect, authorize("admin", "sub-admin"), createBlog);
 
 router.route("/comments/:commentId/like").post(optionalProtect, likeComment);
 
 router
   .route("/:id")
   .get(getBlog)
-  .put(protect, authorize("admin"), updateBlog)
-  .delete(protect, authorize("admin"), deleteBlog);
+  .put(protect, authorize("admin", "sub-admin"), updateBlog)
+  .delete(protect, authorize("admin", "sub-admin"), deleteBlog);
 
 router.route("/:id/like").post(optionalProtect, likeBlog);
 
@@ -39,6 +39,7 @@ router
 
 router
   .route("/delete-status/:id")
-  .put(protect, authorize("admin"), deleteStatus);
+  .put(protect, authorize("admin", "sub-admin"), deleteStatus);
 
 export default router;
+

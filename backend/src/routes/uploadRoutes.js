@@ -12,7 +12,7 @@ const upload = multer({ storage });
 router.post(
   "/",
   protect,
-  authorize("admin"),
+  authorize("admin", "sub-admin"),
   upload.single("image"),
   async (req, res) => {
     try {
@@ -46,3 +46,4 @@ router.post(
 );
 
 export default router;
+

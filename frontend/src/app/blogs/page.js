@@ -192,14 +192,16 @@ export default function BlogsPage() {
           </div>
 
           <div className="col-lg-4 text-center text-lg-end">
-            {isMounted && isAuthenticated && role === "admin" && (
-              <Link
-                href="/dashboard?tab=blogs"
-                className="btn btn-secondary btn-lg rounded-pill px-5 py-3 shadow-lg hover-lift d-inline-flex align-items-center gap-2"
-              >
-                <FiPlus /> Write New Blog
-              </Link>
-            )}
+            {isMounted &&
+              isAuthenticated &&
+              (role === "admin" || role === "sub-admin") && (
+                <Link
+                  href="/dashboard?tab=blogs"
+                  className="btn btn-secondary btn-lg rounded-pill px-5 py-3 shadow-lg hover-lift d-inline-flex align-items-center gap-2"
+                >
+                  <FiPlus /> Write New Blog
+                </Link>
+              )}
           </div>
         </div>
       </motion.div>
@@ -263,6 +265,7 @@ export default function BlogsPage() {
                   <BlogCard
                     blog={blog}
                     role={role}
+                    userId={user?._id}
                     handleView={handleView}
                     handleEdit={handleEdit}
                     handleDelete={handleDelete}
@@ -377,6 +380,7 @@ export default function BlogsPage() {
                 <BlogCard
                   blog={blog}
                   role={role}
+                  userId={user?._id}
                   handleView={handleView}
                   handleEdit={handleEdit}
                   handleDelete={handleDelete}
@@ -397,14 +401,20 @@ export default function BlogsPage() {
 const BlogCard = ({
   blog,
   role,
+  userId,
   handleView,
   handleEdit,
   handleDelete,
   isMounted,
   stripHtml,
   theme,
-}) => (
-  <div className="glass-card h-100 p-4 d-flex flex-column group hover-lift border-1 border-white border-opacity-5">
+}) => {
+  const canManageBlog =
+    role === "admin" ||
+    (role === "sub-admin" && blog?.author && String(blog.author) === String(userId));
+
+  return (
+    <div className="glass-card h-100 p-4 d-flex flex-column group hover-lift border-1 border-white border-opacity-5">
     {/* Header Actions */}
     <div className="d-flex justify-content-between align-items-center mb-4">
       <div className="d-flex align-items-center gap-2 text-muted small">
@@ -436,7 +446,7 @@ const BlogCard = ({
             </motion.div>
           </AnimatePresence>
         </button>
-        {role === "admin" && (
+        {canManageBlog && (
           <>
             <button
               onClick={() => handleEdit(blog._id)}
@@ -525,7 +535,8 @@ const BlogCard = ({
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // Skeleton loader that mimics BlogCard
 const BlogCardSkeleton = () => (

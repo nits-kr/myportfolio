@@ -2,6 +2,15 @@ import Blog from "../models/Blog.js";
 import Comment from "../models/Comment.js";
 import Subscriber from "../models/Subscriber.js";
 
+const canManageBlog = (blog, user) => {
+  if (!user) return false;
+  if (user.role === "admin") return true;
+  if (user.role !== "sub-admin") return false;
+  return (
+    Boolean(blog?.author) && blog.author.toString() === user.id.toString()
+  );
+};
+
 // @desc    Get all blogs (Public view - only published)
 // @route   GET /api/blogs
 // @access  Public
@@ -176,12 +185,8 @@ export const updateBlog = async (req, res, next) => {
       });
     }
 
-    // Check ownership: only admin or the original author can edit
-    if (
-      req.user.role !== "admin" &&
-      blog.author &&
-      blog.author.toString() !== req.user.id
-    ) {
+    // Only admin or the sub-admin who authored the blog can edit.
+    if (!canManageBlog(blog, req.user)) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to update this blog",
@@ -230,12 +235,8 @@ export const deleteBlog = async (req, res, next) => {
       });
     }
 
-    // Check ownership: only admin or the original author can delete
-    if (
-      req.user.role !== "admin" &&
-      blog.author &&
-      blog.author.toString() !== req.user.id
-    ) {
+    // Only admin or the sub-admin who authored the blog can delete.
+    if (!canManageBlog(blog, req.user)) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to delete this blog",
@@ -273,12 +274,8 @@ export const deleteStatus = async (req, res, next) => {
       });
     }
 
-    // Check ownership: only admin or the original author can soft delete
-    if (
-      req.user.role !== "admin" &&
-      blog.author &&
-      blog.author.toString() !== req.user.id
-    ) {
+    // Only admin or the sub-admin who authored the blog can soft delete.
+    if (!canManageBlog(blog, req.user)) {
       return res.status(403).json({
         success: false,
         message: "Not authorized to update this blog's status",
