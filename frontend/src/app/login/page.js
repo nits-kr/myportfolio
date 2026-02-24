@@ -16,6 +16,7 @@ export default function LoginPage() {
   const dispatch = useDispatch();
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
+  const [submitError, setSubmitError] = useState("");
 
   const [login, { isLoading: isLoginLoading, error: loginError }] =
     useLoginMutation();
@@ -35,6 +36,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data) => {
     try {
+      setSubmitError("");
       let result;
       if (isLogin) {
         result = await login({
@@ -52,14 +54,32 @@ export default function LoginPage() {
 
       router.push("/dashboard");
     } catch (err) {
-      console.error("Auth failed:", err);
+      let message = "Authentication failed";
+      if (err?.data?.message) {
+        message = err.data.message;
+      } else if (err?.error) {
+        message = err.error;
+      } else if (err?.message) {
+        message = err.message;
+      } else if (err?.status) {
+        message = `Authentication failed (${err.status})`;
+      }
+
+      setSubmitError(message);
+      console.warn("Auth failed", {
+        status: err?.status,
+        data: err?.data,
+        error: err?.error,
+        message: err?.message,
+      });
     }
   };
 
   const error = isLogin ? loginError : registerError;
   const isLoading = isLogin ? isLoginLoading : isRegisterLoading;
-  const errorMessage =
+  const mutationErrorMessage =
     error?.data?.message || error?.error || "Authentication failed";
+  const errorMessage = submitError || mutationErrorMessage;
 
   return (
     <div className="container d-flex align-items-center justify-content-center py-5">
@@ -73,7 +93,7 @@ export default function LoginPage() {
             {isLogin ? "Welcome Back" : "Create Account"}
           </h2>
 
-          {error && (
+          {(error || submitError) && (
             <div className="alert alert-danger fade show" role="alert">
               {errorMessage}
             </div>
