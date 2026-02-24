@@ -29,8 +29,10 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     let user = await User.findById(decoded.id).select("-password");
+    let isSubUser = false;
     if (!user) {
       user = await SubUser.findById(decoded.id).select("-password");
+      isSubUser = Boolean(user);
     }
 
     req.user = user;
@@ -39,6 +41,13 @@ export const protect = async (req, res, next) => {
       return res
         .status(401)
         .json({ success: false, message: "Not authorized, user not found" });
+    }
+
+    if (isSubUser && req.user.status === false) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is inactive. Please contact admin.",
+      });
     }
 
     next();

@@ -141,7 +141,9 @@ function DashboardContent() {
   const [blogImagePreview, setBlogImagePreview] = useState(null);
 
   // Tab State
-  const tab = searchParams.get("tab") || "projects";
+  const requestedTab = searchParams.get("tab");
+  const tab =
+    requestedTab || (user?.role === "sub-admin" ? "blogs" : "projects");
 
   // Check for edit/view params
   const editId = searchParams.get("edit");

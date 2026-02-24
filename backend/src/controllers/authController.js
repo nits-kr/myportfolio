@@ -86,10 +86,12 @@ export const login = async (req, res) => {
 
     // Check for user
     let user = await User.findOne({ email }).select("+password");
+    let isSubUser = false;
 
     // If no main User, check SubUser
     if (!user) {
       user = await SubUser.findOne({ email }).select("+password");
+      isSubUser = Boolean(user);
     }
 
     if (!user) {
@@ -103,6 +105,14 @@ export const login = async (req, res) => {
       return res
         .status(401)
         .json({ success: false, message: "Invalid password" });
+    }
+
+    // Block inactive sub-admin accounts from logging in.
+    if (isSubUser && user.status === false) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account is inactive. Please contact admin.",
+      });
     }
 
     sendTokenResponse(user, 200, res);
