@@ -64,17 +64,24 @@ export default function SubUserModal({
                   disabled={!!initialData} // Email usually shouldn't change or backend restriction
                 />
               </div>
-              {!initialData && (
-                <div className="mb-3">
-                  <label className="form-label">Password</label>
-                  <input
-                    type="password"
-                    {...register("password", { required: true })}
-                    className="form-control bg-transparent text-light"
-                    placeholder="Enter password"
-                  />
-                </div>
-              )}
+              <div className="mb-3">
+                <label className="form-label">
+                  Password{" "}
+                  {initialData && (
+                    <small className="text-muted">
+                      (Leave blank to keep current)
+                    </small>
+                  )}
+                </label>
+                <input
+                  type="password"
+                  {...register("password", { required: !initialData })}
+                  className="form-control bg-transparent text-light"
+                  placeholder={
+                    initialData ? "Enter new password" : "Enter password"
+                  }
+                />
+              </div>
               <div className="mb-3">
                 <label className="form-label">Role</label>
                 <select

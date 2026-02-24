@@ -28,10 +28,22 @@ const getAllSubUsers = async (parentUserId) => {
 };
 
 const updateSubUser = async (subUserId, subUserData) => {
-  const subuser = await SubUser.findByIdAndUpdate(subUserId, subUserData, {
-    new: true,
-  });
-  return subuser;
+  if (subUserData.password) {
+    const subuser = await SubUser.findById(subUserId);
+    if (!subuser) throw new Error("Subuser not found");
+
+    // Update fields
+    Object.assign(subuser, subUserData);
+    await subuser.save(); // Triggers pre-save hook for password hash
+    return subuser;
+  } else {
+    // If no password, standard update is fine
+    const subuser = await SubUser.findByIdAndUpdate(subUserId, subUserData, {
+      new: true,
+      runValidators: true,
+    });
+    return subuser;
+  }
 };
 
 const deleteSubUser = async (subUserId) => {
