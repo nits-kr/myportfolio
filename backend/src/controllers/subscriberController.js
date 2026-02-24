@@ -50,7 +50,8 @@ export const subscribe = async (req, res, next) => {
 
       res.status(201).json({
         success: true,
-        message: "Verification email sent. Please check your inbox.",
+        message: "Subscription successful.",
+        // message: "Verification email sent. Please check your inbox.",
       });
     } catch (err) {
       console.log(err);
