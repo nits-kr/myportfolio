@@ -176,6 +176,18 @@ export const updateBlog = async (req, res, next) => {
       });
     }
 
+    // Check ownership: only admin or the original author can edit
+    if (
+      req.user.role !== "admin" &&
+      blog.author &&
+      blog.author.toString() !== req.user.id
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this blog",
+      });
+    }
+
     blog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -218,6 +230,18 @@ export const deleteBlog = async (req, res, next) => {
       });
     }
 
+    // Check ownership: only admin or the original author can delete
+    if (
+      req.user.role !== "admin" &&
+      blog.author &&
+      blog.author.toString() !== req.user.id
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete this blog",
+      });
+    }
+
     await blog.deleteOne();
 
     res.status(200).json({
@@ -246,6 +270,18 @@ export const deleteStatus = async (req, res, next) => {
         success: false,
         message: "Blog not found",
         error: "Blog not found",
+      });
+    }
+
+    // Check ownership: only admin or the original author can soft delete
+    if (
+      req.user.role !== "admin" &&
+      blog.author &&
+      blog.author.toString() !== req.user.id
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this blog's status",
       });
     }
 

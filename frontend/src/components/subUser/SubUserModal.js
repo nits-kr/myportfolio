@@ -21,6 +21,14 @@ export default function SubUserModal({
     }
   }, [initialData, setValue, reset]);
 
+  const handleFormSubmit = (data) => {
+    // If we're editing (initialData exists) and password is empty, remove it
+    if (initialData && !data.password) {
+      delete data.password;
+    }
+    onSubmit(data);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -45,7 +53,7 @@ export default function SubUserModal({
             ></button>
           </div>
           <div className="modal-body">
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(handleFormSubmit)}>
               <div className="mb-3">
                 <label className="form-label">Name</label>
                 <input

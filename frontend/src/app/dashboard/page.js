@@ -1081,18 +1081,23 @@ function DashboardContent() {
                               )}
                             </td>
                             <td>
-                              <button
-                                onClick={() => handleEditBlogClick(blog)}
-                                className="btn btn-outline-info btn-sm py-0 px-2 me-2"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteBlog(blog._id)}
-                                className="btn btn-outline-danger btn-sm py-0 px-2"
-                              >
-                                &times;
-                              </button>
+                              {(user?.role === "admin" ||
+                                (blog.author && blog.author === user?._id)) && (
+                                <>
+                                  <button
+                                    onClick={() => handleEditBlogClick(blog)}
+                                    className="btn btn-outline-info btn-sm py-0 px-2 me-2"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteBlog(blog._id)}
+                                    className="btn btn-outline-danger btn-sm py-0 px-2"
+                                  >
+                                    &times;
+                                  </button>
+                                </>
+                              )}
                             </td>
                           </tr>
                         ))
@@ -1148,18 +1153,23 @@ function DashboardContent() {
                               </small>
                             </div>
                             <div className="d-flex gap-2">
-                              <button
-                                onClick={() => handleEditBlogClick(blog)}
-                                className="btn btn-premium btn-sm py-1 px-3"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteBlog(blog._id)}
-                                className="btn btn-outline-danger btn-sm py-1"
-                              >
-                                Delete
-                              </button>
+                              {(user?.role === "admin" ||
+                                (blog.author && blog.author === user?._id)) && (
+                                <>
+                                  <button
+                                    onClick={() => handleEditBlogClick(blog)}
+                                    className="btn btn-premium btn-sm py-1 px-3"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteBlog(blog._id)}
+                                    className="btn btn-outline-danger btn-sm py-1"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
