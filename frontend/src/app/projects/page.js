@@ -100,7 +100,7 @@ export default function ProjectsPage() {
           </div>
 
           <div className="col-lg-4 text-center text-lg-end">
-            {isMounted && isAuthenticated && (
+            {isMounted && isAuthenticated && user?.role === "admin" && (
               <Link
                 href="/dashboard"
                 className="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow-lg hover-lift d-inline-flex align-items-center gap-2"

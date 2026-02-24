@@ -75,9 +75,17 @@ export default function BlogsPage() {
   // Filter logic for both data sets (Admins see drafts, Public sees published)
   const filterBlogs = (list) => {
     if (!list) return [];
-    return role === "admin"
-      ? list
-      : list.filter((b) => b.status === "Published");
+    if (role === "admin") return list;
+
+    if (role === "sub-admin") {
+      return list.filter(
+        (b) =>
+          b.status === "Published" ||
+          (b.author && String(b.author) === String(user?._id)),
+      );
+    }
+
+    return list.filter((b) => b.status === "Published");
   };
 
   const desktopBlogs = filterBlogs(desktopResponse?.data);

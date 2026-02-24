@@ -313,9 +313,8 @@ function DashboardContent() {
       setBlogImagePreview(null);
       setShowBlogEditor(false);
     } catch (err) {
-      console.error("Failed to save blog:", err);
-      // Helper to extract error message
       let errorMessage = "Failed to save blog";
+
       if (err?.data?.message) {
         errorMessage = err.data.message;
       } else if (err?.data?.error) {
@@ -324,8 +323,19 @@ function DashboardContent() {
           : err.data.error;
       } else if (err?.error) {
         errorMessage = err.error;
+      } else if (typeof err?.message === "string" && err.message) {
+        errorMessage = err.message;
+      } else if (err?.status) {
+        errorMessage = `Request failed (${err.status})`;
       }
 
+      // Keep debug details without throwing a noisy console error overlay.
+      console.warn("Blog save failed", {
+        status: err?.status,
+        data: err?.data,
+        error: err?.error,
+        message: err?.message,
+      });
       toast.error(errorMessage);
     }
   };
