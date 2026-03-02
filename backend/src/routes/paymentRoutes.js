@@ -14,18 +14,19 @@ const router = express.Router();
 const requirePrimaryUser = (req, res, next) => {
   const user = req.user;
   if (!user) {
-    return res.status(403).json({
+    // protect middleware should handle unauthenticated access (401),
+    // but keep a defensive check here.
+    return res.status(401).json({
       success: false,
-      error: "Only primary users can manage subscriptions",
+      error: "Not authorized",
     });
   }
 
-  // Use a definitive discriminator rather than presence of fields
-  const modelName = user?.constructor?.modelName;
-  const isPrimary = modelName === "User";
-  const isSub = modelName === "SubUser";
+  // Prefer explicit role flag established at auth time over model discrimination
+  const isPrimary = user?.role === "primary" || user?.isPrimary === true;
 
-  if (!isPrimary || isSub) {
+  if (!isPrimary) {
+    // Deny with 403 for authenticated but not primary users
     return res.status(403).json({
       success: false,
       error: "Only primary users can manage subscriptions",
@@ -43,8 +44,8 @@ router.get("/subscription", protect, requirePrimaryUser, getSubscription);
 router.get(
   "/admin/recent",
   protect,
-  authorize("admin"),
   requirePrimaryUser,
+  authorize("admin"),
   getRecentPaymentsAdmin,
 );
 
