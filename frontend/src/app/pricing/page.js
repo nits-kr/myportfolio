@@ -80,10 +80,15 @@ const pricingPlans = [
 export default function PricingPage() {
   const router = useRouter();
   const { user, token } = useSelector((state) => state.auth);
+  const [isMounted, setIsMounted] = useState(false);
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [processingPlan, setProcessingPlan] = useState(null);
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
   const currencySymbol = "₹";
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const loadRazorpaySdk = () =>
     new Promise((resolve) => {
@@ -142,7 +147,8 @@ export default function PricingPage() {
     fetchSubscription();
   }, [user, authToken]);
 
-  const currentPlan = subscriptionInfo?.currentPlan || user?.subscription || "free";
+  const currentPlan =
+    subscriptionInfo?.currentPlan || (isMounted ? user?.subscription : null) || "free";
   const hasActivePaidPlan =
     subscriptionInfo?.subscriptionStatus === "active" && currentPlan !== "free";
 
@@ -190,6 +196,7 @@ export default function PricingPage() {
       }
 
       const { orderId, amount, currency, keyId, planId } = orderData.data;
+      const callbackUrl = `${process.env.NEXT_PUBLIC_API_URL}/payments/callback`;
 
       const razorpay = new window.Razorpay({
         key: keyId,
@@ -198,6 +205,8 @@ export default function PricingPage() {
         name: "Nitish Portfolio",
         description: `${plan.name} Plan (${billingCycle})`,
         order_id: orderId,
+        callback_url: callbackUrl,
+        redirect: true,
         prefill: {
           name: user.name || "",
           email: user.email || "",
@@ -205,58 +214,6 @@ export default function PricingPage() {
         notes: {
           planId,
           billingCycle,
-        },
-        handler: async (response) => {
-          try {
-            const verifyRes = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/payments/verify`,
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${authToken}`,
-                },
-                body: JSON.stringify({
-                  planId,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                }),
-              },
-            );
-
-            const verifyData = await verifyRes.json();
-            if (!verifyRes.ok || !verifyData.success) {
-              throw new Error(verifyData.error || "Payment verification failed");
-            }
-
-            const normalized = normalizeSubscription(verifyData.data?.subscription);
-            if (normalized) {
-              setSubscriptionInfo(normalized);
-            }
-
-            const actionMessage = {
-              activated: "Payment successful. Plan activated.",
-              upgraded: "Payment successful. Your plan is upgraded.",
-              renewed: "Payment successful. Your plan is renewed.",
-              downgrade_scheduled:
-                "Payment successful. Downgrade scheduled for current plan expiry.",
-            };
-            const params = new URLSearchParams({
-              plan: plan.name,
-              amount: String(Math.round(amount / 100)),
-              action: verifyData.data?.action || "activated",
-              paymentId: response.razorpay_payment_id || "",
-            });
-            router.push(`/pricing/success?${params.toString()}`);
-          } catch (error) {
-            const params = new URLSearchParams({
-              plan: plan.name,
-              amount: String(Math.round(amount / 100)),
-              reason: error.message || "Payment verification failed",
-            });
-            router.push(`/pricing/failed?${params.toString()}`);
-          }
         },
         modal: {
           ondismiss: () => {
@@ -277,7 +234,7 @@ export default function PricingPage() {
             response?.error?.reason ||
             "Payment failed. Please try again.",
         });
-        router.push(`/pricing/failed?${params.toString()}`);
+        window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/payments/callback-failed?${params.toString()}`;
       });
 
       razorpay.open();
@@ -394,7 +351,7 @@ export default function PricingPage() {
               {/* Plan Name */}
               <h3 className="h4 fw-bold mb-2 d-flex align-items-center gap-2">
                 {plan.name}
-                {plan.id === currentPlan && (
+                {isMounted && plan.id === currentPlan && (
                   <span className="badge bg-success">Current Plan</span>
                 )}
               </h3>
@@ -454,9 +411,11 @@ export default function PricingPage() {
               {plan.price === 0 ? (
                 <Link
                   href={plan.ctaLink}
-                  className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100 ${plan.id === currentPlan ? "disabled" : ""}`}
+                  className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100 ${
+                    isMounted && plan.id === currentPlan ? "disabled" : ""
+                  }`}
                 >
-                  {plan.id === currentPlan ? "Current Plan" : plan.cta}
+                  {isMounted && plan.id === currentPlan ? "Current Plan" : plan.cta}
                 </Link>
               ) : (
                 <button

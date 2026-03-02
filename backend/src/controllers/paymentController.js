@@ -31,8 +31,30 @@ const PLAN_CATALOG = {
 
 const getPlanConfig = (planId) => PLAN_CATALOG[planId] || null;
 const PLAN_TIER = { free: 0, pro: 1, enterprise: 2 };
+const FRONTEND_BASE_URL = (
+  process.env.FRONTEND_APP_URL ||
+  process.env.FRONTEND_URL ||
+  "https://nitishportfolio-sigma.vercel.app"
+).replace(/\/$/, "");
 
 const getTier = (plan) => PLAN_TIER[plan] ?? 0;
+
+const getPlanDisplayName = (planId) => {
+  if (planId?.startsWith("enterprise")) return "Enterprise";
+  if (planId?.startsWith("pro")) return "Pro";
+  return "Plan";
+};
+
+const buildFrontendUrl = (path, params = {}) => {
+  const query = new URLSearchParams(
+    Object.entries(params).reduce((acc, [key, value]) => {
+      if (value !== undefined && value !== null && value !== "") acc[key] = String(value);
+      return acc;
+    }, {}),
+  ).toString();
+
+  return `${FRONTEND_BASE_URL}${path}${query ? `?${query}` : ""}`;
+};
 
 const safeCompare = (a, b) => {
   const aBuf = Buffer.from(a || "", "utf8");
@@ -315,22 +337,23 @@ export const handleWebhook = async (req, res) => {
     const entity = payload?.payload?.payment?.entity;
 
     if (event === "payment.captured" && entity?.order_id && entity?.id) {
-      const payment = await Payment.findOne({ razorpayOrderId: entity.order_id });
-      if (payment) {
-        payment.razorpayPaymentId = payment.razorpayPaymentId || entity.id;
-        payment.status = "captured";
-        await payment.save();
+      const capturedPayment = await Payment.findOneAndUpdate(
+        { razorpayOrderId: entity.order_id, status: { $ne: "captured" } },
+        { $set: { razorpayPaymentId: entity.id, status: "captured" } },
+        { new: true },
+      );
 
-        const planConfig = getPlanConfig(payment.planId);
+      if (capturedPayment) {
+        const planConfig = getPlanConfig(capturedPayment.planId);
         if (planConfig) {
-          await applySubscription(payment.userId, planConfig);
+          await applySubscription(capturedPayment.userId, planConfig);
         }
       }
     }
 
     if (event === "payment.failed" && entity?.order_id) {
       const payment = await Payment.findOne({ razorpayOrderId: entity.order_id });
-      if (payment) {
+      if (payment && payment.status !== "captured") {
         payment.status = "failed";
         await payment.save();
       }
@@ -385,4 +408,122 @@ export const getRecentPaymentsAdmin = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }
+};
+
+export const handlePaymentCallback = async (req, res) => {
+  try {
+    const getPayloadValue = (key) => {
+      const bodyValue = req.body?.[key];
+      const queryValue = req.query?.[key];
+      const value = bodyValue ?? queryValue;
+      return Array.isArray(value) ? value[0] : value;
+    };
+
+    const razorpay_order_id = getPayloadValue("razorpay_order_id");
+    const razorpay_payment_id = getPayloadValue("razorpay_payment_id");
+    const razorpay_signature = getPayloadValue("razorpay_signature");
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      const failedUrl = buildFrontendUrl("/pricing/failed", {
+        reason: "Missing payment callback fields",
+      });
+      return res.redirect(302, failedUrl);
+    }
+
+    const payment = await Payment.findOne({ razorpayOrderId: razorpay_order_id });
+    if (!payment) {
+      const failedUrl = buildFrontendUrl("/pricing/failed", {
+        reason: "Order not found",
+      });
+      return res.redirect(302, failedUrl);
+    }
+
+    const planName = getPlanDisplayName(payment.planId);
+
+    if (!process.env.RAZORPAY_KEY_SECRET) {
+      const failedUrl = buildFrontendUrl("/pricing/failed", {
+        plan: planName,
+        amount: Math.round(payment.amountPaise / 100),
+        reason: "Payment verification is not configured",
+      });
+      return res.redirect(302, failedUrl);
+    }
+
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    if (!safeCompare(expectedSignature, razorpay_signature)) {
+      if (payment.status !== "captured") {
+        payment.status = "failed";
+        await payment.save();
+      }
+      const failedUrl = buildFrontendUrl("/pricing/failed", {
+        plan: planName,
+        amount: Math.round(payment.amountPaise / 100),
+        reason: "Invalid payment signature",
+      });
+      return res.redirect(302, failedUrl);
+    }
+
+    const capturedPayment = await Payment.findOneAndUpdate(
+      { _id: payment._id, status: { $ne: "captured" } },
+      {
+        $set: {
+          razorpayPaymentId: razorpay_payment_id,
+          razorpaySignature: razorpay_signature,
+          status: "captured",
+        },
+      },
+      { new: true },
+    );
+
+    const shouldApplySubscription = Boolean(capturedPayment);
+
+    const planConfig = getPlanConfig(payment.planId);
+    const result =
+      shouldApplySubscription && planConfig
+        ? await applySubscription(payment.userId, planConfig)
+        : { action: "activated", user: null };
+
+    if (!shouldApplySubscription) {
+      const needsSignatureUpdate = payment.razorpaySignature !== razorpay_signature;
+      const needsPaymentIdUpdate = payment.razorpayPaymentId !== razorpay_payment_id;
+
+      if (needsSignatureUpdate || needsPaymentIdUpdate) {
+        await Payment.updateOne(
+          { _id: payment._id },
+          {
+            $set: {
+              razorpayPaymentId: razorpay_payment_id,
+              razorpaySignature: razorpay_signature,
+            },
+          },
+        );
+      }
+    }
+
+    const successUrl = buildFrontendUrl("/pricing/success", {
+      plan: planName,
+      amount: Math.round(payment.amountPaise / 100),
+      action: result?.action || "activated",
+      paymentId: razorpay_payment_id,
+    });
+    return res.redirect(302, successUrl);
+  } catch (error) {
+    const failedUrl = buildFrontendUrl("/pricing/failed", {
+      reason: error.message || "Payment callback failed",
+    });
+    return res.redirect(302, failedUrl);
+  }
+};
+
+export const handlePaymentFailedRedirect = async (req, res) => {
+  const failedUrl = buildFrontendUrl("/pricing/failed", {
+    plan: req.query.plan,
+    amount: req.query.amount,
+    reason: req.query.reason || "Payment failed",
+  });
+  return res.redirect(302, failedUrl);
 };

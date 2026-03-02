@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -18,6 +18,9 @@ export default function PaymentSuccessPage() {
   const amount = searchParams.get("amount") || "0";
   const action = searchParams.get("action") || "activated";
   const paymentId = searchParams.get("paymentId") || "";
+  const [needsSoundTap, setNeedsSoundTap] = useState(false);
+  const hasAttemptedSoundRef = useRef(false);
+  const hasPlayedSoundRef = useRef(false);
 
   const particles = useMemo(
     () =>
@@ -33,31 +36,84 @@ export default function PaymentSuccessPage() {
     [],
   );
 
-  useEffect(() => {
-    const playSuccessSound = () => {
+  const playSuccessSound = useCallback(async () => {
+    if (hasPlayedSoundRef.current) return true;
+    try {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) return false;
+
+      const audioContext = new AudioContextCtor();
+
       try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const now = audioContext.currentTime;
-        [523.25, 659.25, 783.99].forEach((freq, idx) => {
-          const osc = audioContext.createOscillator();
-          const gain = audioContext.createGain();
-          osc.type = "triangle";
-          osc.frequency.setValueAtTime(freq, now + idx * 0.1);
-          gain.gain.setValueAtTime(0.0001, now + idx * 0.1);
-          gain.gain.exponentialRampToValueAtTime(0.08, now + idx * 0.1 + 0.02);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.1 + 0.25);
-          osc.connect(gain);
-          gain.connect(audioContext.destination);
-          osc.start(now + idx * 0.1);
-          osc.stop(now + idx * 0.1 + 0.3);
-        });
+        if (audioContext.state === "suspended") {
+          await audioContext.resume();
+        }
       } catch (_e) {
-        // Ignore autoplay/audio-policy restrictions.
+        // Autoplay policy may block resume without a user gesture.
       }
+
+      if (audioContext.state !== "running") {
+        try {
+          await audioContext.close?.();
+        } catch (_e) {
+          // ignore
+        }
+        return false;
+      }
+
+      const now = audioContext.currentTime;
+      [523.25, 659.25, 783.99].forEach((freq, idx) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+        gain.gain.setValueAtTime(0.0001, now + idx * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.08, now + idx * 0.1 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.1 + 0.25);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start(now + idx * 0.1);
+        osc.stop(now + idx * 0.1 + 0.3);
+      });
+
+      window.setTimeout(() => {
+        audioContext.close?.().catch(() => {});
+      }, 900);
+
+      hasPlayedSoundRef.current = true;
+      return true;
+    } catch (_e) {
+      return false;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (hasAttemptedSoundRef.current) return;
+    hasAttemptedSoundRef.current = true;
+
+    let isMounted = true;
+
+    const attemptAutoPlay = async () => {
+      const ok = await playSuccessSound();
+      if (isMounted && !ok) setNeedsSoundTap(true);
     };
 
-    playSuccessSound();
-  }, []);
+    const unlockOnGesture = async () => {
+      const ok = await playSuccessSound();
+      if (isMounted && ok) setNeedsSoundTap(false);
+    };
+
+    attemptAutoPlay();
+
+    window.addEventListener("pointerdown", unlockOnGesture, { once: true });
+    window.addEventListener("keydown", unlockOnGesture, { once: true });
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("pointerdown", unlockOnGesture);
+      window.removeEventListener("keydown", unlockOnGesture);
+    };
+  }, [playSuccessSound]);
 
   return (
     <div className="pay-page pay-success">
@@ -88,6 +144,18 @@ export default function PaymentSuccessPage() {
         <div className="chip">Payment Success</div>
         <h1>Transaction Confirmed</h1>
         <p className="subtitle">{actionLabels[action] || actionLabels.activated}</p>
+        {needsSoundTap && (
+          <button
+            type="button"
+            className="sound-btn"
+            onClick={async () => {
+              const ok = await playSuccessSound();
+              if (ok) setNeedsSoundTap(false);
+            }}
+          >
+            Tap to play success sound
+          </button>
+        )}
 
         <div className="meta-grid">
           <div>
@@ -184,6 +252,24 @@ export default function PaymentSuccessPage() {
           margin: 10px 0 22px;
           color: #bfdbfe;
           font-size: 17px;
+        }
+
+        .sound-btn {
+          margin: -10px 0 22px;
+          border-radius: 999px;
+          padding: 9px 14px;
+          font-weight: 700;
+          font-size: 12px;
+          color: #e2e8f0;
+          border: 1px solid rgba(148, 163, 184, 0.35);
+          background: rgba(15, 23, 42, 0.6);
+          cursor: pointer;
+          width: fit-content;
+        }
+
+        .sound-btn:hover {
+          border-color: rgba(148, 163, 184, 0.6);
+          background: rgba(15, 23, 42, 0.75);
         }
 
         .meta-grid {

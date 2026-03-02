@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -10,32 +10,88 @@ export default function PaymentFailedPage() {
   const plan = searchParams.get("plan") || "Pro";
   const amount = searchParams.get("amount") || "0";
   const reason = searchParams.get("reason") || "Payment could not be completed.";
+  const [needsSoundTap, setNeedsSoundTap] = useState(false);
+  const hasAttemptedSoundRef = useRef(false);
+  const hasPlayedSoundRef = useRef(false);
+
+  const playFailureSound = useCallback(async () => {
+    if (hasPlayedSoundRef.current) return true;
+    try {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) return false;
+
+      const audioContext = new AudioContextCtor();
+
+      try {
+        if (audioContext.state === "suspended") {
+          await audioContext.resume();
+        }
+      } catch (_e) {
+        // Autoplay policy may block resume without a user gesture.
+      }
+
+      if (audioContext.state !== "running") {
+        try {
+          await audioContext.close?.();
+        } catch (_e) {
+          // ignore
+        }
+        return false;
+      }
+
+      const now = audioContext.currentTime;
+      [320, 260].forEach((freq, idx) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+        gain.gain.setValueAtTime(0.0001, now + idx * 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.07, now + idx * 0.12 + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.12 + 0.22);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start(now + idx * 0.12);
+        osc.stop(now + idx * 0.12 + 0.24);
+      });
+
+      window.setTimeout(() => {
+        audioContext.close?.().catch(() => {});
+      }, 650);
+
+      hasPlayedSoundRef.current = true;
+      return true;
+    } catch (_e) {
+      return false;
+    }
+  }, []);
 
   useEffect(() => {
-    const playFailureSound = () => {
-      try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const now = audioContext.currentTime;
-        [320, 260].forEach((freq, idx) => {
-          const osc = audioContext.createOscillator();
-          const gain = audioContext.createGain();
-          osc.type = "sawtooth";
-          osc.frequency.setValueAtTime(freq, now + idx * 0.12);
-          gain.gain.setValueAtTime(0.0001, now + idx * 0.12);
-          gain.gain.exponentialRampToValueAtTime(0.07, now + idx * 0.12 + 0.015);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.12 + 0.22);
-          osc.connect(gain);
-          gain.connect(audioContext.destination);
-          osc.start(now + idx * 0.12);
-          osc.stop(now + idx * 0.12 + 0.24);
-        });
-      } catch (_e) {
-        // Ignore autoplay/audio-policy restrictions.
-      }
+    if (hasAttemptedSoundRef.current) return;
+    hasAttemptedSoundRef.current = true;
+
+    let isMounted = true;
+
+    const attemptAutoPlay = async () => {
+      const ok = await playFailureSound();
+      if (isMounted && !ok) setNeedsSoundTap(true);
     };
 
-    playFailureSound();
-  }, []);
+    const unlockOnGesture = async () => {
+      const ok = await playFailureSound();
+      if (isMounted && ok) setNeedsSoundTap(false);
+    };
+
+    attemptAutoPlay();
+
+    window.addEventListener("pointerdown", unlockOnGesture, { once: true });
+    window.addEventListener("keydown", unlockOnGesture, { once: true });
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("pointerdown", unlockOnGesture);
+      window.removeEventListener("keydown", unlockOnGesture);
+    };
+  }, [playFailureSound]);
 
   return (
     <div className="pay-page pay-failed">
@@ -50,6 +106,18 @@ export default function PaymentFailedPage() {
         <p className="subtitle">
           No amount was captured. Please retry with another method.
         </p>
+        {needsSoundTap && (
+          <button
+            type="button"
+            className="sound-btn"
+            onClick={async () => {
+              const ok = await playFailureSound();
+              if (ok) setNeedsSoundTap(false);
+            }}
+          >
+            Tap to play alert sound
+          </button>
+        )}
 
         <div className="meta-grid">
           <div>
@@ -120,6 +188,24 @@ export default function PaymentFailedPage() {
           margin: 10px 0 22px;
           color: #fecaca;
           font-size: 17px;
+        }
+
+        .sound-btn {
+          margin: -10px 0 22px;
+          border-radius: 999px;
+          padding: 9px 14px;
+          font-weight: 700;
+          font-size: 12px;
+          color: #ffedd5;
+          border: 1px solid rgba(251, 146, 60, 0.4);
+          background: rgba(35, 8, 13, 0.65);
+          cursor: pointer;
+          width: fit-content;
+        }
+
+        .sound-btn:hover {
+          border-color: rgba(251, 146, 60, 0.65);
+          background: rgba(35, 8, 13, 0.8);
         }
 
         .meta-grid {
