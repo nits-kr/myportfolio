@@ -22,8 +22,10 @@ const requirePrimaryUser = (req, res, next) => {
     });
   }
 
-  // Prefer explicit role flag established at auth time over model discrimination
-  const isPrimary = user?.role === "primary" || user?.isPrimary === true;
+  // In this codebase, "primary user" means the main `User` model (the account
+  // that owns billing). Sub-users always have `parentUser`.
+  const isSubUser = Boolean(user?.parentUser);
+  const isPrimary = !isSubUser;
 
   if (!isPrimary) {
     // Deny with 403 for authenticated but not primary users
@@ -40,7 +42,7 @@ router.post("/callback", express.urlencoded({ extended: false }), handlePaymentC
 router.get("/callback-failed", handlePaymentFailedRedirect);
 router.post("/create-order", protect, requirePrimaryUser, createOrder);
 router.post("/verify", protect, requirePrimaryUser, verifyPayment);
-router.get("/subscription", protect, requirePrimaryUser, getSubscription);
+router.get("/subscription", protect, getSubscription);
 router.get(
   "/admin/recent",
   protect,

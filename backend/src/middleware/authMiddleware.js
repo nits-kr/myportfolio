@@ -34,6 +34,22 @@ export const protect = async (req, res, next) => {
     if (!user) {
       user = await SubUser.findById(decoded.id).select("-password");
       isSubUser = Boolean(user);
+
+      // Sub-users inherit subscription entitlements from their parent (billing owner)
+      if (isSubUser && user?.parentUser) {
+        let owner = await User.findById(user.parentUser).select(
+          "subscription subscriptionStatus subscriptionExpiresAt pendingSubscription pendingSubscriptionValidityDays",
+        );
+        if (owner) owner = await refreshSubscriptionState(owner);
+
+        if (owner) {
+          user.subscription = owner.subscription;
+          user.subscriptionStatus = owner.subscriptionStatus;
+          user.subscriptionExpiresAt = owner.subscriptionExpiresAt;
+          user.pendingSubscription = owner.pendingSubscription;
+          user.pendingSubscriptionValidityDays = owner.pendingSubscriptionValidityDays;
+        }
+      }
     }
 
     if (user && !isSubUser) {
@@ -83,16 +99,31 @@ export const optionalProtect = async (req, res, next) => {
   if (token) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      let user = await User.findById(decoded.id).select("-password");
-      let isSubUser = false;
-      if (!user) {
-        user = await SubUser.findById(decoded.id).select("-password");
-        isSubUser = Boolean(user);
-      }
+    let user = await User.findById(decoded.id).select("-password");
+    let isSubUser = false;
+    if (!user) {
+      user = await SubUser.findById(decoded.id).select("-password");
+      isSubUser = Boolean(user);
 
-      if (user && !isSubUser) {
-        user = await refreshSubscriptionState(user);
+      if (isSubUser && user?.parentUser) {
+        let owner = await User.findById(user.parentUser).select(
+          "subscription subscriptionStatus subscriptionExpiresAt pendingSubscription pendingSubscriptionValidityDays",
+        );
+        if (owner) owner = await refreshSubscriptionState(owner);
+
+        if (owner) {
+          user.subscription = owner.subscription;
+          user.subscriptionStatus = owner.subscriptionStatus;
+          user.subscriptionExpiresAt = owner.subscriptionExpiresAt;
+          user.pendingSubscription = owner.pendingSubscription;
+          user.pendingSubscriptionValidityDays = owner.pendingSubscriptionValidityDays;
+        }
       }
+    }
+
+    if (user && !isSubUser) {
+      user = await refreshSubscriptionState(user);
+    }
       req.user = user;
     } catch (err) {
       console.error("Optional Auth Error:", err);

@@ -152,8 +152,10 @@ export default function PricingPage() {
   const pendingPlan = subscriptionInfo?.pendingSubscription || null;
   const hasActivePaidPlan =
     subscriptionInfo?.subscriptionStatus === "active" && currentPlan !== "free";
+  const billingReadOnly = Boolean(isMounted && user && (user?.isSubUser || user?.parentUser));
 
   const getPaidButtonLabel = (planId) => {
+    if (billingReadOnly) return "Billing managed by owner";
     if (
       pendingPlan === planId &&
       hasActivePaidPlan &&
@@ -175,6 +177,11 @@ export default function PricingPage() {
   const handleCheckout = async (plan) => {
     if (!user) {
       router.push(`/login?redirect=/pricing`);
+      return;
+    }
+
+    if (billingReadOnly) {
+      alert("Only the account owner (primary user) can manage subscriptions.");
       return;
     }
 
@@ -299,6 +306,16 @@ export default function PricingPage() {
           </span>
         </div>
       </motion.div>
+
+      {billingReadOnly && (
+        <div className="alert alert-warning mb-4">
+          <div className="fw-semibold">Billing is managed by the account owner</div>
+          <div className="small">
+            You&apos;re logged in as a team member. Please ask the primary account to renew,
+            upgrade, or downgrade the plan.
+          </div>
+        </div>
+      )}
 
       {subscriptionInfo && (
         <div className="alert alert-info mb-4">
@@ -432,6 +449,7 @@ export default function PricingPage() {
                   onClick={() => handleCheckout(plan)}
                   className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100`}
                   disabled={
+                    billingReadOnly ||
                     processingPlan === getPlanId(plan, billingCycle) ||
                     (isMounted &&
                       hasActivePaidPlan &&

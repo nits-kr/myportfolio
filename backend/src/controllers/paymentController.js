@@ -356,7 +356,9 @@ export const handleWebhook = async (req, res) => {
 
 export const getSubscription = async (req, res) => {
   try {
-    let user = await User.findById(req.user._id).select(
+    const ownerUserId = req.user?.parentUser || req.user?._id;
+
+    let user = await User.findById(ownerUserId).select(
       "subscription subscriptionStatus subscriptionExpiresAt pendingSubscription pendingSubscriptionValidityDays",
     );
     if (!user) {

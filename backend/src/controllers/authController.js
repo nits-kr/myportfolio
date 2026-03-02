@@ -1,15 +1,18 @@
 import User from "../models/User.js";
 import SubUser from "../models/subUser.modal.js";
 import jwt from "jsonwebtoken";
+import { refreshSubscriptionState } from "../services/subscriptionService.js";
 
 // Helper to create token and send cookie
-const sendTokenResponse = (user, statusCode, res) => {
+const sendTokenResponse = (user, statusCode, res, sendOptions = {}) => {
   // Create token
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
     expiresIn: "30d",
   });
 
-  const options = {
+  const isSubUser = sendOptions.isSubUser ?? Boolean(user?.parentUser);
+
+  const cookieOptions = {
     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // true in production
@@ -17,7 +20,7 @@ const sendTokenResponse = (user, statusCode, res) => {
 
   res
     .status(statusCode)
-    .cookie("token", token, options)
+    .cookie("token", token, cookieOptions)
     .json({
       success: true,
       token, // Optional: send token in body too for non-cookie clients
@@ -26,6 +29,8 @@ const sendTokenResponse = (user, statusCode, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        isSubUser,
+        parentUser: isSubUser ? user.parentUser : undefined,
         profileImage: user.profileImage || "",
         title: user.title || "",
         bio: user.bio || "",
@@ -118,7 +123,21 @@ export const login = async (req, res) => {
       });
     }
 
-    sendTokenResponse(user, 200, res);
+    // Sub-users inherit subscription entitlements from their parent (billing owner).
+    if (isSubUser && user?.parentUser) {
+      let owner = await User.findById(user.parentUser).select(
+        "subscription subscriptionStatus subscriptionExpiresAt pendingSubscription pendingSubscriptionValidityDays",
+      );
+      if (owner) owner = await refreshSubscriptionState(owner);
+
+      if (owner) {
+        user.subscription = owner.subscription;
+        user.subscriptionStatus = owner.subscriptionStatus;
+        user.subscriptionExpiresAt = owner.subscriptionExpiresAt;
+      }
+    }
+
+    sendTokenResponse(user, 200, res, { isSubUser });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server Error" });
