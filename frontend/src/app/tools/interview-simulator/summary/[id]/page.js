@@ -46,6 +46,7 @@ export default function SessionSummaryPage({ params }) {
 
       if (sessionData.success) {
         setSession(sessionData.data);
+        setSummary(sessionData.data.summary || null);
       }
     } catch (error) {
       console.error("Fetch summary error:", error);
@@ -209,6 +210,69 @@ export default function SessionSummaryPage({ params }) {
           </motion.div>
         </div>
       </div>
+
+      {summary && (
+        <div className="glass-card p-4 mb-5">
+          <h3 className="h5 fw-bold mb-3">AI Summary</h3>
+          {summary.overallPerformance && (
+            <p className="text-muted mb-4">{summary.overallPerformance}</p>
+          )}
+
+          <div className="row g-4">
+            <div className="col-md-6">
+              <h4 className="h6 fw-bold">Strengths</h4>
+              {Array.isArray(summary.strengths) && summary.strengths.length > 0 ? (
+                <ul className="mb-0">
+                  {summary.strengths.map((item, idx) => (
+                    <li key={`strength-${idx}`}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="small text-muted mb-0">No strengths recorded.</p>
+              )}
+            </div>
+
+            <div className="col-md-6">
+              <h4 className="h6 fw-bold">Areas To Improve</h4>
+              {Array.isArray(summary.areasForImprovement) &&
+              summary.areasForImprovement.length > 0 ? (
+                <ul className="mb-0">
+                  {summary.areasForImprovement.map((item, idx) => (
+                    <li key={`improve-${idx}`}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="small text-muted mb-0">
+                  No improvement areas recorded.
+                </p>
+              )}
+            </div>
+
+            <div className="col-md-6">
+              <h4 className="h6 fw-bold">Recommendations</h4>
+              {Array.isArray(summary.recommendations) &&
+              summary.recommendations.length > 0 ? (
+                <ul className="mb-0">
+                  {summary.recommendations.map((item, idx) => (
+                    <li key={`recommend-${idx}`}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="small text-muted mb-0">
+                  No recommendations recorded.
+                </p>
+              )}
+            </div>
+
+            <div className="col-md-6">
+              <h4 className="h6 fw-bold">Next Step</h4>
+              <p className="mb-0 text-muted">
+                {summary.nextSteps || "Continue with another mock interview."}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <motion.div

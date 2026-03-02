@@ -17,6 +17,7 @@ export default function InterviewSessionPage({ params }) {
   const [isSending, setIsSending] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
   const [showFeedback, setShowFeedback] = useState(true);
+  const [requestError, setRequestError] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const messagesEndRef = useRef(null);
   const timerRef = useRef(null);
@@ -60,6 +61,49 @@ export default function InterviewSessionPage({ params }) {
       console.error("Fetch messages error:", error);
     }
   }, [sessionId, user]);
+
+  const requestFeedback = useCallback(
+    async (messageId) => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/interview/sessions/${sessionId}/feedback`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${user.token || localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ messageId }),
+          },
+        );
+
+        const data = await response.json();
+        if (!response.ok || !data.success) return;
+
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg._id === messageId
+              ? {
+                  ...msg,
+                  feedback: {
+                    score: data.data.score,
+                    technicalDepth: data.data.technicalDepth,
+                    clarity: data.data.clarity,
+                    suggestions: [
+                      ...(data.data.improvements || []),
+                      ...(data.data.strengths || []),
+                    ],
+                  },
+                }
+              : msg,
+          ),
+        );
+      } catch (error) {
+        console.error("Feedback request error:", error);
+      }
+    },
+    [sessionId, user],
+  );
 
   // Fetch session and messages
   useEffect(() => {
@@ -108,15 +152,21 @@ export default function InterviewSessionPage({ params }) {
       );
 
       const data = await response.json();
-      if (data.success) {
-        setMessages((prev) => [
-          ...prev,
-          data.data.candidateMessage,
-          data.data.interviewerMessage,
-        ]);
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to send message");
+      }
+
+      const { candidateMessage, interviewerMessage } = data.data;
+      setMessages((prev) => [...prev, candidateMessage, interviewerMessage]);
+      setRequestError(null);
+
+      if (showFeedback && candidateMessage?._id) {
+        requestFeedback(candidateMessage._id);
       }
     } catch (error) {
       console.error("Send message error:", error);
+      setInputMessage(messageContent);
+      setRequestError(error.message || "Failed to send message");
     } finally {
       setIsSending(false);
     }
@@ -138,11 +188,14 @@ export default function InterviewSessionPage({ params }) {
       );
 
       const data = await response.json();
-      if (data.success) {
-        router.push(`/tools/interview-simulator/summary/${sessionId}`);
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to end session");
       }
+      setRequestError(null);
+      router.push(`/tools/interview-simulator/summary/${sessionId}`);
     } catch (error) {
       console.error("End interview error:", error);
+      setRequestError(error.message || "Failed to end session");
       setIsEnding(false);
     }
   };
@@ -199,6 +252,12 @@ export default function InterviewSessionPage({ params }) {
             className="glass-card p-4"
             style={{ height: "calc(100vh - 250px)" }}
           >
+            {requestError && (
+              <div className="alert alert-danger py-2 px-3 mb-3 small">
+                {requestError}
+              </div>
+            )}
+
             {/* Messages */}
             <div
               className="overflow-auto mb-3"

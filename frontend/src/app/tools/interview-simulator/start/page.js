@@ -56,6 +56,7 @@ const difficultyLevels = [
 export default function StartInterviewPage() {
   const router = useRouter();
   const { user } = useSelector((state) => state.auth);
+  const subscription = user?.subscription || "free";
   const [selectedRole, setSelectedRole] = useState(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState("mid");
   const [isCreating, setIsCreating] = useState(false);
@@ -371,7 +372,7 @@ export default function StartInterviewPage() {
         <p className="text-muted small mt-3">
           {selectedRole === "custom"
             ? "Custom interviews consume 1 session credit"
-            : user?.subscription === "free"
+            : subscription === "free"
               ? "Free tier: 3 sessions/month"
               : "Unlimited sessions"}
         </p>

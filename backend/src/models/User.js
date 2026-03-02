@@ -53,6 +53,20 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  subscription: {
+    type: String,
+    enum: ["free", "pro", "enterprise"],
+    default: "free",
+  },
+  subscriptionStatus: {
+    type: String,
+    enum: ["inactive", "active", "cancelled"],
+    default: "inactive",
+  },
+  subscriptionExpiresAt: {
+    type: Date,
+    default: null,
+  },
 });
 
 UserSchema.pre("save", async function () {

@@ -22,6 +22,8 @@ import analyticsRoutes from "./src/routes/analyticsRoutes.js";
 import subscriberRoutes from "./src/routes/subscriberRoutes.js"; // Import Subscriber routes
 import interviewRoutes from "./src/routes/interviewRoutes.js"; // Import Interview routes
 import toolRoutes from "./src/routes/toolRoutes.js"; // Import Tool routes
+import paymentRoutes from "./src/routes/paymentRoutes.js";
+import { handleWebhook } from "./src/controllers/paymentController.js";
 import { scheduleReminderJob } from "./src/utils/reminderScheduler.js"; // Import Reminder Scheduler
 import errorHandler from "./src/middleware/errorMiddleware.js"; // Import Error Handler
 
@@ -57,6 +59,13 @@ app.use(
       },
     },
   }),
+);
+
+// Razorpay webhook must use raw body for signature verification
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" }),
+  handleWebhook,
 );
 
 // Body parser
@@ -112,6 +121,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/subscribers", subscriberRoutes); // Mount Subscriber routes
 app.use("/api/interview", interviewRoutes); // Mount Interview routes
 app.use("/api/tools", toolRoutes); // Mount Tool routes
+app.use("/api/payments", paymentRoutes);
 
 app.use(errorHandler);
 

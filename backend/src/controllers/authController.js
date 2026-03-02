@@ -29,6 +29,9 @@ const sendTokenResponse = (user, statusCode, res) => {
         profileImage: user.profileImage || "",
         title: user.title || "",
         bio: user.bio || "",
+        subscription: user.subscription || "free",
+        subscriptionStatus: user.subscriptionStatus || "inactive",
+        subscriptionExpiresAt: user.subscriptionExpiresAt || null,
       },
     });
 };

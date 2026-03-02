@@ -34,6 +34,7 @@ const roleIcons = {
 export default function DashboardPage() {
   const router = useRouter();
   const { user } = useSelector((state) => state.auth);
+  const subscription = user?.subscription || "free";
   const [sessions, setSessions] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -148,7 +149,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <div className="h4 fw-bold mb-0">
-                  {user?.subscription === "free" ? "3" : "∞"}
+                  {subscription === "free" ? "3" : "Unlimited"}
                 </div>
                 <div className="small text-muted">Sessions/Month</div>
               </div>
@@ -162,7 +163,7 @@ export default function DashboardPage() {
         <div className="glass-card p-4 mb-5">
           <h2 className="h5 fw-bold mb-4">Score Trend</h2>
           <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={analytics.recentScores.reverse()}>
+            <LineChart data={[...analytics.recentScores].reverse()}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke="rgba(255,255,255,0.1)"

@@ -11,9 +11,10 @@ export const createSession = async (req, res) => {
   try {
     const { role, difficulty = "mid", customData } = req.body;
     const userId = req.user._id;
+    const subscriptionPlan = req.user.subscription || "free";
 
     // Check usage limits for free tier
-    if (req.user.subscription === "free") {
+    if (subscriptionPlan === "free") {
       const currentMonth = new Date();
       currentMonth.setDate(1);
       currentMonth.setHours(0, 0, 0, 0);
@@ -203,7 +204,7 @@ export const getFeedback = async (req, res) => {
         .json({ success: false, error: "Session not found" });
     }
 
-    const message = await InterviewMessage.findById(messageId);
+    const message = await InterviewMessage.findOne({ _id: messageId, sessionId: id });
     if (!message || message.role !== "candidate") {
       return res.status(400).json({ success: false, error: "Invalid message" });
     }
@@ -255,6 +256,16 @@ export const endSession = async (req, res) => {
         .json({ success: false, error: "Session not found" });
     }
 
+    if (session.status === "completed") {
+      return res.json({
+        success: true,
+        data: {
+          session,
+          summary: session.summary || null,
+        },
+      });
+    }
+
     // Get all messages
     const messages = await InterviewMessage.find({ sessionId: id }).sort({
       timestamp: 1,
@@ -268,12 +279,27 @@ export const endSession = async (req, res) => {
     const avgScore =
       scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 5;
 
-    // Generate summary
-    const summary = await generateSessionSummary(
-      session.role,
-      messages,
-      scores,
-    );
+    // Generate summary (do not fail session completion if summary generation fails)
+    let summary = null;
+    try {
+      summary = await generateSessionSummary(session.role, messages, scores);
+    } catch (summaryError) {
+      console.error("Summary generation failed:", summaryError);
+      summary = {
+        overallPerformance: "Session completed. Summary generation is temporarily unavailable.",
+        strengths: [],
+        areasForImprovement: [],
+        recommendations: [],
+        nextSteps: "Continue practicing with additional sessions.",
+      };
+    }
+
+    const technicalScores = messages
+      .filter((m) => m.feedback?.technicalDepth !== undefined)
+      .map((m) => m.feedback.technicalDepth);
+    const clarityScores = messages
+      .filter((m) => m.feedback?.clarity !== undefined)
+      .map((m) => m.feedback.clarity);
 
     // Update session
     session.status = "completed";
@@ -284,20 +310,16 @@ export const endSession = async (req, res) => {
     session.overallScore = avgScore;
     session.metrics = {
       technicalDepth:
-        scores.length > 0
-          ? messages
-              .filter((m) => m.feedback?.technicalDepth)
-              .reduce((a, m) => a + m.feedback.technicalDepth, 0) /
-            scores.length
+        technicalScores.length > 0
+          ? technicalScores.reduce((a, b) => a + b, 0) / technicalScores.length
           : 5,
       clarity:
-        scores.length > 0
-          ? messages
-              .filter((m) => m.feedback?.clarity)
-              .reduce((a, m) => a + m.feedback.clarity, 0) / scores.length
+        clarityScores.length > 0
+          ? clarityScores.reduce((a, b) => a + b, 0) / clarityScores.length
           : 5,
       confidence: avgScore, // Simplified for MVP
     };
+    session.summary = summary;
     await session.save();
 
     res.json({

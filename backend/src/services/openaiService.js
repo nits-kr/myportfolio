@@ -92,6 +92,10 @@ Instructions:
  */
 export const generateFeedback = async (role, question, answer) => {
   try {
+    const feedbackSystemPrompt =
+      SYSTEM_PROMPTS[role] ||
+      "You are an experienced interviewer who provides actionable, specific interview feedback.";
+
     const prompt = `As an expert technical interviewer, analyze this candidate's answer:
 
 Question: ${question}
@@ -112,7 +116,7 @@ Be constructive and specific. Focus on technical accuracy, communication clarity
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
-        { role: "system", content: SYSTEM_PROMPTS[role] },
+        { role: "system", content: feedbackSystemPrompt },
         { role: "user", content: prompt },
       ],
       temperature: 0.5,
@@ -132,7 +136,8 @@ Be constructive and specific. Focus on technical accuracy, communication clarity
  */
 export const generateSessionSummary = async (role, messages, scores) => {
   try {
-    const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+    const avgScore =
+      scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 5;
 
     const prompt = `Based on this interview session, provide a comprehensive summary:
 

@@ -63,6 +63,13 @@ const interviewSessionSchema = new mongoose.Schema({
       max: 10,
     },
   },
+  summary: {
+    overallPerformance: String,
+    strengths: [String],
+    areasForImprovement: [String],
+    recommendations: [String],
+    nextSteps: String,
+  },
   messageCount: {
     type: Number,
     default: 0,

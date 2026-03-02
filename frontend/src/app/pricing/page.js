@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
 import { FiCheck, FiX, FiZap, FiTrendingUp, FiAward } from "react-icons/fi";
 
 const pricingPlans = [
@@ -76,7 +78,122 @@ const pricingPlans = [
 ];
 
 export default function PricingPage() {
+  const router = useRouter();
+  const { user, token } = useSelector((state) => state.auth);
   const [billingCycle, setBillingCycle] = useState("monthly");
+  const [processingPlan, setProcessingPlan] = useState(null);
+
+  const loadRazorpaySdk = () =>
+    new Promise((resolve) => {
+      if (typeof window === "undefined") return resolve(false);
+      if (window.Razorpay) return resolve(true);
+
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+
+  const getPlanId = (plan, cycle) => `${plan.id}_${cycle === "yearly" ? "yearly" : "monthly"}`;
+
+  const handleCheckout = async (plan) => {
+    if (!user) {
+      router.push(`/login?redirect=/pricing`);
+      return;
+    }
+
+    const selectedPlanId = getPlanId(plan, billingCycle);
+    setProcessingPlan(selectedPlanId);
+
+    try {
+      const sdkLoaded = await loadRazorpaySdk();
+      if (!sdkLoaded) {
+        throw new Error("Razorpay SDK failed to load");
+      }
+
+      const authToken = token || localStorage.getItem("token");
+      const createOrderRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/payments/create-order`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({ planId: selectedPlanId }),
+        },
+      );
+
+      const orderData = await createOrderRes.json();
+      if (!createOrderRes.ok || !orderData.success) {
+        throw new Error(orderData.error || "Failed to initialize payment");
+      }
+
+      const { orderId, amount, currency, keyId, planId } = orderData.data;
+
+      const razorpay = new window.Razorpay({
+        key: keyId,
+        amount,
+        currency,
+        name: "My Portfolio",
+        description: `${plan.name} Plan (${billingCycle})`,
+        order_id: orderId,
+        prefill: {
+          name: user.name || "",
+          email: user.email || "",
+        },
+        notes: {
+          planId,
+          billingCycle,
+        },
+        handler: async (response) => {
+          try {
+            const verifyRes = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/payments/verify`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({
+                  planId,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              },
+            );
+
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(verifyData.error || "Payment verification failed");
+            }
+
+            alert("Payment successful. Your subscription is now active.");
+            router.refresh();
+          } catch (error) {
+            alert(error.message || "Payment verification failed");
+          }
+        },
+        theme: {
+          color: "#2563eb",
+        },
+      });
+
+      razorpay.on("payment.failed", () => {
+        alert("Payment failed. Please try again.");
+      });
+
+      razorpay.open();
+    } catch (error) {
+      alert(error.message || "Unable to process payment");
+    } finally {
+      setProcessingPlan(null);
+    }
+  };
 
   return (
     <div className="container py-5 mt-4">
@@ -212,12 +329,25 @@ export default function PricingPage() {
               </div>
 
               {/* CTA */}
-              <Link
-                href={plan.ctaLink}
-                className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100`}
-              >
-                {plan.cta}
-              </Link>
+              {plan.price === 0 || plan.id === "enterprise" ? (
+                <Link
+                  href={plan.ctaLink}
+                  className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100`}
+                >
+                  {plan.cta}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleCheckout(plan)}
+                  className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100`}
+                  disabled={processingPlan === getPlanId(plan, billingCycle)}
+                >
+                  {processingPlan === getPlanId(plan, billingCycle)
+                    ? "Processing..."
+                    : `Pay with Razorpay (${billingCycle})`}
+                </button>
+              )}
             </div>
           </motion.div>
         ))}
