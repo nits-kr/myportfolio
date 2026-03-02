@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import User from "../models/User.js";
 import Payment from "../models/Payment.js";
+import { refreshSubscriptionState } from "../services/subscriptionService.js";
 
 const PLAN_CATALOG = {
   pro_monthly: {
@@ -152,38 +153,6 @@ const applySubscription = async (userId, planConfig) => {
   return { user: existingUser, action: "downgrade_scheduled" };
 };
 
-const refreshSubscriptionState = async (user) => {
-  const now = new Date();
-  const isActive =
-    user.subscriptionStatus === "active" &&
-    user.subscriptionExpiresAt &&
-    user.subscriptionExpiresAt > now;
-
-  if (isActive) return user;
-
-  if (user.pendingSubscription && user.pendingSubscriptionValidityDays) {
-    const nextExpiry = new Date(now);
-    nextExpiry.setDate(
-      nextExpiry.getDate() + Number(user.pendingSubscriptionValidityDays),
-    );
-    user.subscription = user.pendingSubscription;
-    user.subscriptionStatus = "active";
-    user.subscriptionExpiresAt = nextExpiry;
-    user.pendingSubscription = null;
-    user.pendingSubscriptionValidityDays = null;
-    await user.save();
-    return user;
-  }
-
-  if (user.subscriptionStatus !== "inactive") {
-    user.subscriptionStatus = "inactive";
-  }
-  user.subscription = "free";
-  user.subscriptionExpiresAt = null;
-  await user.save();
-  return user;
-};
-
 export const createOrder = async (req, res) => {
   try {
     const { planId } = req.body;
@@ -196,6 +165,26 @@ export const createOrder = async (req, res) => {
 
     if (!planConfig) {
       return res.status(400).json({ success: false, error: "Invalid plan" });
+    }
+
+    const now = new Date();
+    const currentPlan = req.user?.subscription || "free";
+    const currentTier = getTier(currentPlan);
+    const newTier = getTier(planConfig.plan);
+    const isActive =
+      req.user?.subscriptionStatus === "active" &&
+      req.user?.subscriptionExpiresAt &&
+      new Date(req.user.subscriptionExpiresAt) > now;
+
+    if (
+      isActive &&
+      newTier < currentTier &&
+      req.user?.pendingSubscription === planConfig.plan
+    ) {
+      return res.status(409).json({
+        success: false,
+        error: `Downgrade to ${planConfig.plan.toUpperCase()} is already scheduled`,
+      });
     }
 
     const receipt = `rcpt_${Date.now()}_${crypto.randomBytes(6).toString("hex")}`;

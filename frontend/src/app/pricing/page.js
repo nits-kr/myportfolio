@@ -149,10 +149,19 @@ export default function PricingPage() {
 
   const currentPlan =
     subscriptionInfo?.currentPlan || (isMounted ? user?.subscription : null) || "free";
+  const pendingPlan = subscriptionInfo?.pendingSubscription || null;
   const hasActivePaidPlan =
     subscriptionInfo?.subscriptionStatus === "active" && currentPlan !== "free";
 
   const getPaidButtonLabel = (planId) => {
+    if (
+      pendingPlan === planId &&
+      hasActivePaidPlan &&
+      currentPlan === "enterprise" &&
+      planId === "pro"
+    ) {
+      return "Downgrade to Pro Scheduled";
+    }
     if (planId === currentPlan && hasActivePaidPlan) return "Renew Current Plan";
     if (currentPlan === "pro" && planId === "enterprise" && hasActivePaidPlan) {
       return "Upgrade to Enterprise";
@@ -226,6 +235,7 @@ export default function PricingPage() {
       });
 
       razorpay.on("payment.failed", (response) => {
+        setProcessingPlan(null);
         const params = new URLSearchParams({
           plan: plan.name,
           amount: String(Math.round(amount / 100)),
@@ -239,9 +249,8 @@ export default function PricingPage() {
 
       razorpay.open();
     } catch (error) {
-      alert(error.message || "Unable to process payment");
-    } finally {
       setProcessingPlan(null);
+      alert(error.message || "Unable to process payment");
     }
   };
 
@@ -422,7 +431,14 @@ export default function PricingPage() {
                   type="button"
                   onClick={() => handleCheckout(plan)}
                   className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100`}
-                  disabled={processingPlan === getPlanId(plan, billingCycle)}
+                  disabled={
+                    processingPlan === getPlanId(plan, billingCycle) ||
+                    (isMounted &&
+                      hasActivePaidPlan &&
+                      currentPlan === "enterprise" &&
+                      plan.id === "pro" &&
+                      pendingPlan === "pro")
+                  }
                 >
                   {processingPlan === getPlanId(plan, billingCycle)
                     ? "Processing..."

@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import SubUser from "../models/subUser.modal.js";
+import { refreshSubscriptionState } from "../services/subscriptionService.js";
 
 export const protect = async (req, res, next) => {
   let token;
@@ -33,6 +34,10 @@ export const protect = async (req, res, next) => {
     if (!user) {
       user = await SubUser.findById(decoded.id).select("-password");
       isSubUser = Boolean(user);
+    }
+
+    if (user && !isSubUser) {
+      user = await refreshSubscriptionState(user);
     }
 
     req.user = user;
@@ -79,8 +84,14 @@ export const optionalProtect = async (req, res, next) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       let user = await User.findById(decoded.id).select("-password");
+      let isSubUser = false;
       if (!user) {
         user = await SubUser.findById(decoded.id).select("-password");
+        isSubUser = Boolean(user);
+      }
+
+      if (user && !isSubUser) {
+        user = await refreshSubscriptionState(user);
       }
       req.user = user;
     } catch (err) {

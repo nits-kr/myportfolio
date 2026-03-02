@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/store/slices/authSlice";
 
 const actionLabels = {
   activated: "Plan activated successfully.",
@@ -13,6 +15,7 @@ const actionLabels = {
 };
 
 export default function PaymentSuccessPage() {
+  const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan") || "Pro";
   const amount = searchParams.get("amount") || "0";
@@ -114,6 +117,48 @@ export default function PaymentSuccessPage() {
       window.removeEventListener("keydown", unlockOnGesture);
     };
   }, [playSuccessSound]);
+
+  useEffect(() => {
+    const syncSubscription = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/payments/subscription`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const data = await response.json();
+        if (!response.ok || !data?.success || !data?.data) return;
+
+        const stored = localStorage.getItem("user");
+        if (!stored) return;
+
+        const storedUser = JSON.parse(stored);
+        const updatedUser = {
+          ...storedUser,
+          subscription: data.data.currentPlan ?? storedUser.subscription,
+          subscriptionStatus: data.data.subscriptionStatus ?? storedUser.subscriptionStatus,
+          subscriptionExpiresAt:
+            data.data.subscriptionExpiresAt ?? storedUser.subscriptionExpiresAt,
+          pendingSubscription: data.data.pendingSubscription ?? null,
+          pendingSubscriptionValidityDays: data.data.pendingSubscriptionValidityDays ?? null,
+        };
+
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        dispatch(setUser(updatedUser));
+      } catch (_e) {
+        // Ignore sync issues.
+      }
+    };
+
+    syncSubscription();
+  }, [dispatch]);
 
   return (
     <div className="pay-page pay-success">
