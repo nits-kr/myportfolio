@@ -242,18 +242,42 @@ export default function PricingPage() {
               downgrade_scheduled:
                 "Payment successful. Downgrade scheduled for current plan expiry.",
             };
-            alert(actionMessage[verifyData.data?.action] || "Payment successful.");
+            const params = new URLSearchParams({
+              plan: plan.name,
+              amount: String(Math.round(amount / 100)),
+              action: verifyData.data?.action || "activated",
+              paymentId: response.razorpay_payment_id || "",
+            });
+            router.push(`/pricing/success?${params.toString()}`);
           } catch (error) {
-            alert(error.message || "Payment verification failed");
+            const params = new URLSearchParams({
+              plan: plan.name,
+              amount: String(Math.round(amount / 100)),
+              reason: error.message || "Payment verification failed",
+            });
+            router.push(`/pricing/failed?${params.toString()}`);
           }
+        },
+        modal: {
+          ondismiss: () => {
+            setProcessingPlan(null);
+          },
         },
         theme: {
           color: "#2563eb",
         },
       });
 
-      razorpay.on("payment.failed", () => {
-        alert("Payment failed. Please try again.");
+      razorpay.on("payment.failed", (response) => {
+        const params = new URLSearchParams({
+          plan: plan.name,
+          amount: String(Math.round(amount / 100)),
+          reason:
+            response?.error?.description ||
+            response?.error?.reason ||
+            "Payment failed. Please try again.",
+        });
+        router.push(`/pricing/failed?${params.toString()}`);
       });
 
       razorpay.open();
