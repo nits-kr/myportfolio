@@ -12,7 +12,20 @@ import { authorize, protect } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 const requirePrimaryUser = (req, res, next) => {
-  if (!req.user || typeof req.user.subscription !== "string") {
+  const user = req.user;
+  if (!user) {
+    return res.status(403).json({
+      success: false,
+      error: "Only primary users can manage subscriptions",
+    });
+  }
+
+  // Use a definitive discriminator rather than presence of fields
+  const modelName = user?.constructor?.modelName;
+  const isPrimary = modelName === "User";
+  const isSub = modelName === "SubUser";
+
+  if (!isPrimary || isSub) {
     return res.status(403).json({
       success: false,
       error: "Only primary users can manage subscriptions",
@@ -30,8 +43,8 @@ router.get("/subscription", protect, requirePrimaryUser, getSubscription);
 router.get(
   "/admin/recent",
   protect,
-  requirePrimaryUser,
   authorize("admin"),
+  requirePrimaryUser,
   getRecentPaymentsAdmin,
 );
 
