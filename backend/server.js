@@ -94,21 +94,32 @@ if (!allowedOrigins.includes("https://nitishportfolio-sigma.vercel.app")) {
   allowedOrigins.push("https://nitishportfolio-sigma.vercel.app");
 }
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
+const corsOptionsDelegate = (req, callback) => {
+  const origin = req.header("Origin");
+  if (!origin) {
+    return callback(null, { origin: true, credentials: true });
+  }
 
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        logger.error(`CORS Error: Origin ${origin} not allowed`);
-        callback(new Error(`Not allowed by CORS: ${origin}`));
-      }
-    },
-    credentials: true, // Allow cookies
-  }),
+  const normalizedOrigin = origin.trim().replace(/\/$/, "");
+
+  // Razorpay can POST to callback_url from its own origin (e.g. https://api.razorpay.com).
+  if (
+    req.path === "/api/payments/callback" ||
+    req.path === "/api/payments/callback-failed"
+  ) {
+    return callback(null, { origin: true, credentials: true });
+  }
+
+  if (allowedOrigins.includes(normalizedOrigin)) {
+    return callback(null, { origin: true, credentials: true });
+  }
+
+  logger.error(`CORS Error: Origin ${normalizedOrigin} not allowed`);
+  return callback(new Error(`Not allowed by CORS: ${normalizedOrigin}`));
+};
+
+app.use(
+  cors(corsOptionsDelegate),
 );
 
 // Mount routers
