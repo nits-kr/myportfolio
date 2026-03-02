@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { FiCheck, FiX, FiZap, FiTrendingUp, FiAward } from "react-icons/fi";
@@ -82,6 +82,7 @@ export default function PricingPage() {
   const { user, token } = useSelector((state) => state.auth);
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [processingPlan, setProcessingPlan] = useState(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState(null);
   const currencySymbol = "₹";
 
   const loadRazorpaySdk = () =>
@@ -98,6 +99,63 @@ export default function PricingPage() {
     });
 
   const getPlanId = (plan, cycle) => `${plan.id}_${cycle === "yearly" ? "yearly" : "monthly"}`;
+  const authToken =
+    token ||
+    (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+
+  const normalizeSubscription = (data) => {
+    if (!data) return null;
+    if (data.currentPlan) return data;
+    return {
+      currentPlan: data.subscription || "free",
+      subscriptionStatus: data.subscriptionStatus || "inactive",
+      subscriptionExpiresAt: data.subscriptionExpiresAt || null,
+      pendingSubscription: data.pendingSubscription || null,
+      pendingSubscriptionValidityDays: data.pendingSubscriptionValidityDays || null,
+    };
+  };
+
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      if (!user || !authToken) {
+        setSubscriptionInfo(null);
+        return;
+      }
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/payments/subscription`,
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          },
+        );
+        const data = await response.json();
+        if (response.ok && data.success) {
+          setSubscriptionInfo(normalizeSubscription(data.data));
+        }
+      } catch (error) {
+        console.error("Failed to fetch subscription:", error);
+      }
+    };
+
+    fetchSubscription();
+  }, [user, authToken]);
+
+  const currentPlan = subscriptionInfo?.currentPlan || user?.subscription || "free";
+  const hasActivePaidPlan =
+    subscriptionInfo?.subscriptionStatus === "active" && currentPlan !== "free";
+
+  const getPaidButtonLabel = (planId) => {
+    if (planId === currentPlan && hasActivePaidPlan) return "Renew Current Plan";
+    if (currentPlan === "pro" && planId === "enterprise" && hasActivePaidPlan) {
+      return "Upgrade to Enterprise";
+    }
+    if (currentPlan === "enterprise" && planId === "pro" && hasActivePaidPlan) {
+      return "Schedule Downgrade to Pro";
+    }
+    return `Pay with Razorpay (${billingCycle})`;
+  };
 
   const handleCheckout = async (plan) => {
     if (!user) {
@@ -114,7 +172,6 @@ export default function PricingPage() {
         throw new Error("Razorpay SDK failed to load");
       }
 
-      const authToken = token || localStorage.getItem("token");
       const createOrderRes = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/payments/create-order`,
         {
@@ -173,8 +230,19 @@ export default function PricingPage() {
               throw new Error(verifyData.error || "Payment verification failed");
             }
 
-            alert("Payment successful. Your subscription is now active.");
-            router.refresh();
+            const normalized = normalizeSubscription(verifyData.data?.subscription);
+            if (normalized) {
+              setSubscriptionInfo(normalized);
+            }
+
+            const actionMessage = {
+              activated: "Payment successful. Plan activated.",
+              upgraded: "Payment successful. Your plan is upgraded.",
+              renewed: "Payment successful. Your plan is renewed.",
+              downgrade_scheduled:
+                "Payment successful. Downgrade scheduled for current plan expiry.",
+            };
+            alert(actionMessage[verifyData.data?.action] || "Payment successful.");
           } catch (error) {
             alert(error.message || "Payment verification failed");
           }
@@ -242,6 +310,29 @@ export default function PricingPage() {
         </div>
       </motion.div>
 
+      {subscriptionInfo && (
+        <div className="alert alert-info mb-4">
+          <div className="fw-semibold">
+            Current Plan: {subscriptionInfo.currentPlan?.toUpperCase() || "FREE"}
+          </div>
+          {subscriptionInfo.subscriptionExpiresAt && (
+            <div className="small">
+              Valid till:{" "}
+              {new Date(subscriptionInfo.subscriptionExpiresAt).toLocaleDateString(
+                "en-IN",
+              )}
+            </div>
+          )}
+          {subscriptionInfo.pendingSubscription && (
+            <div className="small mt-1">
+              Scheduled Change:{" "}
+              {subscriptionInfo.pendingSubscription.toUpperCase()} after current
+              expiry.
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Pricing Cards */}
       <div className="row g-4 mb-5">
         {pricingPlans.map((plan, index) => (
@@ -277,7 +368,12 @@ export default function PricingPage() {
               </div>
 
               {/* Plan Name */}
-              <h3 className="h4 fw-bold mb-2">{plan.name}</h3>
+              <h3 className="h4 fw-bold mb-2 d-flex align-items-center gap-2">
+                {plan.name}
+                {plan.id === currentPlan && (
+                  <span className="badge bg-success">Current Plan</span>
+                )}
+              </h3>
               <p className="text-muted small mb-4">{plan.description}</p>
 
               {/* Price */}
@@ -334,9 +430,9 @@ export default function PricingPage() {
               {plan.price === 0 ? (
                 <Link
                   href={plan.ctaLink}
-                  className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100`}
+                  className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100 ${plan.id === currentPlan ? "disabled" : ""}`}
                 >
-                  {plan.cta}
+                  {plan.id === currentPlan ? "Current Plan" : plan.cta}
                 </Link>
               ) : (
                 <button
@@ -347,7 +443,7 @@ export default function PricingPage() {
                 >
                   {processingPlan === getPlanId(plan, billingCycle)
                     ? "Processing..."
-                    : `Pay with Razorpay (${billingCycle})`}
+                    : getPaidButtonLabel(plan.id)}
                 </button>
               )}
             </div>

@@ -67,6 +67,15 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  pendingSubscription: {
+    type: String,
+    enum: ["pro", "enterprise"],
+    default: null,
+  },
+  pendingSubscriptionValidityDays: {
+    type: Number,
+    default: null,
+  },
 });
 
 UserSchema.pre("save", async function () {

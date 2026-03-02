@@ -30,6 +30,9 @@ const PLAN_CATALOG = {
 };
 
 const getPlanConfig = (planId) => PLAN_CATALOG[planId] || null;
+const PLAN_TIER = { free: 0, pro: 1, enterprise: 2 };
+
+const getTier = (plan) => PLAN_TIER[plan] ?? 0;
 
 const safeCompare = (a, b) => {
   const aBuf = Buffer.from(a || "", "utf8");
@@ -74,25 +77,89 @@ const createRazorpayOrder = async ({ amountPaise, currency, receipt }) => {
 };
 
 const applySubscription = async (userId, planConfig) => {
-  const now = new Date();
   const existingUser = await User.findById(userId);
   if (!existingUser) return null;
 
-  const baseDate =
+  const now = new Date();
+  const isActive =
+    existingUser.subscriptionStatus === "active" &&
     existingUser.subscriptionExpiresAt &&
-    existingUser.subscriptionExpiresAt > now
-      ? existingUser.subscriptionExpiresAt
-      : now;
+    existingUser.subscriptionExpiresAt > now;
+  const currentPlan = existingUser.subscription || "free";
+  const currentTier = getTier(currentPlan);
+  const newTier = getTier(planConfig.plan);
 
-  const nextExpiry = new Date(baseDate);
-  nextExpiry.setDate(nextExpiry.getDate() + planConfig.validityDays);
+  // Same plan renews/extends from current expiry when active.
+  if (isActive && currentPlan === planConfig.plan) {
+    const nextExpiry = new Date(existingUser.subscriptionExpiresAt);
+    nextExpiry.setDate(nextExpiry.getDate() + planConfig.validityDays);
+    existingUser.subscriptionExpiresAt = nextExpiry;
+    existingUser.subscriptionStatus = "active";
+    existingUser.pendingSubscription = null;
+    existingUser.pendingSubscriptionValidityDays = null;
+    await existingUser.save();
+    return { user: existingUser, action: "renewed" };
+  }
 
-  existingUser.subscription = planConfig.plan;
-  existingUser.subscriptionStatus = "active";
-  existingUser.subscriptionExpiresAt = nextExpiry;
+  // Upgrade applies immediately; any scheduled downgrade is cleared.
+  if (!isActive || newTier > currentTier) {
+    const remainingDays =
+      isActive && existingUser.subscriptionExpiresAt
+        ? Math.ceil(
+            (existingUser.subscriptionExpiresAt.getTime() - now.getTime()) /
+              (1000 * 60 * 60 * 24),
+          )
+        : 0;
+    const totalDays = planConfig.validityDays + Math.max(remainingDays, 0);
+    const nextExpiry = new Date(now);
+    nextExpiry.setDate(nextExpiry.getDate() + totalDays);
+
+    existingUser.subscription = planConfig.plan;
+    existingUser.subscriptionStatus = "active";
+    existingUser.subscriptionExpiresAt = nextExpiry;
+    existingUser.pendingSubscription = null;
+    existingUser.pendingSubscriptionValidityDays = null;
+    await existingUser.save();
+    return { user: existingUser, action: currentTier < newTier ? "upgraded" : "activated" };
+  }
+
+  // Downgrade is scheduled after current paid period ends.
+  existingUser.pendingSubscription = planConfig.plan;
+  existingUser.pendingSubscriptionValidityDays = planConfig.validityDays;
   await existingUser.save();
+  return { user: existingUser, action: "downgrade_scheduled" };
+};
 
-  return existingUser;
+const refreshSubscriptionState = async (user) => {
+  const now = new Date();
+  const isActive =
+    user.subscriptionStatus === "active" &&
+    user.subscriptionExpiresAt &&
+    user.subscriptionExpiresAt > now;
+
+  if (isActive) return user;
+
+  if (user.pendingSubscription && user.pendingSubscriptionValidityDays) {
+    const nextExpiry = new Date(now);
+    nextExpiry.setDate(
+      nextExpiry.getDate() + Number(user.pendingSubscriptionValidityDays),
+    );
+    user.subscription = user.pendingSubscription;
+    user.subscriptionStatus = "active";
+    user.subscriptionExpiresAt = nextExpiry;
+    user.pendingSubscription = null;
+    user.pendingSubscriptionValidityDays = null;
+    await user.save();
+    return user;
+  }
+
+  if (user.subscriptionStatus !== "inactive") {
+    user.subscriptionStatus = "inactive";
+  }
+  user.subscription = "free";
+  user.subscriptionExpiresAt = null;
+  await user.save();
+  return user;
 };
 
 export const createOrder = async (req, res) => {
@@ -180,9 +247,10 @@ export const verifyPayment = async (req, res) => {
     });
 
     if (existingCaptured) {
-      const user = await User.findById(userId).select(
-        "subscription subscriptionStatus subscriptionExpiresAt",
+      let user = await User.findById(userId).select(
+        "subscription subscriptionStatus subscriptionExpiresAt pendingSubscription pendingSubscriptionValidityDays",
       );
+      if (user) user = await refreshSubscriptionState(user);
       return res.json({ success: true, data: { subscription: user } });
     }
 
@@ -200,16 +268,20 @@ export const verifyPayment = async (req, res) => {
     payment.status = "captured";
     await payment.save();
 
-    const updatedUser = await applySubscription(userId, planConfig);
+    const result = await applySubscription(userId, planConfig);
 
     return res.json({
       success: true,
       data: {
-        subscription: updatedUser
+        action: result?.action || "activated",
+        subscription: result?.user
           ? {
-              subscription: updatedUser.subscription,
-              subscriptionStatus: updatedUser.subscriptionStatus,
-              subscriptionExpiresAt: updatedUser.subscriptionExpiresAt,
+              subscription: result.user.subscription,
+              subscriptionStatus: result.user.subscriptionStatus,
+              subscriptionExpiresAt: result.user.subscriptionExpiresAt,
+              pendingSubscription: result.user.pendingSubscription,
+              pendingSubscriptionValidityDays:
+                result.user.pendingSubscriptionValidityDays,
             }
           : null,
       },
@@ -272,13 +344,25 @@ export const handleWebhook = async (req, res) => {
 
 export const getSubscription = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select(
-      "subscription subscriptionStatus subscriptionExpiresAt",
+    let user = await User.findById(req.user._id).select(
+      "subscription subscriptionStatus subscriptionExpiresAt pendingSubscription pendingSubscriptionValidityDays",
     );
     if (!user) {
       return res.status(404).json({ success: false, error: "User not found" });
     }
-    return res.json({ success: true, data: user });
+
+    user = await refreshSubscriptionState(user);
+
+    return res.json({
+      success: true,
+      data: {
+        currentPlan: user.subscription || "free",
+        subscriptionStatus: user.subscriptionStatus,
+        subscriptionExpiresAt: user.subscriptionExpiresAt,
+        pendingSubscription: user.pendingSubscription || null,
+        pendingSubscriptionValidityDays: user.pendingSubscriptionValidityDays,
+      },
+    });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }
