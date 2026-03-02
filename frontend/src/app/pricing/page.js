@@ -331,7 +331,7 @@ export default function PricingPage() {
               </div>
 
               {/* CTA */}
-              {plan.price === 0 || plan.id === "enterprise" ? (
+              {plan.price === 0 ? (
                 <Link
                   href={plan.ctaLink}
                   className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100`}
