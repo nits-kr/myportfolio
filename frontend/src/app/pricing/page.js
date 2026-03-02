@@ -34,7 +34,7 @@ const pricingPlans = [
     id: "pro",
     name: "Pro",
     icon: <FiTrendingUp size={32} />,
-    price: 19,
+    price: 199,
     period: "month",
     description: "For serious professionals",
     features: [
@@ -56,7 +56,7 @@ const pricingPlans = [
     id: "enterprise",
     name: "Enterprise",
     icon: <FiAward size={32} />,
-    price: 99,
+    price: 999,
     period: "month",
     description: "For teams and agencies",
     features: [
@@ -82,6 +82,7 @@ export default function PricingPage() {
   const { user, token } = useSelector((state) => state.auth);
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [processingPlan, setProcessingPlan] = useState(null);
+  const currencySymbol = "₹";
 
   const loadRazorpaySdk = () =>
     new Promise((resolve) => {
@@ -137,7 +138,7 @@ export default function PricingPage() {
         key: keyId,
         amount,
         currency,
-        name: "My Portfolio",
+        name: "Nitish Portfolio",
         description: `${plan.name} Plan (${billingCycle})`,
         order_id: orderId,
         prefill: {
@@ -283,7 +284,7 @@ export default function PricingPage() {
               <div className="mb-4">
                 <div className="d-flex align-items-baseline gap-2">
                   <span className="display-4 fw-bold">
-                    $
+                    {currencySymbol}
                     {billingCycle === "yearly" && plan.price > 0
                       ? Math.round(plan.price * 0.8)
                       : plan.price}
@@ -296,7 +297,8 @@ export default function PricingPage() {
                 </div>
                 {billingCycle === "yearly" && plan.price > 0 && (
                   <p className="small text-muted mt-2">
-                    Billed ${Math.round(plan.price * 0.8 * 12)} annually
+                    Billed {currencySymbol}
+                    {Math.round(plan.price * 0.8 * 12)} annually
                   </p>
                 )}
               </div>
