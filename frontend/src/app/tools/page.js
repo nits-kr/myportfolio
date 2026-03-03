@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   FiMail,
   FiDatabase,
@@ -185,6 +185,37 @@ export default function ToolsPage() {
     [],
   );
 
+  const [activeStep, setActiveStep] = useState(0);
+  const benefits = [
+    {
+      icon: <FiZap />,
+      title: "Lightning Fast",
+      desc: "Optimized for performance with sub-second response times",
+    },
+    {
+      icon: <FiLock />,
+      title: "Secure & Private",
+      desc: "Your data is encrypted and never shared with third parties",
+    },
+    {
+      icon: <FiBarChart />,
+      title: "Detailed Analytics",
+      desc: "Track usage and get insights into your workflows",
+    },
+    {
+      icon: <FiDatabase />,
+      title: "API Access",
+      desc: "Integrate tools into your applications with our REST API",
+    },
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % benefits.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [benefits.length]);
+
   return (
     <div className="container py-5 mt-4">
       {/* Hero Section */}
@@ -343,75 +374,191 @@ export default function ToolsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="glass-card p-5 text-center"
+        className="glass-card p-4 p-md-5 text-center"
         style={{
           background:
             "linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)",
         }}
       >
         <h2 className="h3 fw-bold mb-3">Need a Custom Tool?</h2>
-        <p
-          className="text-muted mb-4"
-          style={{ maxWidth: "600px", margin: "0 auto" }}
-        >
+        <p className="text-muted mb-4 mx-auto" style={{ maxWidth: "600px" }}>
           I can build custom tools tailored to your specific needs. From data
           processing to automation, let&apos;s discuss your requirements.
         </p>
         <Link
           href="/contact?service=custom&message=I need a custom tool for..."
-          className="btn btn-primary btn-lg px-5 rounded-pill"
+          className="btn btn-primary btn-lg px-4 px-md-5 rounded-pill w-100 w-md-auto"
         >
           Request Custom Tool
         </Link>
       </motion.div>
 
-      {/* Benefits Section */}
-      <div className="mt-5 pt-5">
+      {/* Benefits Stepper Section */}
+      <div className="mt-5 pt-5 pb-5">
         <h2 className="h3 fw-bold text-center mb-5">Why Use Our Tools?</h2>
-        <div className="row g-4">
-          {[
-            {
-              icon: <FiZap />,
-              title: "Lightning Fast",
-              desc: "Optimized for performance with sub-second response times",
-            },
-            {
-              icon: <FiLock />,
-              title: "Secure & Private",
-              desc: "Your data is encrypted and never shared with third parties",
-            },
-            {
-              icon: <FiBarChart />,
-              title: "Detailed Analytics",
-              desc: "Track usage and get insights into your workflows",
-            },
-            {
-              icon: <FiDatabase />,
-              title: "API Access",
-              desc: "Integrate tools into your applications with our REST API",
-            },
-          ].map((benefit, idx) => (
-            <motion.div
-              key={idx}
-              className="col-md-6 col-lg-3"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 + idx * 0.1 }}
+
+        <div className="mx-auto" style={{ maxWidth: "900px" }}>
+          {/* Stepper Header */}
+          <div className="position-relative d-flex justify-content-between align-items-center mb-4 mb-md-5 px-3">
+            {/* Lines Container */}
+            <div
+              className="position-absolute top-50 translate-middle-y"
+              style={{
+                left: "20px",
+                right: "20px",
+                height: "2px",
+                zIndex: 0,
+              }}
             >
-              <div className="text-center">
-                <div
-                  className="d-inline-flex align-items-center justify-content-center rounded-circle p-3 mb-3"
-                  style={{ background: "rgba(124, 58, 237, 0.1)" }}
+              {/* Background Line */}
+              <div
+                className="w-100 h-100"
+                style={{ background: "rgba(255, 255, 255, 0.1)" }}
+              />
+              {/* Progress Line */}
+              <motion.div
+                className="h-100 position-absolute top-0 start-0"
+                initial={false}
+                animate={{
+                  width: `${(activeStep / (benefits.length - 1)) * 100}%`,
+                }}
+                style={{
+                  background: "#2563eb",
+                  zIndex: 1,
+                }}
+              />
+            </div>
+
+            {benefits.map((benefit, idx) => (
+              <div
+                key={idx}
+                className="position-relative d-flex flex-column align-items-center"
+                style={{ zIndex: 2, cursor: "pointer" }}
+                onClick={() => setActiveStep(idx)}
+              >
+                <div className="position-relative">
+                  <motion.div
+                    className="rounded-circle d-flex align-items-center justify-content-center"
+                    initial={false}
+                    animate={{
+                      background:
+                        idx < activeStep
+                          ? "#10b981"
+                          : idx === activeStep
+                            ? "#ffffff"
+                            : "#0f172a", // Solid background to mask line
+                      borderColor:
+                        idx === activeStep ? "#2563eb" : "transparent",
+                      scale: idx === activeStep ? 1.1 : 1, // Reduced scale for mobile
+                    }}
+                    style={{
+                      width: "40px", // Reduced size for mobile-friendliness
+                      height: "40px",
+                      border: "3px solid transparent",
+                      boxShadow:
+                        idx === activeStep
+                          ? "0 0 15px rgba(37, 99, 235, 0.3)"
+                          : "none",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: idx === activeStep ? "#2563eb" : "#ffffff",
+                        fontSize: "20px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {idx < activeStep ? <FiCheck size={24} /> : benefit.icon}
+                    </div>
+                  </motion.div>
+                </div>
+                <motion.span
+                  className="mt-3 small fw-bold text-center position-absolute d-none d-md-block"
+                  animate={{
+                    color: idx <= activeStep ? "#ffffff" : "#6b7280",
+                    opacity: 1,
+                    fontWeight: idx === activeStep ? "700" : "500",
+                  }}
+                  style={{
+                    top: "100%",
+                    left: "50%",
+                    whiteSpace: "nowrap",
+                    transform: "translateX(-50%)",
+                  }}
                 >
-                  <div className="text-primary" style={{ fontSize: "24px" }}>
-                    {benefit.icon}
+                  {benefit.title}
+                </motion.span>
+              </div>
+            ))}
+          </div>
+
+          {/* Stepper Content Slider */}
+          <div className="mt-5 pt-4 text-center">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeStep}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="glass-card p-4 p-md-5"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%)",
+                }}
+              >
+                <div
+                  className="d-flex align-items-center justify-content-center rounded-circle mb-4 mx-auto"
+                  style={{
+                    background: "rgba(37, 99, 235, 0.1)",
+                    width: "80px",
+                    height: "80px",
+                  }}
+                >
+                  <div
+                    className="text-primary"
+                    style={{
+                      fontSize: "32px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {benefits[activeStep].icon}
                   </div>
                 </div>
-                <h4 className="h6 fw-bold mb-2">{benefit.title}</h4>
-                <p className="text-muted small">{benefit.desc}</p>
-              </div>
-            </motion.div>
-          ))}
+                <h3 className="h3 fw-bold mb-3">
+                  {benefits[activeStep].title}
+                </h3>
+                <p
+                  className="text-muted lead mx-auto"
+                  style={{ maxWidth: "600px" }}
+                >
+                  {benefits[activeStep].desc}
+                </p>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Pagination Indicators */}
+            <div className="d-flex justify-content-center gap-2 mt-4">
+              {benefits.map((_, i) => (
+                <div
+                  key={i}
+                  className={`rounded-pill cursor-pointer ${
+                    activeStep === i ? "bg-primary" : "bg-light bg-opacity-25"
+                  }`}
+                  style={{
+                    width: activeStep === i ? "24px" : "8px",
+                    height: "8px",
+                    transition: "all 0.3s ease",
+                  }}
+                  onClick={() => setActiveStep(i)}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,11 +1,19 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSelector } from "react-redux";
-import { FiCheck, FiX, FiZap, FiTrendingUp, FiAward } from "react-icons/fi";
+import {
+  FiCheck,
+  FiX,
+  FiZap,
+  FiTrendingUp,
+  FiAward,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
 
 const pricingPlans = [
   {
@@ -117,7 +125,8 @@ export default function PricingPage() {
       document.body.appendChild(script);
     });
 
-  const getPlanId = (plan, cycle) => `${plan.id}_${cycle === "yearly" ? "yearly" : "monthly"}`;
+  const getPlanId = (plan, cycle) =>
+    `${plan.id}_${cycle === "yearly" ? "yearly" : "monthly"}`;
   const authToken =
     token ||
     (typeof window !== "undefined" ? localStorage.getItem("token") : null);
@@ -130,7 +139,8 @@ export default function PricingPage() {
       subscriptionStatus: data.subscriptionStatus || "inactive",
       subscriptionExpiresAt: data.subscriptionExpiresAt || null,
       pendingSubscription: data.pendingSubscription || null,
-      pendingSubscriptionValidityDays: data.pendingSubscriptionValidityDays || null,
+      pendingSubscriptionValidityDays:
+        data.pendingSubscriptionValidityDays || null,
     };
   };
 
@@ -162,11 +172,15 @@ export default function PricingPage() {
   }, [user, authToken]);
 
   const currentPlan =
-    subscriptionInfo?.currentPlan || (isMounted ? user?.subscription : null) || "free";
+    subscriptionInfo?.currentPlan ||
+    (isMounted ? user?.subscription : null) ||
+    "free";
   const pendingPlan = subscriptionInfo?.pendingSubscription || null;
   const hasActivePaidPlan =
     subscriptionInfo?.subscriptionStatus === "active" && currentPlan !== "free";
-  const billingReadOnly = Boolean(isMounted && user && (user?.isSubUser || user?.parentUser));
+  const billingReadOnly = Boolean(
+    isMounted && user && (user?.isSubUser || user?.parentUser),
+  );
 
   const getPaidButtonLabel = (planId) => {
     if (billingReadOnly) return "Billing managed by owner";
@@ -178,7 +192,8 @@ export default function PricingPage() {
     ) {
       return "Downgrade to Pro Scheduled";
     }
-    if (planId === currentPlan && hasActivePaidPlan) return "Renew Current Plan";
+    if (planId === currentPlan && hasActivePaidPlan)
+      return "Renew Current Plan";
     if (currentPlan === "pro" && planId === "enterprise" && hasActivePaidPlan) {
       return "Upgrade to Enterprise";
     }
@@ -284,6 +299,124 @@ export default function PricingPage() {
     }
   };
 
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  const renderPricingCard = (plan, index) => (
+    <div
+      className={`glass-card h-100 p-4 position-relative ${plan.popular ? "border-primary border-2" : ""}`}
+      style={{
+        background: plan.popular
+          ? "linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)"
+          : "rgba(255, 255, 255, 0.02)",
+      }}
+    >
+      {plan.popular && (
+        <div className="position-absolute top-0 end-0 m-3">
+          <span className="badge bg-primary px-3 py-2">Most Popular</span>
+        </div>
+      )}
+
+      {/* Icon */}
+      <div
+        className="d-inline-flex align-items-center justify-content-center rounded-3 p-3 mb-4"
+        style={{ background: "rgba(124, 58, 237, 0.1)" }}
+      >
+        <div className="text-primary">{plan.icon}</div>
+      </div>
+
+      {/* Plan Name */}
+      <h3 className="h4 fw-bold mb-2 d-flex align-items-center gap-2">
+        {plan.name}
+        {isMounted && plan.id === currentPlan && (
+          <span className="badge bg-success">Current Plan</span>
+        )}
+      </h3>
+      <p className="text-muted small mb-4">{plan.description}</p>
+
+      {/* Price */}
+      <div className="mb-4">
+        <div className="d-flex align-items-baseline gap-2">
+          <span className="display-4 fw-bold">
+            {currencySymbol}
+            {billingCycle === "yearly" && plan.price > 0
+              ? Math.round(plan.price * 0.8)
+              : plan.price}
+          </span>
+          {plan.price > 0 && (
+            <span className="text-muted">
+              /{billingCycle === "yearly" ? "month" : plan.period}
+            </span>
+          )}
+        </div>
+        {billingCycle === "yearly" && plan.price > 0 && (
+          <p className="small text-muted mt-2">
+            Billed {currencySymbol}
+            {Math.round(plan.price * 0.8 * 12)} annually
+          </p>
+        )}
+      </div>
+
+      {/* Features */}
+      <div className="border-top border-white border-opacity-10 pt-4 mb-4">
+        <ul className="list-unstyled">
+          {plan.features.map((feature, idx) => (
+            <li key={idx} className="d-flex align-items-start gap-2 mb-3">
+              {feature.included ? (
+                <FiCheck
+                  className="text-success mt-1 flex-shrink-0"
+                  size={18}
+                />
+              ) : (
+                <FiX className="text-muted mt-1 flex-shrink-0" size={18} />
+              )}
+              <span className={feature.included ? "" : "text-muted"}>
+                {feature.name}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* CTA */}
+      {plan.price === 0 ? (
+        <Link
+          href={
+            toolRedirect
+              ? `/register?${new URLSearchParams({
+                  plan: plan.id,
+                  redirect: toolRedirect,
+                }).toString()}`
+              : plan.ctaLink
+          }
+          className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100 ${
+            isMounted && plan.id === currentPlan ? "disabled" : ""
+          }`}
+        >
+          {isMounted && plan.id === currentPlan ? "Current Plan" : plan.cta}
+        </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={() => handleCheckout(plan)}
+          className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100`}
+          disabled={
+            billingReadOnly ||
+            processingPlan === getPlanId(plan, billingCycle) ||
+            (isMounted &&
+              hasActivePaidPlan &&
+              currentPlan === "enterprise" &&
+              plan.id === "pro" &&
+              pendingPlan === "pro")
+          }
+        >
+          {processingPlan === getPlanId(plan, billingCycle)
+            ? "Processing..."
+            : getPaidButtonLabel(plan.id)}
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div className="container py-5 mt-4">
       {/* Hero Section */}
@@ -331,10 +464,12 @@ export default function PricingPage() {
 
       {billingReadOnly && (
         <div className="alert alert-warning mb-4">
-          <div className="fw-semibold">Billing is managed by the account owner</div>
+          <div className="fw-semibold">
+            Billing is managed by the account owner
+          </div>
           <div className="small">
-            You&apos;re logged in as a team member. Please ask the primary account to renew,
-            upgrade, or downgrade the plan.
+            You&apos;re logged in as a team member. Please ask the primary
+            account to renew, upgrade, or downgrade the plan.
           </div>
         </div>
       )}
@@ -342,14 +477,15 @@ export default function PricingPage() {
       {subscriptionInfo && (
         <div className="alert alert-info mb-4">
           <div className="fw-semibold">
-            Current Plan: {subscriptionInfo.currentPlan?.toUpperCase() || "FREE"}
+            Current Plan:{" "}
+            {subscriptionInfo.currentPlan?.toUpperCase() || "FREE"}
           </div>
           {subscriptionInfo.subscriptionExpiresAt && (
             <div className="small">
               Valid till:{" "}
-              {new Date(subscriptionInfo.subscriptionExpiresAt).toLocaleDateString(
-                "en-IN",
-              )}
+              {new Date(
+                subscriptionInfo.subscriptionExpiresAt,
+              ).toLocaleDateString("en-IN")}
             </div>
           )}
           {subscriptionInfo.pendingSubscription && (
@@ -362,8 +498,8 @@ export default function PricingPage() {
         </div>
       )}
 
-      {/* Pricing Cards */}
-      <div className="row g-4 mb-5">
+      {/* Desktop Pricing Cards */}
+      <div className="row g-4 mb-5 d-none d-md-flex">
         {pricingPlans.map((plan, index) => (
           <motion.div
             key={plan.id}
@@ -372,129 +508,81 @@ export default function PricingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <div
-              className={`glass-card h-100 p-4 position-relative ${plan.popular ? "border-primary border-2" : ""}`}
-              style={{
-                background: plan.popular
-                  ? "linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)"
-                  : "rgba(255, 255, 255, 0.02)",
-              }}
-            >
-              {plan.popular && (
-                <div className="position-absolute top-0 end-0 m-3">
-                  <span className="badge bg-primary px-3 py-2">
-                    Most Popular
-                  </span>
-                </div>
-              )}
-
-              {/* Icon */}
-              <div
-                className="d-inline-flex align-items-center justify-content-center rounded-3 p-3 mb-4"
-                style={{ background: "rgba(124, 58, 237, 0.1)" }}
-              >
-                <div className="text-primary">{plan.icon}</div>
-              </div>
-
-              {/* Plan Name */}
-              <h3 className="h4 fw-bold mb-2 d-flex align-items-center gap-2">
-                {plan.name}
-                {isMounted && plan.id === currentPlan && (
-                  <span className="badge bg-success">Current Plan</span>
-                )}
-              </h3>
-              <p className="text-muted small mb-4">{plan.description}</p>
-
-              {/* Price */}
-              <div className="mb-4">
-                <div className="d-flex align-items-baseline gap-2">
-                  <span className="display-4 fw-bold">
-                    {currencySymbol}
-                    {billingCycle === "yearly" && plan.price > 0
-                      ? Math.round(plan.price * 0.8)
-                      : plan.price}
-                  </span>
-                  {plan.price > 0 && (
-                    <span className="text-muted">
-                      /{billingCycle === "yearly" ? "month" : plan.period}
-                    </span>
-                  )}
-                </div>
-                {billingCycle === "yearly" && plan.price > 0 && (
-                  <p className="small text-muted mt-2">
-                    Billed {currencySymbol}
-                    {Math.round(plan.price * 0.8 * 12)} annually
-                  </p>
-                )}
-              </div>
-
-              {/* Features */}
-              <div className="border-top border-white border-opacity-10 pt-4 mb-4">
-                <ul className="list-unstyled">
-                  {plan.features.map((feature, idx) => (
-                    <li
-                      key={idx}
-                      className="d-flex align-items-start gap-2 mb-3"
-                    >
-                      {feature.included ? (
-                        <FiCheck
-                          className="text-success mt-1 flex-shrink-0"
-                          size={18}
-                        />
-                      ) : (
-                        <FiX
-                          className="text-muted mt-1 flex-shrink-0"
-                          size={18}
-                        />
-                      )}
-                      <span className={feature.included ? "" : "text-muted"}>
-                        {feature.name}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* CTA */}
-              {plan.price === 0 ? (
-                <Link
-                  href={
-                    toolRedirect
-                      ? `/register?${new URLSearchParams({
-                          plan: plan.id,
-                          redirect: toolRedirect,
-                        }).toString()}`
-                      : plan.ctaLink
-                  }
-                  className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100 ${
-                    isMounted && plan.id === currentPlan ? "disabled" : ""
-                  }`}
-                >
-                  {isMounted && plan.id === currentPlan ? "Current Plan" : plan.cta}
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleCheckout(plan)}
-                  className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100`}
-                  disabled={
-                    billingReadOnly ||
-                    processingPlan === getPlanId(plan, billingCycle) ||
-                    (isMounted &&
-                      hasActivePaidPlan &&
-                      currentPlan === "enterprise" &&
-                      plan.id === "pro" &&
-                      pendingPlan === "pro")
-                  }
-                >
-                  {processingPlan === getPlanId(plan, billingCycle)
-                    ? "Processing..."
-                    : getPaidButtonLabel(plan.id)}
-                </button>
-              )}
-            </div>
+            {renderPricingCard(plan, index)}
           </motion.div>
         ))}
+      </div>
+
+      {/* Mobile Pricing Slider */}
+      <div className="d-block d-md-none mb-5 overflow-hidden">
+        <div className="position-relative px-2">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSlide}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              onDragEnd={(e, { offset }) => {
+                if (offset.x < -50) {
+                  setActiveSlide((prev) => (prev + 1) % pricingPlans.length);
+                } else if (offset.x > 50) {
+                  setActiveSlide(
+                    (prev) =>
+                      (prev - 1 + pricingPlans.length) % pricingPlans.length,
+                  );
+                }
+              }}
+              style={{ minHeight: "650px" }}
+              className="touch-none"
+            >
+              {renderPricingCard(pricingPlans[activeSlide], activeSlide)}
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Slider Controls */}
+          <div className="d-flex justify-content-center align-items-center gap-4 mt-4">
+            <button
+              className="btn btn-outline-primary rounded-circle p-2 d-flex align-items-center justify-content-center"
+              onClick={() =>
+                setActiveSlide(
+                  (prev) =>
+                    (prev - 1 + pricingPlans.length) % pricingPlans.length,
+                )
+              }
+              style={{ width: "45px", height: "45px" }}
+            >
+              <FiChevronLeft size={24} />
+            </button>
+            <div className="d-flex gap-2">
+              {pricingPlans.map((_, i) => (
+                <div
+                  key={i}
+                  onClick={() => setActiveSlide(i)}
+                  className={`rounded-pill cursor-pointer ${
+                    activeSlide === i ? "bg-primary" : "bg-light bg-opacity-25"
+                  }`}
+                  style={{
+                    width: activeSlide === i ? "24px" : "8px",
+                    height: "8px",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  }}
+                />
+              ))}
+            </div>
+            <button
+              className="btn btn-outline-primary rounded-circle p-2 d-flex align-items-center justify-content-center"
+              onClick={() =>
+                setActiveSlide((prev) => (prev + 1) % pricingPlans.length)
+              }
+              style={{ width: "45px", height: "45px" }}
+            >
+              <FiChevronRight size={24} />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* FAQ Section */}
