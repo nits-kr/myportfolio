@@ -88,7 +88,6 @@ export default function OtpInput({
     <div className="d-flex gap-2 justify-content-center" onPaste={handlePaste}>
       {digits.map((digit, index) => (
         <input
-          // eslint-disable-next-line react/no-array-index-key
           key={index}
           ref={(el) => {
             inputRefs.current[index] = el;
