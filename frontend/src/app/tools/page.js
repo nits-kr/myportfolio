@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   FiMail,
   FiDatabase,
@@ -172,6 +172,18 @@ const tools = [
 
 export default function ToolsPage() {
   const [selectedTier, setSelectedTier] = useState("pro");
+  const displayTools = useMemo(
+    () =>
+      tools.map((tool) => {
+        if (tool.id === "interview-simulator") return tool;
+        return {
+          ...tool,
+          status: "coming-soon",
+          demoUrl: null,
+        };
+      }),
+    [],
+  );
 
   return (
     <div className="container py-5 mt-4">
@@ -209,7 +221,7 @@ export default function ToolsPage() {
 
       {/* Tools Grid */}
       <div className="d-none d-md-flex row g-4 mb-5">
-        {tools.map((tool, index) => (
+        {displayTools.map((tool, index) => (
           <motion.div
             key={tool.id}
             className="col-lg-6"
@@ -324,7 +336,7 @@ export default function ToolsPage() {
         ))}
       </div>
 
-      <ToolsSlider tools={tools} selectedTier={selectedTier} />
+      <ToolsSlider tools={displayTools} selectedTier={selectedTier} />
 
       {/* Custom Tool CTA */}
       <motion.div
