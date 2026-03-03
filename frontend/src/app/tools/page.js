@@ -385,12 +385,15 @@ export default function ToolsPage() {
           I can build custom tools tailored to your specific needs. From data
           processing to automation, let&apos;s discuss your requirements.
         </p>
-        <Link
-          href="/contact?service=custom&message=I need a custom tool for..."
-          className="btn btn-primary btn-lg px-4 px-md-5 rounded-pill w-100 w-md-auto"
-        >
-          Request Custom Tool
-        </Link>
+        <div className="mx-auto" style={{ maxWidth: "400px" }}>
+          <Link
+            href="/contact?service=custom&message=I need a custom tool for..."
+            className="btn btn-primary btn-lg px-4 px-md-5 rounded-pill w-100 w-md-auto"
+            style={{ fontWeight: "600", minWidth: "200px" }}
+          >
+            Request Custom Tool
+          </Link>
+        </div>
       </motion.div>
 
       {/* Benefits Stepper Section */}
@@ -496,50 +499,58 @@ export default function ToolsPage() {
 
           {/* Stepper Content Slider */}
           <div className="mt-5 pt-4 text-center">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeStep}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                className="glass-card p-4 p-md-5"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%)",
-                }}
-              >
-                <div
-                  className="d-flex align-items-center justify-content-center rounded-circle mb-4 mx-auto"
+            <div className="position-relative" style={{ minHeight: "280px" }}>
+              <AnimatePresence initial={false}>
+                <motion.div
+                  key={activeStep}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{
+                    opacity: 0,
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                  }}
+                  transition={{ duration: 0.3 }}
+                  className="glass-card p-4 p-md-5 w-100"
                   style={{
-                    background: "rgba(37, 99, 235, 0.1)",
-                    width: "80px",
-                    height: "80px",
+                    background:
+                      "linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%)",
                   }}
                 >
                   <div
-                    className="text-primary"
+                    className="d-flex align-items-center justify-content-center rounded-circle mb-4 mx-auto"
                     style={{
-                      fontSize: "32px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
+                      background: "rgba(37, 99, 235, 0.1)",
+                      width: "80px",
+                      height: "80px",
                     }}
                   >
-                    {benefits[activeStep].icon}
+                    <div
+                      className="text-primary"
+                      style={{
+                        fontSize: "32px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {benefits[activeStep].icon}
+                    </div>
                   </div>
-                </div>
-                <h3 className="h3 fw-bold mb-3">
-                  {benefits[activeStep].title}
-                </h3>
-                <p
-                  className="text-muted lead mx-auto"
-                  style={{ maxWidth: "600px" }}
-                >
-                  {benefits[activeStep].desc}
-                </p>
-              </motion.div>
-            </AnimatePresence>
+                  <h3 className="h3 fw-bold mb-3">
+                    {benefits[activeStep].title}
+                  </h3>
+                  <p
+                    className="text-muted lead mx-auto"
+                    style={{ maxWidth: "600px" }}
+                  >
+                    {benefits[activeStep].desc}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
             {/* Pagination Indicators */}
             <div className="d-flex justify-content-center gap-2 mt-4">

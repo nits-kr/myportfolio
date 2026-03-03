@@ -457,25 +457,28 @@ export default function StartInterviewPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="text-center"
+        className="text-center mt-5"
       >
-        <button
-          onClick={handleStartInterview}
-          disabled={!selectedRole || isCreating}
-          className="btn btn-primary btn-lg px-5 rounded-pill"
-        >
-          {isCreating ? (
-            <>
-              <span className="spinner-border spinner-border-sm me-2" />
-              Creating Session...
-            </>
-          ) : (
-            <>
-              Start Interview
-              <FiArrowRight className="ms-2" />
-            </>
-          )}
-        </button>
+        <div className="mx-auto" style={{ maxWidth: "350px" }}>
+          <button
+            onClick={handleStartInterview}
+            disabled={!selectedRole || isCreating}
+            className="btn btn-primary btn-lg px-5 rounded-pill w-100 w-md-auto"
+            style={{ fontWeight: "600", minWidth: "180px" }}
+          >
+            {isCreating ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" />
+                Creating Session...
+              </>
+            ) : (
+              <>
+                Start Interview
+                <FiArrowRight className="ms-2" />
+              </>
+            )}
+          </button>
+        </div>
         {isMounted && (
           <p className="text-muted small mt-3">
             {selectedRole === "custom"
