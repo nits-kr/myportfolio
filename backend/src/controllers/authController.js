@@ -1,29 +1,52 @@
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import SubUser from "../models/subUser.modal.js";
-import jwt from "jsonwebtoken";
+import sendEmail from "../utils/sendEmail.js";
 import { refreshSubscriptionState } from "../services/subscriptionService.js";
 
-// Helper to create token and send cookie
-const sendTokenResponse = (user, statusCode, res, sendOptions = {}) => {
-  // Create token
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "30d",
-  });
+const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const OTP_MAX_ATTEMPTS = 5;
 
-  const isSubUser = sendOptions.isSubUser ?? Boolean(user?.parentUser);
+const normalizeSameSite = (value) => {
+  const v = String(value || "").toLowerCase();
+  if (v === "none") return "none";
+  if (v === "strict") return "strict";
+  return "lax";
+};
 
-  const cookieOptions = {
-    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+const getAuthCookieOptions = () => {
+  const isProd = process.env.NODE_ENV === "production";
+  const sameSite = normalizeSameSite(
+    process.env.COOKIE_SAMESITE || (isProd ? "none" : "lax"),
+  );
+  const secure = isProd || sameSite === "none";
+
+  const opts = {
+    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // true in production
+    secure,
+    sameSite,
+    path: "/",
   };
+
+  if (process.env.COOKIE_DOMAIN) opts.domain = process.env.COOKIE_DOMAIN;
+  return opts;
+};
+
+const signAuthToken = (user) =>
+  jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+
+const sendTokenResponse = (user, statusCode, res, sendOptions = {}) => {
+  const token = signAuthToken(user);
+  const isSubUser = sendOptions.isSubUser ?? Boolean(user?.parentUser);
 
   res
     .status(statusCode)
-    .cookie("token", token, cookieOptions)
+    .cookie("token", token, getAuthCookieOptions())
     .json({
       success: true,
-      token, // Optional: send token in body too for non-cookie clients
+      token,
       data: {
         _id: user._id,
         name: user.name,
@@ -41,41 +64,228 @@ const sendTokenResponse = (user, statusCode, res, sendOptions = {}) => {
     });
 };
 
-// @desc    Register user
+const generateOtp = () => crypto.randomInt(0, 1000000).toString().padStart(6, "0");
+
+const otpEmailTemplate = ({ otp, purpose }) => {
+  const title =
+    purpose === "password_reset" ? "Password Reset Code" : "Email Verification Code";
+
+  return {
+    subject: `${title} (valid for 5 minutes)`,
+    text: `Your ${title.toLowerCase()} is: ${otp}. It expires in 5 minutes.`,
+    html: `
+      <div style="font-family: Arial, sans-serif; line-height: 1.4;">
+        <h2 style="margin: 0 0 12px 0;">${title}</h2>
+        <p style="margin: 0 0 12px 0;">Use the code below to continue. It expires in 5 minutes.</p>
+        <div style="font-size: 28px; letter-spacing: 6px; font-weight: 700; padding: 12px 16px; background: #f5f5f5; display: inline-block; border-radius: 8px;">
+          ${otp}
+        </div>
+        <p style="margin: 16px 0 0 0; color: #666;">If you did not request this, you can ignore this email.</p>
+      </div>
+    `,
+  };
+};
+
+const ensureOtpUsable = (user, purpose) => {
+  if (!user) return { ok: false, status: 400, message: "Invalid OTP" };
+
+  if (user.otpLockUntil && user.otpLockUntil > Date.now()) {
+    const secondsLeft = Math.ceil((user.otpLockUntil - Date.now()) / 1000);
+    return {
+      ok: false,
+      status: 423,
+      message: `Too many attempts. Try again in ${secondsLeft}s.`,
+    };
+  }
+
+  if (!user.otp || !user.otpExpires || user.otpExpires <= new Date()) {
+    return { ok: false, status: 400, message: "OTP expired or invalid" };
+  }
+
+  if (user.otpPurpose !== purpose) {
+    return { ok: false, status: 400, message: "OTP expired or invalid" };
+  }
+
+  return { ok: true };
+};
+
+const registerOtpFailure = async (user) => {
+  user.otpAttempts = (user.otpAttempts || 0) + 1;
+
+  if (user.otpAttempts >= OTP_MAX_ATTEMPTS) {
+    user.otpFailCycles = (user.otpFailCycles || 0) + 1;
+    user.otpAttempts = 0;
+    user.clearOTP();
+
+    if (user.otpFailCycles >= 2) {
+      user.lockOTPAccount();
+    }
+  }
+
+  await user.save();
+};
+
+// @desc    Register user (start) + email OTP
 // @route   POST /api/auth/register
 // @access  Public
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({
+    const existing = await User.findOne({ email }).select("_id isEmailVerified");
+    if (existing) {
+      return res.status(409).json({
         success: false,
-        message: "Please provide all required fields",
+        message: existing.isEmailVerified
+          ? "User already exists"
+          : "Account exists but email is not verified. Please verify your email.",
       });
-    }
-
-    const userExists = await User.findOne({ email });
-
-    if (userExists) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User already exists" });
     }
 
     const user = await User.create({
       name,
       email,
       password,
-      role: role || "user",
+      role: "user",
+      isEmailVerified: false,
+      emailVerifiedAt: null,
     });
 
-    sendTokenResponse(user, 201, res);
+    const otp = generateOtp();
+    await user.setOTP(otp, { purpose: "email_verification", ttlMs: OTP_TTL_MS });
+    await user.save();
+
+    const tpl = otpEmailTemplate({ otp, purpose: "email_verification" });
+    await sendEmail({
+      email: user.email,
+      subject: tpl.subject,
+      message: tpl.text,
+      html: tpl.html,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Verification code sent to your email",
+      data: { email: user.email },
+    });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error(err);
-    res
+    return res
       .status(500)
       .json({ success: false, message: err.message || "Server Error" });
+  }
+};
+
+// @desc    Resend email verification OTP
+// @route   POST /api/auth/email-verification/send-otp
+// @access  Public
+export const sendEmailVerificationOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email }).select(
+      "+otpResendAfter +otpLockUntil +isEmailVerified",
+    );
+
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: "If an account exists, a verification code will be sent.",
+      });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is already verified. Please login.",
+      });
+    }
+
+    if (user.otpLockUntil && user.otpLockUntil > Date.now()) {
+      const secondsLeft = Math.ceil((user.otpLockUntil - Date.now()) / 1000);
+      return res.status(423).json({
+        success: false,
+        message: `Too many attempts. Try again in ${secondsLeft}s.`,
+      });
+    }
+
+    if (user.otpResendAfter && user.otpResendAfter > Date.now()) {
+      const secondsLeft = Math.ceil((user.otpResendAfter - Date.now()) / 1000);
+      return res.status(429).json({
+        success: false,
+        message: `Please wait ${secondsLeft}s before requesting another code.`,
+      });
+    }
+
+    const otp = generateOtp();
+    await user.setOTP(otp, { purpose: "email_verification", ttlMs: OTP_TTL_MS });
+    await user.save();
+
+    const tpl = otpEmailTemplate({ otp, purpose: "email_verification" });
+    await sendEmail({
+      email: user.email,
+      subject: tpl.subject,
+      message: tpl.text,
+      html: tpl.html,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Verification code sent",
+    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("sendEmailVerificationOTP error:", err);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// @desc    Verify email verification OTP + login (JWT cookie)
+// @route   POST /api/auth/email-verification/verify-otp
+// @access  Public
+export const verifyEmailVerificationOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({ email }).select(
+      "+otp +otpPurpose +otpExpires +otpAttempts +otpFailCycles +otpLockUntil +isEmailVerified",
+    );
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid OTP" });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is already verified. Please login.",
+      });
+    }
+
+    const usable = ensureOtpUsable(user, "email_verification");
+    if (!usable.ok) {
+      return res.status(usable.status).json({ success: false, message: usable.message });
+    }
+
+    const isMatch = await user.matchOTP(otp);
+    if (!isMatch) {
+      await registerOtpFailure(user);
+      return res.status(401).json({ success: false, message: "Invalid OTP" });
+    }
+
+    user.clearOTP();
+    user.otpFailCycles = 0;
+    user.otpLockUntil = undefined;
+    user.isEmailVerified = true;
+    user.emailVerifiedAt = new Date();
+    await user.save();
+
+    return sendTokenResponse(user, 200, res);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("verifyEmailVerificationOTP error:", err);
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
@@ -86,17 +296,9 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Please provide email and password" });
-    }
-
-    // Check for user
     let user = await User.findOne({ email }).select("+password");
     let isSubUser = false;
 
-    // If no main User, check SubUser
     if (!user) {
       user = await SubUser.findOne({ email }).select("+password");
       isSubUser = Boolean(user);
@@ -106,16 +308,18 @@ export const login = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid email" });
     }
 
-    // Check if password matches
-    const isMatch = await user.matchPassword(password);
-
-    if (!isMatch) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid password" });
+    if (!isSubUser && user.isEmailVerified === false) {
+      return res.status(403).json({
+        success: false,
+        message: "Email not verified. Please verify your email to continue.",
+      });
     }
 
-    // Block inactive sub-admin accounts from logging in.
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Invalid password" });
+    }
+
     if (isSubUser && user.status === false) {
       return res.status(403).json({
         success: false,
@@ -123,7 +327,6 @@ export const login = async (req, res) => {
       });
     }
 
-    // Sub-users inherit subscription entitlements from their parent (billing owner).
     if (isSubUser && user?.parentUser) {
       let owner = await User.findById(user.parentUser).select(
         "subscription subscriptionStatus subscriptionExpiresAt pendingSubscription pendingSubscriptionValidityDays",
@@ -137,205 +340,186 @@ export const login = async (req, res) => {
       }
     }
 
-    sendTokenResponse(user, 200, res, { isSubUser });
+    return sendTokenResponse(user, 200, res, { isSubUser });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error(err);
-    res.status(500).json({ success: false, message: "Server Error" });
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
-// @desc    Send OTP with cooldown & lock protection
-// @route   POST /api/auth/send-otp
+// @desc    Send password reset OTP (email)
+// @route   POST /api/auth/password-reset/send-otp
 // @access  Public
-export const sendOTP = async (req, res) => {
+export const sendPasswordResetOTP = async (req, res) => {
   try {
     const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required",
-      });
-    }
+    const user = await User.findOne({ email }).select(
+      "+otpResendAfter +otpLockUntil +isEmailVerified",
+    );
 
-    const user = await User.findOne({ email });
-
+    // Avoid user enumeration
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
+      return res.status(200).json({
+        success: true,
+        message: "If an account exists, a verification code will be sent.",
       });
     }
 
-    /* ================= ACCOUNT LOCK CHECK ================= */
-    if (user.otpLockUntil && user.otpLockUntil > Date.now()) {
-      const minutesLeft = Math.ceil((user.otpLockUntil - Date.now()) / 60000);
+    if (user.isEmailVerified === false) {
+      return res.status(403).json({
+        success: false,
+        message: "Email not verified. Please verify your email first.",
+      });
+    }
 
+    if (user.otpLockUntil && user.otpLockUntil > Date.now()) {
+      const secondsLeft = Math.ceil((user.otpLockUntil - Date.now()) / 1000);
       return res.status(423).json({
         success: false,
-        message: `Account locked due to OTP abuse. Try again in ${minutesLeft} minutes.`,
+        message: `Too many attempts. Try again in ${secondsLeft}s.`,
       });
     }
 
-    /* ================= COOLDOWN CHECK ================= */
     if (user.otpResendAfter && user.otpResendAfter > Date.now()) {
       const secondsLeft = Math.ceil((user.otpResendAfter - Date.now()) / 1000);
-
       return res.status(429).json({
         success: false,
-        message: `Please wait ${secondsLeft}s before requesting another OTP`,
+        message: `Please wait ${secondsLeft}s before requesting another code.`,
       });
     }
 
-    /* ================= GENERATE OTP ================= */
-    const otp = Math.floor(100000 + Math.random() * 900000);
-
-    await user.setOTP(otp);
+    const otp = generateOtp();
+    await user.setOTP(otp, { purpose: "password_reset", ttlMs: OTP_TTL_MS });
     await user.save();
 
-    /* ================= SEND OTP ================= */
-    // TODO: integrate email / SMS provider here
-    // await sendEmail(user.email, `Your OTP is ${otp}`);
+    const tpl = otpEmailTemplate({ otp, purpose: "password_reset" });
+    await sendEmail({
+      email: user.email,
+      subject: tpl.subject,
+      message: tpl.text,
+      html: tpl.html,
+    });
 
-    res.status(200).json({
-      success: true,
-      message: "OTP sent successfully",
-      OTP: otp,
-    });
-  } catch (error) {
-    console.error("sendOTP error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    return res.status(200).json({ success: true, message: "OTP sent successfully" });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("sendPasswordResetOTP error:", err);
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
-export const verifyOTP = async (req, res) => {
+// @desc    Verify password reset OTP and mint reset token
+// @route   POST /api/auth/password-reset/verify-otp
+// @access  Public
+export const verifyPasswordResetOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    const user = await User.findOne({ email }).select("+otp");
+    const user = await User.findOne({ email }).select(
+      "+otp +otpPurpose +otpExpires +otpAttempts +otpFailCycles +otpLockUntil +isEmailVerified",
+    );
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+    const usable = ensureOtpUsable(user, "password_reset");
+    if (!usable.ok) {
+      return res.status(usable.status).json({ success: false, message: usable.message });
     }
 
-    if (user.otpLockUntil && user.otpLockUntil > Date.now()) {
-      return res.status(423).json({
+    if (user.isEmailVerified === false) {
+      return res.status(403).json({
         success: false,
-        message: "Account locked due to OTP abuse",
-      });
-    }
-
-    // ⏱ Expiry check
-    if (!user.otp || user.otpExpires < Date.now()) {
-      return res.status(400).json({
-        success: false,
-        message: "OTP expired or invalid",
+        message: "Email not verified. Please verify your email first.",
       });
     }
 
     const isMatch = await user.matchOTP(otp);
-
-    // ❌ INVALID OTP
     if (!isMatch) {
-      user.otpAttempts += 1;
-
-      if (user.otpAttempts >= 5) {
-        user.otpFailCycles += 1;
-        user.otpAttempts = 0;
-        user.otp = undefined;
-        user.otpExpires = undefined;
-
-        if (user.otpFailCycles >= 2) {
-          user.lockOTPAccount();
-        }
-      }
-
-      await user.save();
-
-      return res.status(401).json({
-        success: false,
-        message: "Invalid OTP",
-      });
+      await registerOtpFailure(user);
+      return res.status(401).json({ success: false, message: "Invalid OTP" });
     }
 
-    // ✅ OTP VERIFIED SUCCESSFULLY (⬅️ THIS BLOCK)
-    user.otp = undefined;
-    user.otpExpires = undefined;
-    user.otpAttempts = 0;
+    user.clearOTP();
     user.otpFailCycles = 0;
     user.otpLockUntil = undefined;
-    user.otpResendAfter = undefined;
+    await user.save();
 
+    const resetSecret = process.env.JWT_PASSWORD_RESET_SECRET || process.env.JWT_SECRET;
+    const resetToken = jwt.sign({ id: user._id, type: "password_reset" }, resetSecret, {
+      expiresIn: "15m",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified",
+      data: { resetToken },
+    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("verifyPasswordResetOTP error:", err);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+// @desc    Reset password using reset token
+// @route   POST /api/auth/password-reset/reset
+// @access  Public
+export const resetPassword = async (req, res) => {
+  try {
+    const { resetToken, password } = req.body;
+    const resetSecret = process.env.JWT_PASSWORD_RESET_SECRET || process.env.JWT_SECRET;
+
+    let decoded;
+    try {
+      decoded = jwt.verify(resetToken, resetSecret);
+    } catch {
+      return res.status(401).json({ success: false, message: "Invalid or expired reset token" });
+    }
+
+    if (!decoded || decoded.type !== "password_reset" || !decoded.id) {
+      return res.status(401).json({ success: false, message: "Invalid or expired reset token" });
+    }
+
+    const user = await User.findById(decoded.id).select("+password");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    user.password = password;
     await user.save();
 
     return res.status(200).json({
       success: true,
-      message: "OTP verified successfully",
+      message: "Password reset successfully",
     });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("resetPassword error:", err);
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
-export const resetPassword = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res
-        .status(404)
-        .json({ error: true, success: false, message: "User not found" });
-    } else {
-      user.password = password;
-      await user.save();
-      return res.status(200).json({
-        error: false,
-        success: true,
-        message: "Password reset successfully",
-        data: user,
-      });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
 // @desc    Get current logged in user
 // @route   GET /api/auth/me
 // @access  Private
 export const getMe = async (req, res) => {
   try {
     let user = await User.findById(req.user.id);
+    if (!user) user = await SubUser.findById(req.user.id);
 
     if (!user) {
-      user = await SubUser.findById(req.user.id);
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "User fetched successfully",
       data: user,
     });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error(err);
-    res.status(500).json({ success: false, message: "Server Error" });
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
@@ -343,16 +527,11 @@ export const getMe = async (req, res) => {
 // @route   GET /api/auth/logout
 // @access  Private
 export const logout = async (req, res) => {
-  res.cookie("token", "none", {
-    expires: new Date(Date.now() + 10 * 1000), // 10 seconds
-    httpOnly: true,
-  });
-
-  res.status(200).json({
-    success: true,
-    data: {},
-  });
+  const clearOptions = { ...getAuthCookieOptions(), expires: new Date(0) };
+  res.cookie("token", "none", clearOptions);
+  return res.status(200).json({ success: true, data: {} });
 };
+
 // @desc    Update user profile
 // @route   PUT /api/auth/profile
 // @access  Private
@@ -371,16 +550,18 @@ export const updateProfile = async (req, res) => {
       runValidators: true,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Profile updated successfully",
       data: user,
     });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error(err);
-    res.status(500).json({ success: false, message: "Server Error" });
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 // @desc    Get public profile (admin user)
 // @route   GET /api/auth/profile/public
 // @access  Public
@@ -397,13 +578,14 @@ export const getPublicProfile = async (req, res) => {
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Public profile fetched successfully",
       data: adminUser,
     });
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error(err);
-    res.status(500).json({ success: false, message: "Server Error" });
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };

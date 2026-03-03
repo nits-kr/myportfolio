@@ -29,6 +29,9 @@ import errorHandler from "./src/middleware/errorMiddleware.js"; // Import Error 
 
 const app = express();
 
+// Trust proxy (needed for secure cookies / rate limiting behind reverse proxies)
+app.set("trust proxy", 1);
+
 // Security Headers
 app.use(helmet());
 

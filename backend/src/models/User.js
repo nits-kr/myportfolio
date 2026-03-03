@@ -32,8 +32,49 @@ const UserSchema = new mongoose.Schema({
     enum: ["user", "admin"],
     default: "user",
   },
+  isEmailVerified: {
+    type: Boolean,
+    default: true,
+  },
+  emailVerifiedAt: {
+    type: Date,
+    default: null,
+  },
   otp: {
     type: String,
+    select: false,
+    default: undefined,
+  },
+  otpPurpose: {
+    type: String,
+    enum: ["email_verification", "password_reset"],
+    select: false,
+    default: undefined,
+  },
+  otpExpires: {
+    type: Date,
+    select: false,
+    default: undefined,
+  },
+  otpResendAfter: {
+    type: Date,
+    select: false,
+    default: undefined,
+  },
+  otpAttempts: {
+    type: Number,
+    select: false,
+    default: 0,
+    min: 0,
+  },
+  otpFailCycles: {
+    type: Number,
+    select: false,
+    default: 0,
+    min: 0,
+  },
+  otpLockUntil: {
+    type: Date,
     select: false,
     default: undefined,
   },
@@ -79,36 +120,44 @@ const UserSchema = new mongoose.Schema({
 });
 
 UserSchema.pre("save", async function () {
-  if (!this.isModified("password")) {
-    return;
-  }
+  if (!this.isModified("password")) return;
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Match user entered password to hashed password in database
 UserSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  return bcrypt.compare(enteredPassword, this.password);
 };
 
-UserSchema.methods.setOTP = async function (otp) {
-  const salt = await bcrypt.genSalt(10);
+UserSchema.methods.setOTP = async function (otp, options = {}) {
+  const ttlMs = options.ttlMs ?? 5 * 60 * 1000; // 5 minutes
+  const resendCooldownMs = options.resendCooldownMs ?? 60 * 1000; // 60 seconds
+  const purpose = options.purpose;
 
-  this.otp = await bcrypt.hash(otp.toString(), salt);
-  this.otpExpires = Date.now() + 2 * 60 * 1000; // 2 min
-  this.otpResendAfter = Date.now() + 60 * 1000; // ⏱ 60 sec cooldown
-  this.otpAttempts = 0; // reset attempts
+  const salt = await bcrypt.genSalt(10);
+  this.otp = await bcrypt.hash(String(otp), salt);
+  this.otpPurpose = purpose;
+  this.otpExpires = new Date(Date.now() + ttlMs);
+  this.otpResendAfter = new Date(Date.now() + resendCooldownMs);
+  this.otpAttempts = 0;
 };
 
 UserSchema.methods.matchOTP = async function (enteredOTP) {
-  return bcrypt.compare(enteredOTP.toString(), this.otp);
+  return bcrypt.compare(String(enteredOTP), this.otp);
+};
+
+UserSchema.methods.clearOTP = function () {
+  this.otp = undefined;
+  this.otpPurpose = undefined;
+  this.otpExpires = undefined;
+  this.otpResendAfter = undefined;
+  this.otpAttempts = 0;
 };
 
 UserSchema.methods.lockOTPAccount = function () {
-  this.otpLockUntil = Date.now() + 15 * 60 * 1000; // 🔒 15 minutes
-  this.otpAttempts = 0;
-  this.otp = undefined;
-  this.otpExpires = undefined;
+  this.otpLockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+  this.otpFailCycles = 0;
+  this.clearOTP();
 };
 
 export default mongoose.model("User", UserSchema);

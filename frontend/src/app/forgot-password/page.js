@@ -1,34 +1,35 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  useSendOtpMutation,
-  useVerifyOtpMutation,
+  useSendPasswordResetOtpMutation,
+  useVerifyPasswordResetOtpMutation,
   useResetPasswordMutation,
 } from "@/store/services/portfolioApi";
 import Link from "next/link";
 import { FaArrowLeft, FaEnvelope, FaLock } from "react-icons/fa";
+import OtpInput from "@/components/auth/OtpInput";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const [step, setStep] = useState(1); // 1: Send OTP, 2: Verify OTP, 3: Reset Password
   const [email, setEmail] = useState("");
+  const [resetToken, setResetToken] = useState("");
 
   // Timer State
   const [timeLeft, setTimeLeft] = useState(0);
 
   // OTP Input State (6 digits)
-  const [otp, setOtp] = useState(new Array(6).fill(""));
-  const inputRefs = useRef([]);
+  const [otp, setOtp] = useState("");
 
   // API Mutations
   const [sendOtp, { isLoading: isSendingOtp, error: sendOtpError }] =
-    useSendOtpMutation();
+    useSendPasswordResetOtpMutation();
   const [verifyOtp, { isLoading: isVerifyingOtp, error: verifyOtpError }] =
-    useVerifyOtpMutation();
+    useVerifyPasswordResetOtpMutation();
   const [resetPassword, { isLoading: isResetting, error: resetError }] =
     useResetPasswordMutation();
 
@@ -48,9 +49,9 @@ export default function ForgotPasswordPage() {
 
   // --- Timer Logic ---
   const startTimer = () => {
-    const expiry = Date.now() + 120 * 1000; // 2 minutes
+    const expiry = Date.now() + 300 * 1000; // 5 minutes
     localStorage.setItem("otpExpiry", expiry);
-    setTimeLeft(120);
+    setTimeLeft(300);
   };
 
   useEffect(() => {
@@ -106,7 +107,7 @@ export default function ForgotPasswordPage() {
     if (timeLeft > 0) return;
     try {
       await sendOtp({ email }).unwrap();
-      setOtp(new Array(6).fill("")); // Clear OTP boxes
+      setOtp(""); // Clear OTP
       startTimer();
     } catch (err) {
       console.error("Resend failed", err);
@@ -115,11 +116,12 @@ export default function ForgotPasswordPage() {
 
   const onVerifyOtp = async (e) => {
     e.preventDefault();
-    const otpCode = otp.join("");
+    const otpCode = otp;
     if (otpCode.length !== 6) return;
 
     try {
-      await verifyOtp({ email, otp: otpCode }).unwrap();
+      const result = await verifyOtp({ email, otp: otpCode }).unwrap();
+      setResetToken(result?.data?.resetToken || "");
       // If verification is successful, move to reset password
       // Clear timer on success
       localStorage.removeItem("otpExpiry");
@@ -132,50 +134,10 @@ export default function ForgotPasswordPage() {
 
   const onResetPassword = async (data) => {
     try {
-      await resetPassword({ email, password: data.newPassword }).unwrap();
+      await resetPassword({ resetToken, password: data.newPassword }).unwrap();
       router.push("/login?reset=success");
     } catch (err) {
       console.error("Failed to reset password", err);
-    }
-  };
-
-  // --- OTP Input Handlers ---
-  const handleOtpChange = (element, index) => {
-    if (isNaN(element.value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = element.value;
-    setOtp(newOtp);
-
-    // Focus next input
-    if (element.value && index < 5) {
-      inputRefs.current[index + 1].focus();
-    }
-  };
-
-  const handleKeyDown = (e, index) => {
-    if (e.key === "Backspace") {
-      if (!otp[index] && index > 0) {
-        inputRefs.current[index - 1].focus();
-      } else if (otp[index]) {
-        const newOtp = [...otp];
-        newOtp[index] = "";
-        setOtp(newOtp);
-      }
-    }
-  };
-
-  const handlePaste = (e) => {
-    e.preventDefault();
-    const val = e.clipboardData.getData("text").slice(0, 6);
-    if (/^[0-9]+$/.test(val)) {
-      const newOtp = [...otp];
-      val.split("").forEach((char, i) => {
-        newOtp[i] = char;
-      });
-      setOtp(newOtp);
-      // Focus proper input
-      const nextFocus = Math.min(val.length, 5);
-      inputRefs.current[nextFocus].focus();
     }
   };
 
@@ -285,26 +247,8 @@ export default function ForgotPasswordPage() {
               >
                 {verifyOtpError && renderError(verifyOtpError)}
 
-                <div
-                  className="d-flex justify-content-center gap-2 mb-4"
-                  onPaste={handlePaste}
-                >
-                  {otp.map((data, index) => (
-                    <input
-                      key={index}
-                      type="text"
-                      className="form-control bg-transparent border-secondary text-center fw-bold fs-4"
-                      name="otp"
-                      maxLength="1"
-                      ref={(el) => (inputRefs.current[index] = el)}
-                      value={data}
-                      onChange={(e) => handleOtpChange(e.target, index)}
-                      onKeyDown={(e) => handleKeyDown(e, index)}
-                      onFocus={(e) => e.target.select()}
-                      style={{ width: "50px", height: "60px" }}
-                      suppressHydrationWarning
-                    />
-                  ))}
+                <div className="mb-4">
+                  <OtpInput value={otp} onChange={setOtp} autoFocus disabled={isVerifyingOtp} />
                 </div>
 
                 {/* Timer Section */}
@@ -331,7 +275,7 @@ export default function ForgotPasswordPage() {
                 <button
                   type="submit"
                   className="btn btn-premium w-100 mb-3"
-                  disabled={isVerifyingOtp || otp.join("").length !== 6}
+                  disabled={isVerifyingOtp || otp.length !== 6}
                   suppressHydrationWarning
                 >
                   {isVerifyingOtp ? (

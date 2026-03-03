@@ -48,7 +48,7 @@ const authSlice = createSlice({
         },
       )
       .addMatcher(
-        portfolioApi.endpoints.register.matchFulfilled,
+        portfolioApi.endpoints.verifyEmailVerificationOtp.matchFulfilled,
         (state, { payload }) => {
           state.user = payload.data;
           state.token = payload.token;

@@ -5,6 +5,7 @@ export const portfolioApi = createApi({
   reducerPath: "portfolioApi",
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
+    credentials: "include",
     prepareHeaders: (headers, { getState }) => {
       const token =
         typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -34,6 +35,20 @@ export const portfolioApi = createApi({
         body: userData,
       }),
     }),
+    sendEmailVerificationOtp: builder.mutation({
+      query: (data) => ({
+        url: "auth/email-verification/send-otp",
+        method: "POST",
+        body: data,
+      }),
+    }),
+    verifyEmailVerificationOtp: builder.mutation({
+      query: (data) => ({
+        url: "auth/email-verification/verify-otp",
+        method: "POST",
+        body: data,
+      }),
+    }),
     login: builder.mutation({
       query: (userData) => ({
         url: "auth/login",
@@ -41,23 +56,23 @@ export const portfolioApi = createApi({
         body: userData,
       }),
     }),
-    sendOtp: builder.mutation({
+    sendPasswordResetOtp: builder.mutation({
       query: (data) => ({
-        url: "auth/send-otp",
+        url: "auth/password-reset/send-otp",
         method: "POST",
         body: data,
       }),
     }),
-    verifyOtp: builder.mutation({
+    verifyPasswordResetOtp: builder.mutation({
       query: (data) => ({
-        url: "auth/verify-otp",
+        url: "auth/password-reset/verify-otp",
         method: "POST",
         body: data,
       }),
     }),
     resetPassword: builder.mutation({
       query: (data) => ({
-        url: "auth/reset-password",
+        url: "auth/password-reset/reset",
         method: "POST",
         body: data,
       }),
@@ -80,10 +95,12 @@ export const portfolioApi = createApi({
 export const {
   useGetProjectsQuery,
   useRegisterMutation,
+  useSendEmailVerificationOtpMutation,
+  useVerifyEmailVerificationOtpMutation,
   useLoginMutation,
   useGetMeQuery,
-  useSendOtpMutation,
-  useVerifyOtpMutation,
+  useSendPasswordResetOtpMutation,
+  useVerifyPasswordResetOtpMutation,
   useResetPasswordMutation,
   useUpdateProfileMutation,
   useGetPublicProfileQuery,
