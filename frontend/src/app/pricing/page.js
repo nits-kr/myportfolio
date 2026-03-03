@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSelector } from "react-redux";
 import { FiCheck, FiX, FiZap, FiTrendingUp, FiAward } from "react-icons/fi";
 
@@ -79,12 +79,26 @@ const pricingPlans = [
 
 export default function PricingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, token } = useSelector((state) => state.auth);
   const [isMounted, setIsMounted] = useState(false);
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [processingPlan, setProcessingPlan] = useState(null);
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
   const currencySymbol = "₹";
+
+  const tool = (searchParams.get("tool") || "").trim().toLowerCase();
+  const toolRedirect =
+    tool === "interview-simulator"
+      ? "/tools/interview-simulator/start"
+      : tool
+        ? `/tools/${tool}`
+        : null;
+
+  const heroSubtitle =
+    tool === "interview-simulator"
+      ? "Unlock premium Interview Simulator features. Upgrade anytime."
+      : "Unlock premium features across the platform. Start free, upgrade anytime.";
 
   useEffect(() => {
     setIsMounted(true);
@@ -176,7 +190,10 @@ export default function PricingPage() {
 
   const handleCheckout = async (plan) => {
     if (!user) {
-      const redirectTo = `/pricing?plan=${encodeURIComponent(plan.id)}`;
+      const pricingParams = new URLSearchParams();
+      if (tool) pricingParams.set("tool", tool);
+      pricingParams.set("plan", plan.id);
+      const redirectTo = `/pricing?${pricingParams.toString()}`;
       const params = new URLSearchParams({
         redirect: redirectTo,
         register: "1",
@@ -283,8 +300,7 @@ export default function PricingPage() {
           Choose Your <span className="text-primary">Perfect Plan</span>
         </h1>
         <p className="lead text-muted mx-auto" style={{ maxWidth: "700px" }}>
-          Build your professional portfolio with our powerful platform. Start
-          free, upgrade anytime.
+          {heroSubtitle}
         </p>
 
         {/* Billing Toggle */}
@@ -442,7 +458,14 @@ export default function PricingPage() {
               {/* CTA */}
               {plan.price === 0 ? (
                 <Link
-                  href={plan.ctaLink}
+                  href={
+                    toolRedirect
+                      ? `/register?${new URLSearchParams({
+                          plan: plan.id,
+                          redirect: toolRedirect,
+                        }).toString()}`
+                      : plan.ctaLink
+                  }
                   className={`btn ${plan.popular ? "btn-primary" : "btn-outline-light"} w-100 ${
                     isMounted && plan.id === currentPlan ? "disabled" : ""
                   }`}
