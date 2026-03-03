@@ -38,10 +38,19 @@ const otpSchema = z.object({
   otp: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
 });
 
+const safeRedirect = (value) => {
+  if (typeof value !== "string") return null;
+  if (!value.startsWith("/")) return null;
+  if (value.startsWith("//")) return null;
+  return value;
+};
+
 export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan");
+  const redirectParam = searchParams.get("redirect");
+  const redirectTo = safeRedirect(redirectParam);
 
   const [step, setStep] = useState(1); // 1: details, 2: otp
   const [emailForOtp, setEmailForOtp] = useState("");
@@ -136,7 +145,8 @@ export default function RegisterPage() {
     await verifyOtp({ email: emailForOtp, otp: data.otp }).unwrap();
     localStorage.removeItem("registerOtpExpiry");
 
-    if (plan) router.push(`/pricing?plan=${encodeURIComponent(plan)}`);
+    if (redirectTo) router.push(redirectTo);
+    else if (plan) router.push(`/pricing?plan=${encodeURIComponent(plan)}`);
     else router.push("/dashboard");
   };
 

@@ -1,97 +1,83 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useDispatch } from "react-redux";
-import { setUser } from "@/store/slices/authSlice";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  useLoginMutation,
-  useRegisterMutation,
-} from "@/store/services/portfolioApi";
+import { motion } from "framer-motion";
+import { useLoginMutation } from "@/store/services/portfolioApi";
+
+const safeRedirect = (value) => {
+  if (typeof value !== "string") return null;
+  if (!value.startsWith("/")) return null;
+  if (value.startsWith("//")) return null;
+  return value;
+};
 
 export default function LoginPage() {
-  const dispatch = useDispatch();
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(true);
-  const [submitError, setSubmitError] = useState("");
+  const searchParams = useSearchParams();
 
-  const [login, { isLoading: isLoginLoading, error: loginError }] =
-    useLoginMutation();
-  const [registerUser, { isLoading: isRegisterLoading, error: registerError }] =
-    useRegisterMutation();
+  const redirectParam = searchParams.get("redirect");
+  const planParam = searchParams.get("plan");
+  const showRegisterHint = searchParams.get("register") === "1";
+
+  const redirectTo = useMemo(
+    () => safeRedirect(redirectParam) || "/dashboard",
+    [redirectParam],
+  );
+
+  const registerLink = useMemo(() => {
+    const params = new URLSearchParams();
+    const safe = safeRedirect(redirectParam);
+    if (safe) params.set("redirect", safe);
+    if (planParam) params.set("plan", planParam);
+    const qs = params.toString();
+    return qs ? `/register?${qs}` : "/register";
+  }, [redirectParam, planParam]);
+
+  const [submitError, setSubmitError] = useState("");
+  const [login, { isLoading, error }] = useLoginMutation();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset,
-  } = useForm();
+  } = useForm({ mode: "onTouched" });
 
-  useEffect(() => {
-    reset();
-  }, [isLogin, reset]);
+  const errorMessage =
+    submitError || error?.data?.message || error?.error || "Authentication failed";
 
   const onSubmit = async (data) => {
     try {
       setSubmitError("");
-      let result;
-      if (isLogin) {
-        result = await login({
-          email: data.email,
-          password: data.password,
-        }).unwrap();
-      } else {
-        result = await registerUser({
-          name: data.name,
-          email: data.email,
-          password: data.password,
-          role: data.role || "user",
-        }).unwrap();
-      }
-
-      router.push("/dashboard");
+      await login({ email: data.email, password: data.password }).unwrap();
+      router.push(redirectTo);
     } catch (err) {
-      let message = "Authentication failed";
-      if (err?.data?.message) {
-        message = err.data.message;
-      } else if (err?.error) {
-        message = err.error;
-      } else if (err?.message) {
-        message = err.message;
-      } else if (err?.status) {
-        message = `Authentication failed (${err.status})`;
-      }
-
+      const message =
+        err?.data?.message ||
+        err?.error ||
+        err?.message ||
+        (err?.status ? `Authentication failed (${err.status})` : "Authentication failed");
       setSubmitError(message);
-      console.warn("Auth failed", {
-        status: err?.status,
-        data: err?.data,
-        error: err?.error,
-        message: err?.message,
-      });
     }
   };
 
-  const error = isLogin ? loginError : registerError;
-  const isLoading = isLogin ? isLoginLoading : isRegisterLoading;
-  const mutationErrorMessage =
-    error?.data?.message || error?.error || "Authentication failed";
-  const errorMessage = submitError || mutationErrorMessage;
-
   return (
     <div className="container d-flex align-items-center justify-content-center py-5">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="col-md-5"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="col-md-5">
         <div className="glass-card p-5 position-relative z-3">
-          <h2 className="text-center fw-bold mb-4">
-            {isLogin ? "Welcome Back" : "Create Account"}
-          </h2>
+          <h2 className="text-center fw-bold mb-4">Welcome Back</h2>
+
+          {showRegisterHint ? (
+            <div className="alert alert-info py-2 text-center" role="alert">
+              Login to continue — or{" "}
+              <Link href={registerLink} className="fw-bold text-decoration-none">
+                create an account
+              </Link>
+              .
+            </div>
+          ) : null}
 
           {(error || submitError) && (
             <div className="alert alert-danger fade show" role="alert">
@@ -100,55 +86,22 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} suppressHydrationWarning>
-            <AnimatePresence mode="popLayout">
-              {!isLogin && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
-                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  className="overflow-hidden"
-                >
-                  <label className="form-label text-muted">Full Name</label>
-                  <input
-                    type="text"
-                    suppressHydrationWarning
-                    className={`form-control bg-transparent border-secondary ${errors.name ? "is-invalid" : ""}`}
-                    placeholder="John Doe"
-                    {...register("name", {
-                      required: !isLogin ? "Name is required" : false,
-                      minLength: {
-                        value: 2,
-                        message: "Name must be at least 2 characters",
-                      },
-                    })}
-                  />
-                  {errors.name && (
-                    <div className="invalid-feedback">
-                      {errors.name.message}
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             <div className="mb-3">
               <label className="form-label text-muted">Email Address</label>
               <input
                 type="email"
                 suppressHydrationWarning
                 className={`form-control bg-transparent border-secondary ${errors.email ? "is-invalid" : ""}`}
-                placeholder="admin@example.com"
+                placeholder="name@example.com"
                 {...register("email", {
                   required: "Email is required",
                   pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$/i,
                     message: "Invalid email address",
                   },
                 })}
               />
-              {errors.email && (
-                <div className="invalid-feedback">{errors.email.message}</div>
-              )}
+              {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
             </div>
 
             <div className="mb-4">
@@ -160,87 +113,41 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 {...register("password", {
                   required: "Password is required",
-                  minLength: {
-                    value: 6,
-                    message: "Password must be at least 6 characters",
-                  },
+                  minLength: { value: 6, message: "Password must be at least 6 characters" },
                 })}
               />
               {errors.password && (
-                <div className="invalid-feedback">
-                  {errors.password.message}
-                </div>
+                <div className="invalid-feedback">{errors.password.message}</div>
               )}
             </div>
 
-            {isLogin && (
-              <div className="d-flex justify-content-end mb-4">
-                <Link
-                  href="/forgot-password"
-                  className="text-muted small text-decoration-none hover-primary transition"
-                >
-                  Forgot Password?
-                </Link>
-              </div>
-            )}
+            <div className="d-flex justify-content-end mb-4">
+              <Link
+                href="/forgot-password"
+                className="text-muted small text-decoration-none hover-primary transition"
+              >
+                Forgot Password?
+              </Link>
+            </div>
 
-            <AnimatePresence mode="popLayout">
-              {!isLogin && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  animate={{ opacity: 1, height: "auto", marginBottom: 24 }}
-                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  className="overflow-hidden"
-                >
-                  <label className="form-label text-muted">Role</label>
-                  <select
-                    className="form-select bg-transparent border-secondary"
-                    suppressHydrationWarning
-                    {...register("role")}
-                  >
-                    <option value="user" className="text-dark">
-                      User
-                    </option>
-                    <option value="admin" className="text-dark">
-                      Admin
-                    </option>
-                  </select>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <button
-              type="submit"
-              className="btn btn-premium w-100"
-              disabled={isLoading}
-            >
+            <button type="submit" className="btn btn-premium w-100" disabled={isLoading}>
               {isLoading ? (
                 <span
                   className="spinner-border spinner-border-sm me-2"
                   role="status"
                   aria-hidden="true"
-                ></span>
+                />
               ) : null}
-              {isLoading
-                ? "Processing..."
-                : isLogin
-                  ? "Access Dashboard"
-                  : "Sign Up"}
+              {isLoading ? "Processing..." : "Login"}
             </button>
           </form>
 
-          <div className="text-center mt-4 d-none">
-            <p className="mb-0 text-muted">
-              {isLogin
-                ? "Don't have an account? "
-                : "Already have an account? "}
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="btn btn-link p-0 text-decoration-none text-primary fw-bold"
-              >
-                {isLogin ? "Sign Up" : "Login"}
-              </button>
+          <div className="text-center mt-4">
+            <p className="mb-0 text-muted small">
+              Don&apos;t have an account?{" "}
+              <Link href={registerLink} className="text-primary fw-bold text-decoration-none">
+                Create one
+              </Link>
             </p>
           </div>
         </div>

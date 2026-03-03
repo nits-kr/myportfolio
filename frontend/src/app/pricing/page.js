@@ -176,7 +176,13 @@ export default function PricingPage() {
 
   const handleCheckout = async (plan) => {
     if (!user) {
-      router.push(`/login?redirect=/pricing`);
+      const redirectTo = `/pricing?plan=${encodeURIComponent(plan.id)}`;
+      const params = new URLSearchParams({
+        redirect: redirectTo,
+        register: "1",
+        plan: plan.id,
+      });
+      router.push(`/login?${params.toString()}`);
       return;
     }
 
