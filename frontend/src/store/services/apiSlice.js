@@ -130,7 +130,9 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
             );
           } else if (method === "DELETE") {
             // Remove item
-            const idToDelete = endpoint.split("/").pop();
+            // Check if endpoint ends with ID or if it's the specific delete-status endpoint
+            const parts = endpoint.split("/");
+            const idToDelete = parts.pop();
             updatedList = updatedList.filter((item) => item._id !== idToDelete);
           }
 
@@ -149,23 +151,33 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
   // ── Mutation Requests (POST/PUT/PATCH/DELETE) ─────────────────────────────
   if (!isOnline) {
     // Stage in WAL (Write-Ahead Log) for later sync
-    await db.mutations.add({
-      endpoint: url, // ✅ always uses normalized url
-      method,
-      body: body ?? null,
-      status: "pending",
-      retryCount: 0,
-      timestamp: Date.now(),
-    });
+    // PREVENT DUPLICATES: Check if this mutation is already pending
+    const existing = await db.mutations
+      .where({ endpoint: url, method })
+      .filter((m) => m.status === "pending")
+      .first();
+
+    if (!existing) {
+      await db.mutations.add({
+        endpoint: url, // ✅ always uses normalized url
+        method,
+        body: body ?? null,
+        status: "pending",
+        retryCount: 0,
+        timestamp: Date.now(),
+      });
+    }
 
     // Apply optimistic update to local cache
     await handleOptimisticOfflineUpdate(method, url, body);
 
     // Return optimistic success so UI doesn't freeze
+    const responseId =
+      body?._id || url.split("/").pop() || `temp-${Date.now()}`;
     return {
       data: {
         ...(body ?? {}),
-        _id: body?._id || `temp-${Date.now()}`,
+        _id: responseId,
         _offlineStaged: true,
         _stagedAt: Date.now(),
       },
@@ -177,22 +189,31 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
     return await baseQuery(args, api, extraOptions);
   } catch {
     // Connection dropped mid-flight — stage for retry
-    await db.mutations.add({
-      endpoint: url,
-      method,
-      body: body ?? null,
-      status: "pending",
-      retryCount: 0,
-      timestamp: Date.now(),
-    });
+    const existing = await db.mutations
+      .where({ endpoint: url, method })
+      .filter((m) => m.status === "pending")
+      .first();
+
+    if (!existing) {
+      await db.mutations.add({
+        endpoint: url,
+        method,
+        body: body ?? null,
+        status: "pending",
+        retryCount: 0,
+        timestamp: Date.now(),
+      });
+    }
 
     // Apply optimistic update to local cache
     await handleOptimisticOfflineUpdate(method, url, body);
 
+    const responseId =
+      body?._id || url.split("/").pop() || `temp-${Date.now()}`;
     return {
       data: {
         ...(body ?? {}),
-        _id: body?._id || `temp-${Date.now()}`,
+        _id: responseId,
         _offlineStaged: true,
         _stagedAt: Date.now(),
       },
