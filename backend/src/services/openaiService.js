@@ -83,7 +83,7 @@ Instructions:
     return completion.choices[0].message.content;
   } catch (error) {
     console.error("OpenAI API error:", error);
-    throw new Error("Failed to generate interviewer response");
+    throw error;
   }
 };
 
@@ -127,7 +127,7 @@ Be constructive and specific. Focus on technical accuracy, communication clarity
     return JSON.parse(completion.choices[0].message.content);
   } catch (error) {
     console.error("OpenAI feedback error:", error);
-    throw new Error("Failed to generate feedback");
+    throw error;
   }
 };
 
@@ -168,7 +168,7 @@ Provide a summary in JSON format:
     return JSON.parse(completion.choices[0].message.content);
   } catch (error) {
     console.error("OpenAI summary error:", error);
-    throw new Error("Failed to generate session summary");
+    throw error;
   }
 };
 

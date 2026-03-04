@@ -13,30 +13,36 @@ export const createSession = async (req, res) => {
     const userId = req.user._id;
     const subscriptionPlan = req.user.subscription || "free";
 
-    // Check usage limits for free tier
-    if (subscriptionPlan === "free") {
-      const currentMonth = new Date();
-      currentMonth.setDate(1);
-      currentMonth.setHours(0, 0, 0, 0);
+    // Tiered monthly session limits
+    const limits = {
+      free: 3,
+      pro: 50,
+      enterprise: 200,
+    };
 
-      const sessionsThisMonth = await InterviewSession.countDocuments({
-        userId,
-        createdAt: { $gte: currentMonth },
+    const currentMonth = new Date();
+    currentMonth.setDate(1);
+    currentMonth.setHours(0, 0, 0, 0);
+
+    const sessionsThisMonth = await InterviewSession.countDocuments({
+      userId,
+      createdAt: { $gte: currentMonth },
+    });
+
+    const monthlyLimit = limits[subscriptionPlan] || limits.free;
+
+    if (sessionsThisMonth >= monthlyLimit) {
+      return res.status(403).json({
+        success: false,
+        error: `${subscriptionPlan.charAt(0).toUpperCase() + subscriptionPlan.slice(1)} tier limit reached (${monthlyLimit} sessions/month)`,
+        upgradeUrl: "/pricing",
       });
-
-      if (sessionsThisMonth >= 3) {
-        return res.status(403).json({
-          success: false,
-          error: "Free tier limit reached (3 sessions/month)",
-          upgradeUrl: "/pricing",
-        });
-      }
     }
 
     const session = await InterviewSession.create({
       userId,
-      role: role === "custom" ? "custom" : role, // Keep 'custom' as the role identifier
-      customData: role === "custom" ? customData : undefined, // Save the full custom context
+      role: role === "custom" ? "custom" : role,
+      customData: role === "custom" ? customData : undefined,
       difficulty,
     });
 
@@ -109,6 +115,7 @@ export const sendMessage = async (req, res) => {
     const { id } = req.params;
     const { content, codeSnippet } = req.body;
     const userId = req.user._id;
+    const subscriptionPlan = req.user.subscription || "free";
 
     const session = await InterviewSession.findOne({ _id: id, userId });
     if (!session) {
@@ -121,6 +128,23 @@ export const sendMessage = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, error: "Session is not active" });
+    }
+
+    // Tiered per-session message limits
+    const messageLimits = {
+      free: 14, // 7 rounds
+      pro: 50, // 25 rounds
+      enterprise: 999,
+    };
+
+    const limit = messageLimits[subscriptionPlan] || messageLimits.free;
+
+    if (session.messageCount >= limit) {
+      return res.status(403).json({
+        success: false,
+        error: `Message limit reached for this session (${limit} messages). Please upgrade for more.`,
+        upgradeUrl: "/pricing",
+      });
     }
 
     // Save candidate's message
@@ -140,7 +164,7 @@ export const sendMessage = async (req, res) => {
     const aiResponse = await generateInterviewerResponse(
       session.role,
       messages,
-      session.customData, // Pass the persisted custom context
+      session.customData,
     );
 
     // Save interviewer's response
@@ -204,12 +228,14 @@ export const getFeedback = async (req, res) => {
         .json({ success: false, error: "Session not found" });
     }
 
-    const message = await InterviewMessage.findOne({ _id: messageId, sessionId: id });
+    const message = await InterviewMessage.findOne({
+      _id: messageId,
+      sessionId: id,
+    });
     if (!message || message.role !== "candidate") {
       return res.status(400).json({ success: false, error: "Invalid message" });
     }
 
-    // Get previous interviewer question
     const previousMessages = await InterviewMessage.find({ sessionId: id })
       .sort({ timestamp: -1 })
       .limit(2);
@@ -217,14 +243,12 @@ export const getFeedback = async (req, res) => {
     const question =
       previousMessages[1]?.content || "General interview question";
 
-    // Generate feedback
     const feedback = await generateFeedback(
       session.role,
       question,
       message.content,
     );
 
-    // Update message with feedback
     message.feedback = {
       score: feedback.score,
       technicalDepth: feedback.technicalDepth,
@@ -266,12 +290,10 @@ export const endSession = async (req, res) => {
       });
     }
 
-    // Get all messages
     const messages = await InterviewMessage.find({ sessionId: id }).sort({
       timestamp: 1,
     });
 
-    // Calculate scores
     const scores = messages
       .filter((m) => m.feedback?.score)
       .map((m) => m.feedback.score);
@@ -279,14 +301,14 @@ export const endSession = async (req, res) => {
     const avgScore =
       scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 5;
 
-    // Generate summary (do not fail session completion if summary generation fails)
     let summary = null;
     try {
       summary = await generateSessionSummary(session.role, messages, scores);
     } catch (summaryError) {
       console.error("Summary generation failed:", summaryError);
       summary = {
-        overallPerformance: "Session completed. Summary generation is temporarily unavailable.",
+        overallPerformance:
+          "Session completed. Summary generation is temporarily unavailable.",
         strengths: [],
         areasForImprovement: [],
         recommendations: [],
@@ -301,7 +323,6 @@ export const endSession = async (req, res) => {
       .filter((m) => m.feedback?.clarity !== undefined)
       .map((m) => m.feedback.clarity);
 
-    // Update session
     session.status = "completed";
     session.completedAt = new Date();
     session.duration = Math.floor(
@@ -317,7 +338,7 @@ export const endSession = async (req, res) => {
         clarityScores.length > 0
           ? clarityScores.reduce((a, b) => a + b, 0) / clarityScores.length
           : 5,
-      confidence: avgScore, // Simplified for MVP
+      confidence: avgScore,
     };
     session.summary = summary;
     await session.save();
