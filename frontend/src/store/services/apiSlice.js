@@ -95,8 +95,9 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
   // ── Helper to Optimistically Patch Offline Cache ───────────────────────────
   const handleOptimisticOfflineUpdate = async (method, endpoint, bodyData) => {
     try {
-      const isProject = endpoint.includes("/projects");
-      const isBlog = endpoint.includes("/blogs");
+      const cleanEndpoint = endpoint.split("?")[0];
+      const isProject = cleanEndpoint.includes("/projects");
+      const isBlog = cleanEndpoint.includes("/blogs");
       if (!isProject && !isBlog) return;
 
       const stagedItem = {
@@ -113,28 +114,47 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
           ? cache.key.includes("/projects")
           : cache.key.includes("/blogs");
 
-        if (isTargetCache && cache.data && Array.isArray(cache.data.data)) {
-          let updatedList = [...cache.data.data];
+        if (isTargetCache && cache.data) {
+          let updatedList;
+          let isBlogObject = false;
+
+          if (Array.isArray(cache.data.data)) {
+            updatedList = [...cache.data.data];
+          } else if (cache.data.data && Array.isArray(cache.data.data.blogs)) {
+            updatedList = [...cache.data.data.blogs];
+            isBlogObject = true;
+          } else {
+            // Not a list cache (e.g., specific item detail page), skip
+            continue;
+          }
 
           if (
             method === "POST" &&
-            (endpoint === "/projects" || endpoint === "/blogs")
+            (cleanEndpoint === "/projects" || cleanEndpoint === "/blogs")
           ) {
             // Add new item to front of list
             updatedList.unshift(stagedItem);
           } else if (method === "PUT" || method === "PATCH") {
             // Update existing item
-            const idToUpdate = endpoint.split("/").pop();
+            const idToUpdate = cleanEndpoint.split("/").pop();
             updatedList = updatedList.map((item) =>
-              item._id === idToUpdate ? { ...item, ...stagedItem } : item,
+              String(item._id) === idToUpdate
+                ? { ...item, ...stagedItem }
+                : item,
             );
           } else if (method === "DELETE") {
             // Remove item
-            const idToDelete = endpoint.split("/").pop();
-            updatedList = updatedList.filter((item) => item._id !== idToDelete);
+            const idToDelete = cleanEndpoint.split("/").pop();
+            updatedList = updatedList.filter(
+              (item) => String(item._id) !== idToDelete,
+            );
           }
 
-          cache.data.data = updatedList;
+          if (isBlogObject) {
+            cache.data.data.blogs = updatedList;
+          } else {
+            cache.data.data = updatedList;
+          }
           await db.content.put(cache);
         }
       }
@@ -148,6 +168,28 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
 
   // ── Mutation Requests (POST/PUT/PATCH/DELETE) ─────────────────────────────
   if (!isOnline) {
+    // Prevent duplicate DELETE operations in the offline queue
+    if (method === "DELETE") {
+      try {
+        const pendingDeletes = await db.mutations
+          .where("status")
+          .equals("pending")
+          .toArray();
+
+        const isAlreadyQueued = pendingDeletes.some(
+          (m) => m.endpoint === url && m.method === "DELETE",
+        );
+
+        if (isAlreadyQueued) {
+          // Already queued for deletion! Apply optimistic patch again just in case, and short-circuit.
+          await handleOptimisticOfflineUpdate(method, url, body);
+          return { data: { success: true, _offlineDuplicate: true } };
+        }
+      } catch (err) {
+        console.warn("[Offline] Failed to check for duplicate deletes:", err);
+      }
+    }
+
     // Stage in WAL (Write-Ahead Log) for later sync
     await db.mutations.add({
       endpoint: url, // ✅ always uses normalized url
@@ -176,6 +218,33 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
   try {
     return await baseQuery(args, api, extraOptions);
   } catch {
+    // Prevent duplicate DELETE operations for dropped flights too!
+    if (method === "DELETE") {
+      try {
+        const pendingDeletes = await db.mutations
+          .where("status")
+          .equals("pending")
+          .toArray();
+
+        const isAlreadyQueued = pendingDeletes.some(
+          (m) => m.endpoint === url && m.method === "DELETE",
+        );
+
+        if (isAlreadyQueued) {
+          await handleOptimisticOfflineUpdate(method, url, body);
+          return {
+            data: {
+              ...(body ?? {}),
+              _id: body?._id || `temp-${Date.now()}`,
+              _offlineStaged: true,
+              _stagedAt: Date.now(),
+              _offlineDuplicate: true,
+            },
+          };
+        }
+      } catch (err) {}
+    }
+
     // Connection dropped mid-flight — stage for retry
     await db.mutations.add({
       endpoint: url,

@@ -76,6 +76,15 @@ export const syncOfflineMutations = async (toastFn = null) => {
         // Auth failure — no point retrying, remove it
         await db.mutations.delete(mutation.id);
         failCount++;
+      } else if (
+        mutation.method === "DELETE" &&
+        response.status >= 400 &&
+        response.status < 500
+      ) {
+        // For DELETE, any 4xx error (like 404 Not Found or 400 invalid id) implies the item is already gone or invalid.
+        // Clear from queue to prevent lingering duplicate deletes holding up the badge indicator.
+        await db.mutations.delete(mutation.id);
+        successCount++;
       } else {
         // Server error — mark for retry
         await db.mutations.update(mutation.id, {
