@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSelector } from "react-redux";
 import {
@@ -86,6 +86,20 @@ const pricingPlans = [
 ];
 
 export default function PricingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container py-5 mt-4 text-center">
+          <p>Loading...</p>
+        </div>
+      }
+    >
+      <PricingContent />
+    </Suspense>
+  );
+}
+
+function PricingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, token } = useSelector((state) => state.auth);

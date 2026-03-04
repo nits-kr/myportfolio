@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   FiMail,
@@ -36,6 +36,20 @@ const timelineOptions = [
 ];
 
 export default function ContactPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container py-5 mt-4 text-center">
+          <p>Loading...</p>
+        </div>
+      }
+    >
+      <ContactContent />
+    </Suspense>
+  );
+}
+
+function ContactContent() {
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     name: "",

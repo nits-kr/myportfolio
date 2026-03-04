@@ -92,11 +92,65 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
     }
   }
 
+  // ── Helper to Optimistically Patch Offline Cache ───────────────────────────
+  const handleOptimisticOfflineUpdate = async (method, endpoint, bodyData) => {
+    try {
+      const isProject = endpoint.includes("/projects");
+      const isBlog = endpoint.includes("/blogs");
+      if (!isProject && !isBlog) return;
+
+      const stagedItem = {
+        ...bodyData,
+        _id: bodyData?._id || `temp-${Date.now()}`,
+        _offlineStaged: true,
+        _stagedAt: Date.now(),
+      };
+
+      const allCaches = await db.content.toArray();
+
+      for (const cache of allCaches) {
+        const isTargetCache = isProject
+          ? cache.key.includes("/projects")
+          : cache.key.includes("/blogs");
+
+        if (isTargetCache && cache.data && Array.isArray(cache.data.data)) {
+          let updatedList = [...cache.data.data];
+
+          if (
+            method === "POST" &&
+            (endpoint === "/projects" || endpoint === "/blogs")
+          ) {
+            // Add new item to front of list
+            updatedList.unshift(stagedItem);
+          } else if (method === "PUT" || method === "PATCH") {
+            // Update existing item
+            const idToUpdate = endpoint.split("/").pop();
+            updatedList = updatedList.map((item) =>
+              item._id === idToUpdate ? { ...item, ...stagedItem } : item,
+            );
+          } else if (method === "DELETE") {
+            // Remove item
+            const idToDelete = endpoint.split("/").pop();
+            updatedList = updatedList.filter((item) => item._id !== idToDelete);
+          }
+
+          cache.data.data = updatedList;
+          await db.content.put(cache);
+        }
+      }
+    } catch (err) {
+      console.warn(
+        "[Offline] Failed to apply optimistic update to cache:",
+        err,
+      );
+    }
+  };
+
   // ── Mutation Requests (POST/PUT/PATCH/DELETE) ─────────────────────────────
   if (!isOnline) {
     // Stage in WAL (Write-Ahead Log) for later sync
     await db.mutations.add({
-      endpoint: url, // ✅ Fixed: was using args.url || args — now always uses normalized url
+      endpoint: url, // ✅ always uses normalized url
       method,
       body: body ?? null,
       status: "pending",
@@ -104,9 +158,17 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
       timestamp: Date.now(),
     });
 
+    // Apply optimistic update to local cache
+    await handleOptimisticOfflineUpdate(method, url, body);
+
     // Return optimistic success so UI doesn't freeze
     return {
-      data: { ...(body ?? {}), _offlineStaged: true, _stagedAt: Date.now() },
+      data: {
+        ...(body ?? {}),
+        _id: body?._id || `temp-${Date.now()}`,
+        _offlineStaged: true,
+        _stagedAt: Date.now(),
+      },
     };
   }
 
@@ -123,8 +185,17 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
       retryCount: 0,
       timestamp: Date.now(),
     });
+
+    // Apply optimistic update to local cache
+    await handleOptimisticOfflineUpdate(method, url, body);
+
     return {
-      data: { ...(body ?? {}), _offlineStaged: true, _stagedAt: Date.now() },
+      data: {
+        ...(body ?? {}),
+        _id: body?._id || `temp-${Date.now()}`,
+        _offlineStaged: true,
+        _stagedAt: Date.now(),
+      },
     };
   }
 };

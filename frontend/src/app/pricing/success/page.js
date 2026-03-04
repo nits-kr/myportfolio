@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  Suspense,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { useDispatch } from "react-redux";
@@ -15,6 +22,20 @@ const actionLabels = {
 };
 
 export default function PaymentSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="pay-page pay-success text-center">
+          <p style={{ color: "#ecfeff" }}>Loading...</p>
+        </div>
+      }
+    >
+      <PaymentSuccessContent />
+    </Suspense>
+  );
+}
+
+function PaymentSuccessContent() {
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan") || "Pro";
@@ -143,11 +164,13 @@ export default function PaymentSuccessPage() {
         const updatedUser = {
           ...storedUser,
           subscription: data.data.currentPlan ?? storedUser.subscription,
-          subscriptionStatus: data.data.subscriptionStatus ?? storedUser.subscriptionStatus,
+          subscriptionStatus:
+            data.data.subscriptionStatus ?? storedUser.subscriptionStatus,
           subscriptionExpiresAt:
             data.data.subscriptionExpiresAt ?? storedUser.subscriptionExpiresAt,
           pendingSubscription: data.data.pendingSubscription ?? null,
-          pendingSubscriptionValidityDays: data.data.pendingSubscriptionValidityDays ?? null,
+          pendingSubscriptionValidityDays:
+            data.data.pendingSubscriptionValidityDays ?? null,
         };
 
         localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -188,7 +211,9 @@ export default function PaymentSuccessPage() {
       >
         <div className="chip">Payment Success</div>
         <h1>Transaction Confirmed</h1>
-        <p className="subtitle">{actionLabels[action] || actionLabels.activated}</p>
+        <p className="subtitle">
+          {actionLabels[action] || actionLabels.activated}
+        </p>
         {needsSoundTap && (
           <button
             type="button"
@@ -240,8 +265,16 @@ export default function PaymentSuccessPage() {
           overflow: hidden;
           padding: 32px 16px;
           background:
-            radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.25), transparent 45%),
-            radial-gradient(circle at 80% 70%, rgba(6, 182, 212, 0.2), transparent 45%),
+            radial-gradient(
+              circle at 20% 20%,
+              rgba(34, 197, 94, 0.25),
+              transparent 45%
+            ),
+            radial-gradient(
+              circle at 80% 70%,
+              rgba(6, 182, 212, 0.2),
+              transparent 45%
+            ),
             linear-gradient(140deg, #031220 0%, #071f3d 52%, #05273a 100%);
         }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
@@ -46,7 +46,7 @@ const safeRedirect = (value) => {
   return value;
 };
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan");
@@ -450,5 +450,19 @@ export default function RegisterPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container min-vh-100 d-flex align-items-center justify-content-center py-5">
+          <p>Loading...</p>
+        </div>
+      }
+    >
+      <RegisterContent />
+    </Suspense>
   );
 }

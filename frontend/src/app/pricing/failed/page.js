@@ -1,15 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
 export default function PaymentFailedPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="pay-page pay-failed text-center">
+          <p style={{ color: "#fff7ed" }}>Loading...</p>
+        </div>
+      }
+    >
+      <PaymentFailedContent />
+    </Suspense>
+  );
+}
+
+function PaymentFailedContent() {
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan") || "Pro";
   const amount = searchParams.get("amount") || "0";
-  const reason = searchParams.get("reason") || "Payment could not be completed.";
+  const reason =
+    searchParams.get("reason") || "Payment could not be completed.";
   const [needsSoundTap, setNeedsSoundTap] = useState(false);
   const hasAttemptedSoundRef = useRef(false);
   const hasPlayedSoundRef = useRef(false);
@@ -151,8 +166,16 @@ export default function PaymentFailedPage() {
           place-items: center;
           padding: 32px 16px;
           background:
-            radial-gradient(circle at 20% 20%, rgba(248, 113, 113, 0.22), transparent 45%),
-            radial-gradient(circle at 80% 72%, rgba(251, 146, 60, 0.18), transparent 45%),
+            radial-gradient(
+              circle at 20% 20%,
+              rgba(248, 113, 113, 0.22),
+              transparent 45%
+            ),
+            radial-gradient(
+              circle at 80% 72%,
+              rgba(251, 146, 60, 0.18),
+              transparent 45%
+            ),
             linear-gradient(140deg, #19030a 0%, #2b0818 48%, #1f102a 100%);
         }
 
