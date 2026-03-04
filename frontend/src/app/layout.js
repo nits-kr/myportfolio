@@ -16,6 +16,7 @@ import LogoLoader from "@/components/common/LogoLoader";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 import GlobalPullToRefresh from "@/components/common/GlobalPullToRefresh";
 import OfflineSyncIndicator from "@/components/common/OfflineSyncIndicator";
+import NavigationProgress from "@/components/common/NavigationProgress";
 import { Toaster } from "react-hot-toast";
 
 export const metadata = {
@@ -52,6 +53,7 @@ export default function RootLayout({ children }) {
       <body suppressHydrationWarning={true} className={inter.className}>
         <Providers>
           <GlobalLoader />
+          <NavigationProgress />
           <ServiceWorkerRegistration />
           <OnlineStatus />
           <BootstrapClient />
