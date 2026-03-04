@@ -77,7 +77,9 @@ export const syncOfflineMutations = async (toastFn = null) => {
         await db.mutations.delete(mutation.id);
         failCount++;
       } else if (
-        mutation.method === "DELETE" &&
+        (mutation.method === "DELETE" ||
+          (mutation.method === "PUT" &&
+            mutation.endpoint.includes("/delete-status"))) &&
         response.status >= 400 &&
         response.status < 500
       ) {

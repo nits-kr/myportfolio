@@ -134,7 +134,10 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
           ) {
             // Add new item to front of list
             updatedList.unshift(stagedItem);
-          } else if (method === "PUT" || method === "PATCH") {
+          } else if (
+            (method === "PUT" || method === "PATCH") &&
+            !cleanEndpoint.includes("/delete-status")
+          ) {
             // Update existing item
             const idToUpdate = cleanEndpoint.split("/").pop();
             updatedList = updatedList.map((item) =>
@@ -142,7 +145,10 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
                 ? { ...item, ...stagedItem }
                 : item,
             );
-          } else if (method === "DELETE") {
+          } else if (
+            method === "DELETE" ||
+            (method === "PUT" && cleanEndpoint.includes("/delete-status"))
+          ) {
             // Remove item
             const idToDelete = cleanEndpoint.split("/").pop();
             updatedList = updatedList.filter(
@@ -169,7 +175,11 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
   // ── Mutation Requests (POST/PUT/PATCH/DELETE) ─────────────────────────────
   if (!isOnline) {
     // Prevent duplicate DELETE operations in the offline queue
-    if (method === "DELETE") {
+    const isDeleteEquivalent =
+      method === "DELETE" ||
+      (method === "PUT" && url.includes("/delete-status"));
+
+    if (isDeleteEquivalent) {
       try {
         const pendingDeletes = await db.mutations
           .where("status")
@@ -177,7 +187,9 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
           .toArray();
 
         const isAlreadyQueued = pendingDeletes.some(
-          (m) => m.endpoint === url && m.method === "DELETE",
+          (m) =>
+            m.endpoint === url &&
+            (m.method === "DELETE" || m.endpoint.includes("/delete-status")),
         );
 
         if (isAlreadyQueued) {
@@ -204,21 +216,24 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
     await handleOptimisticOfflineUpdate(method, url, body);
 
     // Return optimistic success so UI doesn't freeze
+    const isDeleteEquivalentResponse =
+      method === "DELETE" ||
+      (method === "PUT" && url.includes("/delete-status"));
+
     return {
-      data:
-        method === "DELETE"
-          ? {
-              success: true,
-              id: url.split("/").pop(), // Crucial for RTK Query cache invalidation
-              _offlineStaged: true,
-              _stagedAt: Date.now(),
-            }
-          : {
-              ...(body ?? {}),
-              _id: body?._id || `temp-${Date.now()}`,
-              _offlineStaged: true,
-              _stagedAt: Date.now(),
-            },
+      data: isDeleteEquivalentResponse
+        ? {
+            success: true,
+            id: url.split("/").pop(), // Crucial for RTK Query cache invalidation
+            _offlineStaged: true,
+            _stagedAt: Date.now(),
+          }
+        : {
+            ...(body ?? {}),
+            _id: body?._id || `temp-${Date.now()}`,
+            _offlineStaged: true,
+            _stagedAt: Date.now(),
+          },
     };
   }
 
@@ -227,7 +242,11 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
     return await baseQuery(args, api, extraOptions);
   } catch {
     // Prevent duplicate DELETE operations for dropped flights too!
-    if (method === "DELETE") {
+    const isDeleteEquivalent =
+      method === "DELETE" ||
+      (method === "PUT" && url.includes("/delete-status"));
+
+    if (isDeleteEquivalent) {
       try {
         const pendingDeletes = await db.mutations
           .where("status")
@@ -235,7 +254,9 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
           .toArray();
 
         const isAlreadyQueued = pendingDeletes.some(
-          (m) => m.endpoint === url && m.method === "DELETE",
+          (m) =>
+            m.endpoint === url &&
+            (m.method === "DELETE" || m.endpoint.includes("/delete-status")),
         );
 
         if (isAlreadyQueued) {
