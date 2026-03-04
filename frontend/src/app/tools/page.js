@@ -237,12 +237,25 @@ export default function ToolsPage() {
         </p>
 
         {/* Tier Selector */}
-        <div className="d-flex justify-content-center gap-2 mt-4">
+        <div
+          className="d-inline-flex mx-auto mt-4 p-1 rounded-pill"
+          style={{
+            background: "rgba(124, 58, 237, 0.08)",
+            border: "1px solid rgba(124, 58, 237, 0.2)",
+            gap: "4px",
+          }}
+        >
           {["free", "pro", "enterprise"].map((tier) => (
             <button
               key={tier}
               onClick={() => setSelectedTier(tier)}
-              className={`btn ${selectedTier === tier ? "btn-primary" : "btn-outline-light"} text-capitalize`}
+              className={`btn btn-sm text-capitalize px-4 rounded-pill ${selectedTier === tier ? "btn-primary" : ""}`}
+              style={{
+                fontWeight: selectedTier === tier ? 600 : 400,
+                ...(selectedTier !== tier
+                  ? { background: "transparent", border: "none" }
+                  : {}),
+              }}
             >
               {tier}
             </button>
@@ -260,106 +273,154 @@ export default function ToolsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
-            <div className="glass-card h-100 p-4 position-relative">
-              {tool.highlight && tool.badge && (
-                <div className="position-absolute top-0 start-0 m-3">
-                  <span className="badge bg-primary px-3 py-2">
-                    ✨ {tool.badge}
-                  </span>
+            <div
+              className="glass-card h-100 p-0 overflow-hidden d-flex flex-column"
+              style={{ borderRadius: "16px" }}
+            >
+              {/* Card Header: Badges Row */}
+              <div
+                className="d-flex align-items-center justify-content-between px-4 pt-3 pb-0"
+                style={{ minHeight: "40px" }}
+              >
+                <div>
+                  {tool.highlight && tool.badge && (
+                    <span
+                      className="badge bg-primary px-3 py-2 rounded-pill"
+                      style={{ fontSize: "0.72rem", letterSpacing: "0.3px" }}
+                    >
+                      ✨ {tool.badge}
+                    </span>
+                  )}
                 </div>
-              )}
-              {tool.status === "coming-soon" && (
-                <div className="position-absolute top-0 end-0 m-3">
-                  <span className="badge bg-warning text-dark px-3 py-2">
-                    Coming Soon
-                  </span>
+                <div>
+                  {tool.status === "coming-soon" && (
+                    <span
+                      className="badge bg-warning text-dark px-3 py-2 rounded-pill"
+                      style={{ fontSize: "0.72rem" }}
+                    >
+                      Coming Soon
+                    </span>
+                  )}
                 </div>
-              )}
+              </div>
 
-              <div className="d-flex gap-4">
-                {/* Icon */}
+              {/* Card Body */}
+              <div className="p-4 pt-3 flex-grow-1 d-flex flex-column">
+                {/* Icon + Title */}
+                <div className="d-flex align-items-center gap-3 mb-3">
+                  <div
+                    className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(168, 85, 247, 0.08))",
+                      border: "1px solid rgba(124, 58, 237, 0.2)",
+                      width: "52px",
+                      height: "52px",
+                    }}
+                  >
+                    <div className="text-primary">{tool.icon}</div>
+                  </div>
+                  <div>
+                    <h3 className="h5 fw-bold mb-0" style={{ lineHeight: 1.3 }}>
+                      {tool.name}
+                    </h3>
+                    <p
+                      className="text-muted small mb-0 mt-1"
+                      style={{ lineHeight: 1.5 }}
+                    >
+                      {tool.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <hr className="my-3 opacity-25" />
+
+                {/* Features */}
+                <div className="mb-3">
+                  <p
+                    className="small fw-semibold text-uppercase mb-2"
+                    style={{
+                      letterSpacing: "0.8px",
+                      fontSize: "0.7rem",
+                      opacity: 0.7,
+                    }}
+                  >
+                    Features
+                  </p>
+                  <ul className="list-unstyled mb-0 row g-1">
+                    {tool.features.slice(0, 3).map((feature, idx) => (
+                      <li
+                        key={idx}
+                        className="col-12 d-flex align-items-start gap-2"
+                      >
+                        <FiCheck
+                          className="text-success flex-shrink-0 mt-1"
+                          size={13}
+                        />
+                        <span className="small">{feature}</span>
+                      </li>
+                    ))}
+                    {tool.features.length > 3 && (
+                      <li
+                        className="col-12 small text-muted ps-4"
+                        style={{ opacity: 0.7 }}
+                      >
+                        +{tool.features.length - 3} more features
+                      </li>
+                    )}
+                  </ul>
+                </div>
+
+                {/* Pricing Box */}
                 <div
-                  className="d-inline-flex align-items-center justify-content-center rounded-3 p-3 flex-shrink-0"
+                  className="tools-pricing-box rounded-3 px-3 py-2 mb-3 mt-auto"
                   style={{
-                    background: "rgba(124, 58, 237, 0.1)",
-                    height: "fit-content",
+                    background: "rgba(124, 58, 237, 0.05)",
+                    border: "1px solid rgba(124, 58, 237, 0.15)",
                   }}
                 >
-                  <div className="text-primary">{tool.icon}</div>
-                </div>
-
-                {/* Content */}
-                <div className="flex-grow-1">
-                  <h3 className="h5 fw-bold mb-2">{tool.name}</h3>
-                  <p className="text-muted small mb-3">{tool.description}</p>
-
-                  {/* Features */}
-                  <div className="mb-3">
-                    <h5 className="h6 fw-bold mb-2">Features:</h5>
-                    <ul className="list-unstyled">
-                      {tool.features.slice(0, 3).map((feature, idx) => (
-                        <li
-                          key={idx}
-                          className="d-flex align-items-start gap-2 mb-1"
-                        >
-                          <FiCheck
-                            className="text-success mt-1 flex-shrink-0"
-                            size={14}
-                          />
-                          <span className="small">{feature}</span>
-                        </li>
-                      ))}
-                      {tool.features.length > 3 && (
-                        <li className="small text-muted">
-                          +{tool.features.length - 3} more features
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-
-                  {/* Pricing for selected tier */}
-                  <div
-                    className="glass-card p-3 mb-3"
-                    style={{ background: "rgba(124, 58, 237, 0.05)" }}
-                  >
-                    <div className="d-flex align-items-center gap-2 mb-1">
-                      <FiZap size={14} className="text-primary" />
-                      <span className="small fw-bold text-capitalize">
+                  <div className="d-flex align-items-center justify-content-between">
+                    <div className="d-flex align-items-center gap-2">
+                      <FiZap size={13} className="text-primary" />
+                      <span className="small fw-semibold text-capitalize">
                         {selectedTier} Plan
                       </span>
                     </div>
-                    <p className="mb-0 small">{tool.pricing[selectedTier]}</p>
+                    <span className="small text-muted">
+                      {tool.pricing[selectedTier]}
+                    </span>
                   </div>
+                </div>
 
-                  {/* CTA */}
-                  <div className="d-flex gap-2">
-                    {tool.status === "available" ? (
-                      <>
-                        {tool.demoUrl && (
-                          <Link
-                            href={tool.demoUrl}
-                            className="btn btn-outline-light btn-sm flex-grow-1"
-                          >
-                            Try Demo
-                          </Link>
-                        )}
+                {/* CTA Buttons */}
+                <div className="d-flex gap-2">
+                  {tool.status === "available" ? (
+                    <>
+                      {tool.demoUrl && (
                         <Link
-                          href={`/pricing?tool=${tool.id}`}
-                          className="btn btn-primary btn-sm flex-grow-1"
+                          href={tool.demoUrl}
+                          className="btn btn-outline-light btn-sm flex-grow-1 py-2"
                         >
-                          Get Access
+                          Try Demo
                         </Link>
-                      </>
-                    ) : (
-                      <button
-                        className="btn btn-outline-light btn-sm w-100"
-                        disabled
+                      )}
+                      <Link
+                        href={`/pricing?tool=${tool.id}`}
+                        className="btn btn-primary btn-sm flex-grow-1 py-2"
                       >
-                        <FiLock size={14} className="me-2" />
-                        Coming Soon
-                      </button>
-                    )}
-                  </div>
+                        Get Access
+                      </Link>
+                    </>
+                  ) : (
+                    <button
+                      className="btn btn-outline-light btn-sm w-100 py-2"
+                      disabled
+                    >
+                      <FiLock size={13} className="me-2" />
+                      Coming Soon
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

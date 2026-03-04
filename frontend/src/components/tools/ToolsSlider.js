@@ -141,10 +141,9 @@ export default function ToolsSlider({ tools, selectedTier }) {
             return (
               <div key={tool.id} className="px-2 pt-3 pb-5 h-100">
                 <div
-                  className={`glass-card h-100 p-4 position-relative d-flex flex-column ${
-                    isActive ? "active-focus-card" : ""
-                  }`}
+                  className={`glass-card h-100 p-0 overflow-hidden d-flex flex-column ${isActive ? "active-focus-card" : ""}`}
                   style={{
+                    borderRadius: "16px",
                     background: isActive
                       ? theme === "dark"
                         ? "rgba(15, 23, 42, 0.95)"
@@ -159,55 +158,84 @@ export default function ToolsSlider({ tools, selectedTier }) {
                     transition: "all 0.3s ease",
                   }}
                 >
-                  {/* Badges */}
-                  {tool.highlight && tool.badge && (
-                    <div className="position-absolute top-0 start-0 m-3">
-                      <span className="badge bg-primary px-3 py-2">
-                        ✨ {tool.badge}
-                      </span>
-                    </div>
-                  )}
-                  {tool.status === "coming-soon" && (
-                    <div className="position-absolute top-0 end-0 m-3">
-                      <span className="badge bg-warning text-dark px-3 py-2">
-                        Coming Soon
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Header Space for Badges */}
-                  <div className="mb-4" style={{ height: "20px" }}></div>
-
-                  {/* Icon */}
+                  {/* Badge Header Row */}
                   <div
-                    className="d-inline-flex align-items-center justify-content-center rounded-3 p-3 mb-3 align-self-center"
-                    style={{
-                      background: "rgba(124, 58, 237, 0.1)",
-                      height: "fit-content",
-                      width: "fit-content",
-                      filter: isActive
-                        ? "drop-shadow(0 0 15px rgba(124, 58, 237, 0.5))"
-                        : "none",
-                      transition: "filter 0.3s ease",
-                    }}
+                    className="d-flex align-items-center justify-content-between px-3 pt-3 pb-0"
+                    style={{ minHeight: "36px" }}
                   >
-                    <div className="text-primary">{tool.icon}</div>
+                    <div>
+                      {tool.highlight && tool.badge && (
+                        <span
+                          className="badge bg-primary px-3 py-2 rounded-pill"
+                          style={{ fontSize: "0.7rem" }}
+                        >
+                          ✨ {tool.badge}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      {tool.status === "coming-soon" && (
+                        <span
+                          className="badge bg-warning text-dark px-3 py-2 rounded-pill"
+                          style={{ fontSize: "0.7rem" }}
+                        >
+                          Coming Soon
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="text-center flex-grow-1 d-flex flex-column">
-                    <h3 className="h4 fw-bold mb-2">{tool.name}</h3>
-                    <p className="text-muted small mb-4 opacity-75">
-                      {tool.description}
-                    </p>
+                  {/* Card Body */}
+                  <div className="p-3 pt-3 flex-grow-1 d-flex flex-column">
+                    {/* Icon + Title row */}
+                    <div className="d-flex align-items-center gap-3 mb-3">
+                      <div
+                        className="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(168, 85, 247, 0.08))",
+                          border: "1px solid rgba(124, 58, 237, 0.2)",
+                          width: "48px",
+                          height: "48px",
+                          filter: isActive
+                            ? "drop-shadow(0 0 10px rgba(124, 58, 237, 0.4))"
+                            : "none",
+                          transition: "filter 0.3s ease",
+                        }}
+                      >
+                        <div className="text-primary">{tool.icon}</div>
+                      </div>
+                      <div>
+                        <h3
+                          className="h6 fw-bold mb-0"
+                          style={{ lineHeight: 1.3 }}
+                        >
+                          {tool.name}
+                        </h3>
+                        <p
+                          className="text-muted mb-0 mt-1"
+                          style={{ fontSize: "0.78rem", lineHeight: 1.4 }}
+                        >
+                          {tool.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <hr className="my-2 opacity-25" />
 
                     {/* Features */}
-                    <div className="mb-4 text-start bg-secondary bg-opacity-10 p-3 rounded-3">
-                      <h5
-                        className="small fw-bold text-uppercase tracking-wider text-muted mb-3"
-                        style={{ fontSize: "0.75rem", letterSpacing: "1px" }}
+                    <div className="mb-3">
+                      <p
+                        className="small fw-semibold text-uppercase mb-2"
+                        style={{
+                          letterSpacing: "0.8px",
+                          fontSize: "0.68rem",
+                          opacity: 0.65,
+                        }}
                       >
                         Features
-                      </h5>
+                      </p>
                       <ul className="list-unstyled mb-0">
                         {tool.features.slice(0, 3).map((feature, idx) => (
                           <li
@@ -215,41 +243,54 @@ export default function ToolsSlider({ tools, selectedTier }) {
                             className="d-flex align-items-start gap-2 mb-1"
                           >
                             <FiCheck
-                              className="text-success mt-1 flex-shrink-0"
-                              size={14}
+                              className="text-success flex-shrink-0 mt-1"
+                              size={12}
                             />
-                            <span className="small">{feature}</span>
+                            <span style={{ fontSize: "0.8rem" }}>
+                              {feature}
+                            </span>
                           </li>
                         ))}
                         {tool.features.length > 3 && (
-                          <li className="small text-muted ps-4 mt-2 fst-italic">
+                          <li
+                            className="small text-muted ps-4 fst-italic"
+                            style={{ opacity: 0.7, fontSize: "0.75rem" }}
+                          >
                             +{tool.features.length - 3} more features
                           </li>
                         )}
                       </ul>
                     </div>
 
-                    {/* Pricing */}
+                    {/* Pricing Pill */}
                     <div
-                      className="glass-card p-3 mb-4"
+                      className="tools-pricing-box rounded-3 px-3 py-2 mb-3 mt-auto"
                       style={{
-                        background: "rgba(124, 58, 237, 0.03)",
-                        border: "1px solid rgba(124, 58, 237, 0.1)",
+                        background: "rgba(124, 58, 237, 0.05)",
+                        border: "1px solid rgba(124, 58, 237, 0.15)",
                       }}
                     >
-                      <div className="d-flex align-items-center justify-content-center gap-2 mb-1">
-                        <FiZap size={14} className="text-primary" />
-                        <span className="small fw-bold text-uppercase tracking-wider">
-                          {selectedTier} Plan
+                      <div className="d-flex align-items-center justify-content-between">
+                        <div className="d-flex align-items-center gap-2">
+                          <FiZap size={12} className="text-primary" />
+                          <span
+                            className="fw-semibold text-capitalize"
+                            style={{ fontSize: "0.78rem" }}
+                          >
+                            {selectedTier} Plan
+                          </span>
+                        </div>
+                        <span
+                          className="text-muted"
+                          style={{ fontSize: "0.75rem" }}
+                        >
+                          {tool.pricing[selectedTier]}
                         </span>
                       </div>
-                      <p className="mb-0 fw-bold">
-                        {tool.pricing[selectedTier]}
-                      </p>
                     </div>
 
                     {/* CTA */}
-                    <div className="d-flex gap-2 flex-column mt-auto">
+                    <div className="d-flex gap-2 flex-column">
                       {tool.status === "available" ? (
                         <>
                           {tool.demoUrl && (
@@ -262,7 +303,7 @@ export default function ToolsSlider({ tools, selectedTier }) {
                           )}
                           <Link
                             href={`/pricing?tool=${tool.id}`}
-                            className="btn btn-primary btn-sm w-100 py-2 shadow-sm"
+                            className="btn btn-primary btn-sm w-100 py-2"
                           >
                             Get Access
                           </Link>
@@ -272,7 +313,7 @@ export default function ToolsSlider({ tools, selectedTier }) {
                           className="btn btn-outline-light btn-sm w-100 py-2"
                           disabled
                         >
-                          <FiLock size={14} className="me-2" />
+                          <FiLock size={13} className="me-2" />
                           Coming Soon
                         </button>
                       )}

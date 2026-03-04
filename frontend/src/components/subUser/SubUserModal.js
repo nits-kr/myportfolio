@@ -1,5 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 export default function SubUserModal({
   isOpen,
@@ -7,7 +8,14 @@ export default function SubUserModal({
   onSubmit,
   initialData,
 }) {
-  const { register, handleSubmit, reset, setValue } = useForm();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm();
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -81,14 +89,40 @@ export default function SubUserModal({
                     </small>
                   )}
                 </label>
-                <input
-                  type="password"
-                  {...register("password", { required: !initialData })}
-                  className="form-control bg-transparent text-light"
-                  placeholder={
-                    initialData ? "Enter new password" : "Enter password"
-                  }
-                />
+                <div className="position-relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    {...register("password", { required: !initialData })}
+                    className={`form-control bg-transparent text-light pe-5 ${errors?.password ? "is-invalid" : ""}`}
+                    placeholder={
+                      initialData ? "Enter new password" : "Enter password"
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-link position-absolute translate-middle-y text-muted p-0 text-decoration-none"
+                    style={{
+                      right: errors?.password ? "2.8rem" : "1rem",
+                      top: "50%",
+                      zIndex: 10,
+                    }}
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showPassword ? (
+                      <FiEyeOff size={20} />
+                    ) : (
+                      <FiEye size={20} />
+                    )}
+                  </button>
+                </div>
+                {errors?.password && (
+                  <div className="invalid-feedback d-block">
+                    {errors.password.message || "Password is required"}
+                  </div>
+                )}
               </div>
               <div className="mb-3">
                 <label className="form-label">Role</label>

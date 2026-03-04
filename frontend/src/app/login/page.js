@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useLoginMutation } from "@/store/services/portfolioApi";
 
 const safeRedirect = (value) => {
@@ -37,20 +38,27 @@ export default function LoginPage() {
   }, [redirectParam, planParam]);
 
   const [submitError, setSubmitError] = useState("");
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [login, { isLoading, error }] = useLoginMutation();
 
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors },
   } = useForm({ mode: "onTouched" });
 
   const errorMessage =
-    submitError || error?.data?.message || error?.error || "Authentication failed";
+    submitError ||
+    error?.data?.message ||
+    error?.error ||
+    "Authentication failed";
 
   const onSubmit = async (data) => {
     try {
       setSubmitError("");
+      setUnverifiedEmail("");
       await login({ email: data.email, password: data.password }).unwrap();
       router.push(redirectTo);
     } catch (err) {
@@ -58,21 +66,34 @@ export default function LoginPage() {
         err?.data?.message ||
         err?.error ||
         err?.message ||
-        (err?.status ? `Authentication failed (${err.status})` : "Authentication failed");
+        (err?.status
+          ? `Authentication failed (${err.status})`
+          : "Authentication failed");
+
       setSubmitError(message);
+      if (message.includes("not verified")) {
+        setUnverifiedEmail(data.email || getValues("email"));
+      }
     }
   };
 
   return (
     <div className="container d-flex align-items-center justify-content-center py-5">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="col-md-5">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="col-md-5"
+      >
         <div className="glass-card p-5 position-relative z-3">
           <h2 className="text-center fw-bold mb-4">Welcome Back</h2>
 
           {showRegisterHint ? (
             <div className="alert alert-info py-2 text-center" role="alert">
               Login to continue — or{" "}
-              <Link href={registerLink} className="fw-bold text-decoration-none">
+              <Link
+                href={registerLink}
+                className="fw-bold text-decoration-none"
+              >
                 create an account
               </Link>
               .
@@ -80,8 +101,19 @@ export default function LoginPage() {
           ) : null}
 
           {(error || submitError) && (
-            <div className="alert alert-danger fade show" role="alert">
-              {errorMessage}
+            <div
+              className="alert alert-danger fade show text-center py-2"
+              role="alert"
+            >
+              <div>{errorMessage}</div>
+              {unverifiedEmail && (
+                <Link
+                  href={`/register?email=${encodeURIComponent(unverifiedEmail)}&step=2`}
+                  className="btn btn-link btn-sm p-0 fw-bold text-danger text-decoration-none mt-1"
+                >
+                  Verify your account now
+                </Link>
+              )}
             </div>
           )}
 
@@ -101,23 +133,46 @@ export default function LoginPage() {
                   },
                 })}
               />
-              {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
+              {errors.email && (
+                <div className="invalid-feedback">{errors.email.message}</div>
+              )}
             </div>
 
             <div className="mb-4">
               <label className="form-label text-muted">Password</label>
-              <input
-                type="password"
-                suppressHydrationWarning
-                className={`form-control bg-transparent border-secondary ${errors.password ? "is-invalid" : ""}`}
-                placeholder="••••••••"
-                {...register("password", {
-                  required: "Password is required",
-                  minLength: { value: 6, message: "Password must be at least 6 characters" },
-                })}
-              />
+              <div className="position-relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  suppressHydrationWarning
+                  className={`form-control bg-transparent border-secondary pe-5 ${errors.password ? "is-invalid" : ""}`}
+                  placeholder="••••••••"
+                  {...register("password", {
+                    required: "Password is required",
+                    minLength: {
+                      value: 6,
+                      message: "Password must be at least 6 characters",
+                    },
+                  })}
+                />
+                <button
+                  type="button"
+                  suppressHydrationWarning
+                  className="btn btn-link position-absolute translate-middle-y text-muted p-0 text-decoration-none"
+                  style={{
+                    right: errors.password ? "2.8rem" : "1rem",
+                    top: "50%",
+                    zIndex: 10,
+                  }}
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                </button>
+              </div>
               {errors.password && (
-                <div className="invalid-feedback">{errors.password.message}</div>
+                <div className="invalid-feedback d-block">
+                  {errors.password.message}
+                </div>
               )}
             </div>
 
@@ -130,7 +185,12 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <button type="submit" className="btn btn-premium w-100" disabled={isLoading}>
+            <button
+              type="submit"
+              suppressHydrationWarning
+              className="btn btn-premium w-100"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <span
                   className="spinner-border spinner-border-sm me-2"
@@ -145,7 +205,10 @@ export default function LoginPage() {
           <div className="text-center mt-4">
             <p className="mb-0 text-muted small">
               Don&apos;t have an account?{" "}
-              <Link href={registerLink} className="text-primary fw-bold text-decoration-none">
+              <Link
+                href={registerLink}
+                className="text-primary fw-bold text-decoration-none"
+              >
                 Create one
               </Link>
             </p>

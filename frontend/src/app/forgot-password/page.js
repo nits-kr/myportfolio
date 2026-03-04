@@ -11,6 +11,7 @@ import {
 } from "@/store/services/portfolioApi";
 import Link from "next/link";
 import { FaArrowLeft, FaEnvelope, FaLock } from "react-icons/fa";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import OtpInput from "@/components/auth/OtpInput";
 
 export default function ForgotPasswordPage() {
@@ -18,6 +19,8 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState(1); // 1: Send OTP, 2: Verify OTP, 3: Reset Password
   const [email, setEmail] = useState("");
   const [resetToken, setResetToken] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Timer State
   const [timeLeft, setTimeLeft] = useState(0);
@@ -219,9 +222,9 @@ export default function ForgotPasswordPage() {
 
                 <button
                   type="submit"
+                  suppressHydrationWarning
                   className="btn btn-premium w-100 mb-3"
                   disabled={isSendingOtp}
-                  suppressHydrationWarning
                 >
                   {isSendingOtp ? (
                     <>
@@ -248,7 +251,12 @@ export default function ForgotPasswordPage() {
                 {verifyOtpError && renderError(verifyOtpError)}
 
                 <div className="mb-4">
-                  <OtpInput value={otp} onChange={setOtp} autoFocus disabled={isVerifyingOtp} />
+                  <OtpInput
+                    value={otp}
+                    onChange={setOtp}
+                    autoFocus
+                    disabled={isVerifyingOtp}
+                  />
                 </div>
 
                 {/* Timer Section */}
@@ -313,14 +321,11 @@ export default function ForgotPasswordPage() {
                 {resetError && renderError(resetError)}
 
                 <div className="mb-3">
-                  <div className="input-group">
-                    <span className="input-group-text bg-transparent border-end-0 border-secondary text-muted">
-                      <FaLock />
-                    </span>
+                  <div className="position-relative">
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       suppressHydrationWarning
-                      className={`form-control bg-transparent border-start-0 border-secondary ${resetErrors.newPassword ? "is-invalid" : ""}`}
+                      className={`form-control bg-transparent border-secondary pe-5 ${resetErrors.newPassword ? "is-invalid" : ""}`}
                       placeholder="New Password"
                       {...registerReset("newPassword", {
                         required: "Password is required",
@@ -330,23 +335,37 @@ export default function ForgotPasswordPage() {
                         },
                       })}
                     />
+                    <button
+                      type="button"
+                      suppressHydrationWarning
+                      className="btn btn-link position-absolute translate-middle-y text-muted p-0 text-decoration-none"
+                      style={{
+                        right: resetErrors.newPassword ? "2.8rem" : "1rem",
+                        top: "50%",
+                        zIndex: 10,
+                      }}
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <FiEyeOff size={20} />
+                      ) : (
+                        <FiEye size={20} />
+                      )}
+                    </button>
                   </div>
                   {resetErrors.newPassword && (
-                    <div className="text-danger small mt-1 ps-1">
+                    <div className="text-danger small mt-1 ps-1 d-block">
                       {resetErrors.newPassword.message}
                     </div>
                   )}
                 </div>
 
                 <div className="mb-4">
-                  <div className="input-group">
-                    <span className="input-group-text bg-transparent border-end-0 border-secondary text-muted">
-                      <FaLock />
-                    </span>
+                  <div className="position-relative">
                     <input
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"}
                       suppressHydrationWarning
-                      className={`form-control bg-transparent border-start-0 border-secondary ${resetErrors.confirmPassword ? "is-invalid" : ""}`}
+                      className={`form-control bg-transparent border-secondary pe-5 ${resetErrors.confirmPassword ? "is-invalid" : ""}`}
                       placeholder="Confirm Password"
                       {...registerReset("confirmPassword", {
                         validate: (val) => {
@@ -356,9 +375,28 @@ export default function ForgotPasswordPage() {
                         },
                       })}
                     />
+                    <button
+                      type="button"
+                      suppressHydrationWarning
+                      className="btn btn-link position-absolute translate-middle-y text-muted p-0 text-decoration-none"
+                      style={{
+                        right: resetErrors.confirmPassword ? "2.8rem" : "1rem",
+                        top: "50%",
+                        zIndex: 10,
+                      }}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <FiEyeOff size={20} />
+                      ) : (
+                        <FiEye size={20} />
+                      )}
+                    </button>
                   </div>
                   {resetErrors.confirmPassword && (
-                    <div className="text-danger small mt-1 ps-1">
+                    <div className="text-danger small mt-1 ps-1 d-block">
                       {resetErrors.confirmPassword.message}
                     </div>
                   )}
@@ -366,9 +404,9 @@ export default function ForgotPasswordPage() {
 
                 <button
                   type="submit"
+                  suppressHydrationWarning
                   className="btn btn-premium w-100 mb-3"
                   disabled={isResetting}
-                  suppressHydrationWarning
                 >
                   {isResetting ? (
                     <>

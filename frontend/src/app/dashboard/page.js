@@ -142,12 +142,15 @@ function DashboardContent() {
 
   // Tab State
   const requestedTab = searchParams.get("tab");
-  const tab =
-    requestedTab || (user?.role === "sub-admin" ? "blogs" : "projects");
+  const isAdmin = user?.role === "admin";
+  const tab = isAdmin ? requestedTab || "projects" : "blogs";
 
   // Check for edit/view params
   const editId = searchParams.get("edit");
   const viewId = searchParams.get("view");
+
+  const canShowBlogActions =
+    user?.role === "admin" || blogs.some((blog) => blog.author === user?._id);
   const targetId = editId || viewId;
 
   const { data: projectToEditData } = useGetProjectQuery(targetId, {
@@ -381,12 +384,14 @@ function DashboardContent() {
       <div className="container py-5">
         <div className="row mb-5">
           <div className="col">
-            <h1 className="fw-bold">Admin Dashboard</h1>
+            <h1 className="fw-bold">
+              {isAdmin ? "Admin Dashboard" : "Dashboard"}
+            </h1>
             <p className="text-muted mb-4">
               Welcome, {user?.name} ({user?.role})
             </p>
 
-            {user?.role === "admin" && (
+            {isAdmin && (
               <div className="mb-5">
                 <Link href="/dashboard/sub-users" className="btn btn-primary">
                   Manage Sub-Users
@@ -396,7 +401,7 @@ function DashboardContent() {
 
             {/* Tab Navigation */}
             <div className="d-flex gap-3 mb-4">
-              {user?.role === "admin" && (
+              {isAdmin && (
                 <button
                   className={`btn ${tab === "projects" ? "btn-primary" : "btn-outline-light"}`}
                   onClick={() => router.push("/dashboard?tab=projects")}
@@ -815,53 +820,55 @@ function DashboardContent() {
               </small>
             </div>
           </div>
-          <div className="col-md-4">
-            <div className="glass-card h-100 p-4">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <div
-                  className="icon-box bg-purple bg-opacity-10 p-3 rounded-4"
-                  style={{ backgroundColor: "rgba(124, 58, 237, 0.1)" }}
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#7c3aed"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+          {isAdmin && (
+            <div className="col-md-4">
+              <div className="glass-card h-100 p-4">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <div
+                    className="icon-box bg-purple bg-opacity-10 p-3 rounded-4"
+                    style={{ backgroundColor: "rgba(124, 58, 237, 0.1)" }}
                   >
-                    <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
-                    <path d="m12 12 8-4.5" />
-                    <path d="M12 12v9" />
-                    <path d="m12 12-8-4.5" />
-                    <path d="m16 5.25-8 4.5" />
-                  </svg>
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#7c3aed"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
+                      <path d="m12 12 8-4.5" />
+                      <path d="M12 12v9" />
+                      <path d="m12 12-8-4.5" />
+                      <path d="m16 5.25-8 4.5" />
+                    </svg>
+                  </div>
+                  <span
+                    className={`badge bg-${
+                      stats.projectsChangePct > 0
+                        ? "success"
+                        : stats.projectsChangePct < 0
+                          ? "danger"
+                          : "secondary"
+                    } bg-opacity-10 text-${
+                      stats.projectsChangePct > 0
+                        ? "success"
+                        : stats.projectsChangePct < 0
+                          ? "danger"
+                          : "secondary"
+                    } border-0 px-3 py-2 rounded-pill`}
+                  >
+                    {stats.projectsChangePct > 0 ? "+" : ""}
+                    {stats.projectsChangePct}%
+                  </span>
                 </div>
-                <span
-                  className={`badge bg-${
-                    stats.projectsChangePct > 0
-                      ? "success"
-                      : stats.projectsChangePct < 0
-                        ? "danger"
-                        : "secondary"
-                  } bg-opacity-10 text-${
-                    stats.projectsChangePct > 0
-                      ? "success"
-                      : stats.projectsChangePct < 0
-                        ? "danger"
-                        : "secondary"
-                  } border-0 px-3 py-2 rounded-pill`}
-                >
-                  {stats.projectsChangePct > 0 ? "+" : ""}
-                  {stats.projectsChangePct}%
-                </span>
+                <h5 className="text-muted fw-medium mb-1">Projects</h5>
+                <h2 className="display-6 fw-bold mb-0">{stats.projects}</h2>
               </div>
-              <h5 className="text-muted fw-medium mb-1">Projects</h5>
-              <h2 className="display-6 fw-bold mb-0">{stats.projects}</h2>
             </div>
-          </div>
+          )}
           <div className="col-md-4">
             <div className="glass-card h-100 p-4">
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -905,19 +912,25 @@ function DashboardContent() {
                         <th>Subheading</th>
                         <th>Status</th>
                         <th>Date</th>
-                        <th>Action</th>
+                        {user?.role === "admin" && <th>Action</th>}
                       </tr>
                     </thead>
                     <tbody>
                       {isProjectsLoading ? (
                         <tr>
-                          <td colSpan="5" className="text-center py-3">
+                          <td
+                            colSpan={user?.role === "admin" ? 5 : 4}
+                            className="text-center py-3"
+                          >
                             Loading projects...
                           </td>
                         </tr>
                       ) : projects.length === 0 ? (
                         <tr>
-                          <td colSpan="5" className="text-center py-3">
+                          <td
+                            colSpan={user?.role === "admin" ? 5 : 4}
+                            className="text-center py-3"
+                          >
                             No projects found
                           </td>
                         </tr>
@@ -947,26 +960,24 @@ function DashboardContent() {
                                 },
                               )}
                             </td>
-                            <td>
-                              {user?.role === "admin" && (
-                                <>
-                                  <button
-                                    onClick={() => handleEditClick(project)}
-                                    className="btn btn-outline-info btn-sm py-0 px-2 me-2"
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      handleDeleteProject(project._id)
-                                    }
-                                    className="btn btn-outline-danger btn-sm py-0 px-2"
-                                  >
-                                    &times;
-                                  </button>
-                                </>
-                              )}
-                            </td>
+                            {user?.role === "admin" && (
+                              <td>
+                                <button
+                                  onClick={() => handleEditClick(project)}
+                                  className="btn btn-outline-info btn-sm py-0 px-2 me-2"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDeleteProject(project._id)
+                                  }
+                                  className="btn btn-outline-danger btn-sm py-0 px-2"
+                                >
+                                  &times;
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         ))
                       )}
@@ -1058,19 +1069,25 @@ function DashboardContent() {
                         <th>Status</th>
                         <th>Impressions</th>
                         <th>Date</th>
-                        <th>Action</th>
+                        {canShowBlogActions && <th>Action</th>}
                       </tr>
                     </thead>
                     <tbody>
                       {isBlogsLoading ? (
                         <tr>
-                          <td colSpan="5" className="text-center py-3">
+                          <td
+                            colSpan={canShowBlogActions ? 6 : 5}
+                            className="text-center py-3"
+                          >
                             Loading blogs...
                           </td>
                         </tr>
                       ) : blogs.length === 0 ? (
                         <tr>
-                          <td colSpan="5" className="text-center py-3">
+                          <td
+                            colSpan={canShowBlogActions ? 6 : 5}
+                            className="text-center py-3"
+                          >
                             No blogs found
                           </td>
                         </tr>
@@ -1105,25 +1122,28 @@ function DashboardContent() {
                                 },
                               )}
                             </td>
-                            <td>
-                              {(user?.role === "admin" ||
-                                (blog.author && blog.author === user?._id)) && (
-                                <>
-                                  <button
-                                    onClick={() => handleEditBlogClick(blog)}
-                                    className="btn btn-outline-info btn-sm py-0 px-2 me-2"
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteBlog(blog._id)}
-                                    className="btn btn-outline-danger btn-sm py-0 px-2"
-                                  >
-                                    &times;
-                                  </button>
-                                </>
-                              )}
-                            </td>
+                            {canShowBlogActions && (
+                              <td>
+                                {(user?.role === "admin" ||
+                                  (blog.author &&
+                                    blog.author === user?._id)) && (
+                                  <>
+                                    <button
+                                      onClick={() => handleEditBlogClick(blog)}
+                                      className="btn btn-outline-info btn-sm py-0 px-2 me-2"
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteBlog(blog._id)}
+                                      className="btn btn-outline-danger btn-sm py-0 px-2"
+                                    >
+                                      &times;
+                                    </button>
+                                  </>
+                                )}
+                              </td>
+                            )}
                           </tr>
                         ))
                       )}

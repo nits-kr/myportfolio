@@ -21,7 +21,10 @@ export default function OtpInput({
 
   useEffect(() => {
     if (!autoFocus) return;
-    const idx = Math.min(digits.findIndex((d) => d === ""), length - 1);
+    const idx = Math.min(
+      digits.findIndex((d) => d === ""),
+      length - 1,
+    );
     const focusIndex = idx === -1 ? length - 1 : idx;
     inputRefs.current[focusIndex]?.focus?.();
   }, [autoFocus, digits, length]);
@@ -34,7 +37,9 @@ export default function OtpInput({
   };
 
   const handleChange = (index, nextChar) => {
-    const char = String(nextChar || "").replace(/\D/g, "").slice(-1);
+    const char = String(nextChar || "")
+      .replace(/\D/g, "")
+      .slice(-1);
     const nextDigits = [...digits];
     nextDigits[index] = char;
 
@@ -74,7 +79,10 @@ export default function OtpInput({
 
   const handlePaste = (e) => {
     e.preventDefault();
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
+    const pasted = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, length);
     if (!pasted) return;
 
     const nextDigits = new Array(length).fill("");
@@ -95,7 +103,7 @@ export default function OtpInput({
           type="text"
           inputMode="numeric"
           autoComplete={index === 0 ? "one-time-code" : "off"}
-          pattern="\\d*"
+          pattern="[0-9]"
           maxLength={1}
           className="form-control text-center fw-bold"
           style={{ width: 44, height: 52, fontSize: 20 }}
