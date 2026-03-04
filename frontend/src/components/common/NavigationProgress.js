@@ -276,7 +276,7 @@ export default function NavigationProgress() {
         </div>
 
         <div className="np-content">
-          <p className="np-title">Portfolio</p>
+          <p className="np-title">NK Portfolio</p>
           <p className="np-sub">Loading page</p>
           <div className="np-dots">
             <span className="np-dot" />
