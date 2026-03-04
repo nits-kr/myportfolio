@@ -27,6 +27,29 @@ Keep questions concise and focused. One question at a time.`,
 };
 
 /**
+ * Maps technical OpenAI errors to user-friendly messages
+ */
+const mapOpenAIError = (error) => {
+  const status = error.status || error.response?.status;
+  const message = error.message || "";
+
+  if (status === 429) {
+    return "The AI service is currently at capacity or your quota has been reached. Please check your OpenAI billing status and credits.";
+  }
+  if (status === 404) {
+    return "The requested AI model is not available for your API key. We are attempting to use a more accessible version.";
+  }
+  if (status === 401) {
+    return "Invalid OpenAI API key. Please check your server configuration and environment variables.";
+  }
+  if (message.includes("quota") || message.includes("billing")) {
+    return "Your OpenAI account has insufficient credits or has reached its billing limit.";
+  }
+
+  return "An unexpected error occurred while communicating with the AI service. Please try again in a moment.";
+};
+
+/**
  * Generate AI interviewer response
  */
 export const generateInterviewerResponse = async (
@@ -41,7 +64,6 @@ export const generateInterviewerResponse = async (
       role === "custom" ||
       (role !== "frontend" && role !== "backend" && role !== "hr")
     ) {
-      // Use custom data if available, otherwise fallback or generic
       if (customData) {
         systemPrompt = `You are an expert technical interviewer conducting an interview for the role of ${customData.title}.
         
@@ -57,10 +79,6 @@ Instructions:
 - Be encouraging but thorough.
 - Keep questions concise and focused. One question at a time.`;
       } else {
-        // Fallback for when "custom" role title is stored in session but we might not have the full context object re-passed in chat (though we should store it in session normally)
-        // For MVP, if we don't persist customData in DB, the chat continuation might lose context.
-        // ideally we should store customPrompt in the Session model.
-        // For now, let's assume 'role' passed here might be the actual custom title if it's not one of the standard keys
         systemPrompt = `You are an experienced interviewer conducting an interview for the role of ${role}. ask relevant questions.`;
       }
     }
@@ -74,7 +92,7 @@ Instructions:
     ];
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o-mini",
       messages,
       temperature: 0.7,
       max_tokens: 300,
@@ -83,7 +101,7 @@ Instructions:
     return completion.choices[0].message.content;
   } catch (error) {
     console.error("OpenAI API error:", error);
-    throw error;
+    throw new Error(mapOpenAIError(error));
   }
 };
 
@@ -114,7 +132,7 @@ Provide feedback in the following JSON format:
 Be constructive and specific. Focus on technical accuracy, communication clarity, and depth of understanding.`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o-mini",
       messages: [
         { role: "system", content: feedbackSystemPrompt },
         { role: "user", content: prompt },
@@ -127,7 +145,7 @@ Be constructive and specific. Focus on technical accuracy, communication clarity
     return JSON.parse(completion.choices[0].message.content);
   } catch (error) {
     console.error("OpenAI feedback error:", error);
-    throw error;
+    throw new Error(mapOpenAIError(error));
   }
 };
 
@@ -158,7 +176,7 @@ Provide a summary in JSON format:
 }`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.6,
       max_tokens: 600,
@@ -168,7 +186,7 @@ Provide a summary in JSON format:
     return JSON.parse(completion.choices[0].message.content);
   } catch (error) {
     console.error("OpenAI summary error:", error);
-    throw error;
+    throw new Error(mapOpenAIError(error));
   }
 };
 

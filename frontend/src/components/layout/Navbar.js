@@ -43,9 +43,10 @@ export default function Navbar() {
     ...(isMounted && role === "admin"
       ? [{ name: "Services", path: "/services" }]
       : []),
-    ...(isMounted && role === "admin"
-      ? [{ name: "Tools", path: "/tools" }]
-      : []),
+    // ...(isMounted && role === "admin"
+    //   ? [{ name: "Tools", path: "/tools" }]
+    //   : []),
+    { name: "Tools", path: "/tools" },
     { name: "Projects", path: "/projects" },
     { name: "Blogs", path: "/blogs" },
     ...(isMounted && role === "admin"

@@ -374,7 +374,7 @@ export default function ToolsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="glass-card p-4 p-md-5 text-center"
+        className="glass-card p-4 p-md-5 text-center d-none"
         style={{
           background:
             "linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)",
