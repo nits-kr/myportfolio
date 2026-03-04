@@ -629,7 +629,7 @@ export default function PricingPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
-        className="glass-card p-5 text-center mt-5"
+        className="glass-card p-5 text-center mt-5 d-none"
         style={{
           background:
             "linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(168, 85, 247, 0.05) 100%)",
