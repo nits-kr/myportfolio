@@ -37,7 +37,6 @@ export const OnlineStatus = () => {
   const baseStyle = {
     position: "fixed",
     left: "50%",
-    transform: "translateX(-50%)",
     top: "80px",
     zIndex: 9999,
     display: "flex",
@@ -77,9 +76,9 @@ export const OnlineStatus = () => {
       {!isOnline && (
         <motion.div
           key="offline-banner"
-          initial={{ y: -60, opacity: 0, scale: 0.9 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: -60, opacity: 0, scale: 0.9 }}
+          initial={{ y: -60, x: "-50%", opacity: 0, scale: 0.9 }}
+          animate={{ y: 0, x: "-50%", opacity: 1, scale: 1 }}
+          exit={{ y: -60, x: "-50%", opacity: 0, scale: 0.9 }}
           transition={{ type: "spring", damping: 22, stiffness: 280 }}
           style={offlineStyle}
           aria-live="assertive"
@@ -117,9 +116,9 @@ export const OnlineStatus = () => {
       {showOnlineBanner && (
         <motion.div
           key="online-banner"
-          initial={{ y: -60, opacity: 0, scale: 0.9 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: -60, opacity: 0, scale: 0.9 }}
+          initial={{ y: -60, x: "-50%", opacity: 0, scale: 0.9 }}
+          animate={{ y: 0, x: "-50%", opacity: 1, scale: 1 }}
+          exit={{ y: -60, x: "-50%", opacity: 0, scale: 0.9 }}
           transition={{ type: "spring", damping: 22, stiffness: 280 }}
           style={onlineStyle}
           aria-live="polite"

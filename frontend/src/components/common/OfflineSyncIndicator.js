@@ -50,16 +50,15 @@ export const OfflineSyncIndicator = () => {
       {total > 0 && (
         <motion.div
           key="sync-indicator"
-          initial={{ y: 80, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 80, opacity: 0 }}
+          initial={{ y: 80, x: "-50%", opacity: 0 }}
+          animate={{ y: 0, x: "-50%", opacity: 1 }}
+          exit={{ y: 80, x: "-50%", opacity: 0 }}
           transition={{ type: "spring", damping: 20, stiffness: 260 }}
           aria-live="polite"
           style={{
             position: "fixed",
             bottom: "80px", // Above mobile bottom nav
             left: "50%",
-            transform: "translateX(-50%)",
             zIndex: 9990,
             display: "flex",
             alignItems: "center",
