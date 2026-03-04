@@ -69,23 +69,8 @@ export const syncOfflineMutations = async (toastFn = null) => {
         body: mutation.body ? JSON.stringify(mutation.body) : undefined,
       });
 
-      if (
-        response.ok ||
-        (response.status === 404 && mutation.method === "DELETE")
-      ) {
+      if (response.ok) {
         await db.mutations.delete(mutation.id);
-
-        // Clean up any remaining redundant actions for this resource
-        // This handles cases where duplicates might have been added before the fix
-        const redundant = await db.mutations
-          .where({ endpoint: mutation.endpoint, method: mutation.method })
-          .filter((m) => m.id !== mutation.id)
-          .toArray();
-
-        for (const r of redundant) {
-          await db.mutations.delete(r.id);
-        }
-
         successCount++;
       } else if (response.status === 401 || response.status === 403) {
         // Auth failure — no point retrying, remove it
