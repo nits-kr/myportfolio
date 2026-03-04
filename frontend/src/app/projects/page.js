@@ -26,9 +26,14 @@ export default function ProjectsPage() {
   const [deleteProject] = useUpdateDeleteStatusMutation();
   const { theme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
+  // Local state to track optimistically deleted IDs (works both online & offline)
+  const [deletedProjectIds, setDeletedProjectIds] = useState(new Set());
   const router = useRouter();
 
-  const projects = projectsData?.data || [];
+  // Filter out optimistically deleted items
+  const projects = (projectsData?.data || []).filter(
+    (p) => !deletedProjectIds.has(String(p._id)),
+  );
   const role = user?.role;
 
   useEffect(() => {
@@ -63,16 +68,29 @@ export default function ProjectsPage() {
       });
 
       if (result.isConfirmed) {
-        await deleteProject(id).unwrap();
-        Swal.fire({
-          title: "Deleted!",
-          text: "Project has been removed.",
-          icon: "success",
-          background: "var(--glass-bg)",
-          color: "var(--text-color)",
-          timer: 2000,
-          showConfirmButton: false,
-        });
+        // Optimistically hide the item immediately — works offline too
+        setDeletedProjectIds((prev) => new Set([...prev, String(id)]));
+        try {
+          await deleteProject(id);
+          Swal.fire({
+            title: "Deleted!",
+            text: "Project has been removed.",
+            icon: "success",
+            background: "var(--glass-bg)",
+            color: "var(--text-color)",
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        } catch (error) {
+          // Rollback optimistic removal on genuine error
+          setDeletedProjectIds((prev) => {
+            const next = new Set(prev);
+            next.delete(String(id));
+            return next;
+          });
+          console.error("Failed to delete project:", error);
+          Swal.fire("Error!", "Failed to delete project.", "error");
+        }
       }
     } catch (error) {
       console.error("Failed to delete project:", error);

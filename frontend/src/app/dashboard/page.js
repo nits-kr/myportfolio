@@ -43,6 +43,9 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  // Local state to track optimistically deleted IDs (works both online & offline)
+  const [deletedProjectIds, setDeletedProjectIds] = useState(new Set());
+  const [deletedBlogIds, setDeletedBlogIds] = useState(new Set());
 
   useEffect(() => {
     setMounted(true);
@@ -74,8 +77,13 @@ function DashboardContent() {
   const [uploadImage, { isLoading: isUploadingImage }] =
     useUploadImageMutation();
 
-  const projects = projectsData?.data || [];
-  const blogs = blogsData?.data || [];
+  // Filter out optimistically deleted items from rendered lists
+  const projects = (projectsData?.data || []).filter(
+    (p) => !deletedProjectIds.has(String(p._id)),
+  );
+  const blogs = (blogsData?.data?.blogs || blogsData?.data || []).filter(
+    (b) => !deletedBlogIds.has(String(b._id)),
+  );
 
   const {
     register: registerProfile,
@@ -269,12 +277,20 @@ function DashboardContent() {
 
   const handleDeleteProject = async (id) => {
     if (window.confirm("Are you sure you want to delete this project?")) {
+      // Optimistically hide the item immediately — works offline too
+      setDeletedProjectIds((prev) => new Set([...prev, String(id)]));
       try {
-        await deleteProject(id).unwrap();
+        await deleteProject(id);
         if (editingProject?._id === id) {
           handleCancelEdit();
         }
       } catch (err) {
+        // Rollback optimistic removal on genuine error
+        setDeletedProjectIds((prev) => {
+          const next = new Set(prev);
+          next.delete(String(id));
+          return next;
+        });
         console.error("Failed to delete project:", err);
       }
     }
@@ -355,12 +371,20 @@ function DashboardContent() {
 
   const handleDeleteBlog = async (id) => {
     if (window.confirm("Are you sure you want to delete this blog?")) {
+      // Optimistically hide the item immediately — works offline too
+      setDeletedBlogIds((prev) => new Set([...prev, String(id)]));
       try {
-        await deleteBlog(id).unwrap();
+        await deleteBlog(id);
         if (editingBlog?._id === id) {
           handleCancelEditBlog();
         }
       } catch (err) {
+        // Rollback optimistic removal on genuine error
+        setDeletedBlogIds((prev) => {
+          const next = new Set(prev);
+          next.delete(String(id));
+          return next;
+        });
         console.error("Failed to delete blog:", err);
       }
     }
