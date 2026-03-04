@@ -1,13 +1,15 @@
 "use client";
 
+import { use } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useGetProjectQuery } from "@/store/services/projectsApi";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { IoArrowBack } from "react-icons/io5";
 
-export default function ProjectDetailsPage() {
-  const { id } = useParams();
+export default function ProjectDetailsPage({ params }) {
+  const resolvedParams = use(params);
+  const id = resolvedParams.id;
   const router = useRouter();
   const { data: projectData, error, isLoading } = useGetProjectQuery(id);
   const project = projectData?.data;

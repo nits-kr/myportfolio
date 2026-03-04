@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -22,7 +22,8 @@ export default function SessionSummaryPage({ params }) {
   const [summary, setSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const sessionId = params.id;
+  const resolvedParams = use(params);
+  const sessionId = resolvedParams.id;
 
   const fetchSessionDetails = useCallback(async () => {
     try {
@@ -221,7 +222,8 @@ export default function SessionSummaryPage({ params }) {
           <div className="row g-4">
             <div className="col-md-6">
               <h4 className="h6 fw-bold">Strengths</h4>
-              {Array.isArray(summary.strengths) && summary.strengths.length > 0 ? (
+              {Array.isArray(summary.strengths) &&
+              summary.strengths.length > 0 ? (
                 <ul className="mb-0">
                   {summary.strengths.map((item, idx) => (
                     <li key={`strength-${idx}`}>{item}</li>

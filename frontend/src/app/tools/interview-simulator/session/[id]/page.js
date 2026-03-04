@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiSend, FiClock, FiX, FiCheck, FiTrendingUp } from "react-icons/fi";
@@ -22,7 +22,8 @@ export default function InterviewSessionPage({ params }) {
   const messagesEndRef = useRef(null);
   const timerRef = useRef(null);
 
-  const sessionId = params.id;
+  const resolvedParams = use(params);
+  const sessionId = resolvedParams.id;
 
   const fetchSession = useCallback(async () => {
     try {

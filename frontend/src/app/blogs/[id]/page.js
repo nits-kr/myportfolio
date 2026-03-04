@@ -22,7 +22,8 @@ async function getBlogData(id) {
 }
 
 export async function generateMetadata({ params }) {
-  const { blog } = await getBlogData(params.id);
+  const { id } = await params;
+  const { blog } = await getBlogData(id);
 
   if (!blog) {
     return {
@@ -43,7 +44,8 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function BlogDetailsPage({ params }) {
-  const { blog, comments } = await getBlogData(params.id);
+  const { id } = await params;
+  const { blog, comments } = await getBlogData(id);
 
   return <BlogDetailsClient initialBlog={blog} initialComments={comments} />;
 }
