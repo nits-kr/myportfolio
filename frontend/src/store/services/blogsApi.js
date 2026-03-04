@@ -56,6 +56,27 @@ export const blogsApi = apiSlice.injectEndpoints({
         url: `/blogs/${id}`,
         method: "DELETE",
       }),
+      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+        // Optimistic update for empty args (default list)
+        const patchResult = dispatch(
+          blogsApi.util.updateQueryData("getBlogs", undefined, (draft) => {
+            if (draft?.data?.blogs) {
+              draft.data.blogs = draft.data.blogs.filter(
+                (blog) => String(blog._id) !== String(id),
+              );
+            } else if (draft?.data && Array.isArray(draft.data)) {
+              draft.data = draft.data.filter(
+                (blog) => String(blog._id) !== String(id),
+              );
+            }
+          }),
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
       invalidatesTags: ["Blog"],
     }),
     updateBlogDeleteStatus: builder.mutation({

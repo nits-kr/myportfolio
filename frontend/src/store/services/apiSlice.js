@@ -205,12 +205,20 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
 
     // Return optimistic success so UI doesn't freeze
     return {
-      data: {
-        ...(body ?? {}),
-        _id: body?._id || `temp-${Date.now()}`,
-        _offlineStaged: true,
-        _stagedAt: Date.now(),
-      },
+      data:
+        method === "DELETE"
+          ? {
+              success: true,
+              id: url.split("/").pop(), // Crucial for RTK Query cache invalidation
+              _offlineStaged: true,
+              _stagedAt: Date.now(),
+            }
+          : {
+              ...(body ?? {}),
+              _id: body?._id || `temp-${Date.now()}`,
+              _offlineStaged: true,
+              _stagedAt: Date.now(),
+            },
     };
   }
 
@@ -234,8 +242,8 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
           await handleOptimisticOfflineUpdate(method, url, body);
           return {
             data: {
-              ...(body ?? {}),
-              _id: body?._id || `temp-${Date.now()}`,
+              success: true,
+              id: url.split("/").pop(),
               _offlineStaged: true,
               _stagedAt: Date.now(),
               _offlineDuplicate: true,
