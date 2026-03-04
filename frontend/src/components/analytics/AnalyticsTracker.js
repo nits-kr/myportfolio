@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useSelector } from "react-redux";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
@@ -54,7 +54,6 @@ const sendJson = (url, payload, useBeacon = false) => {
 
 export default function AnalyticsTracker() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { user } = useSelector((state) => state.auth);
   const heartbeatRef = useRef(null);
 
@@ -66,7 +65,9 @@ export default function AnalyticsTracker() {
     const sessionId = getSessionId();
     if (!sessionId) return;
 
-    const currentPath = `${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`;
+    // Use window.location.search instead of useSearchParams() hook to avoid Suspense conflicts
+    const search = window.location.search;
+    const currentPath = `${pathname}${search}`;
     const lastPath = localStorage.getItem(LAST_PATH_KEY);
     localStorage.setItem(LAST_PATH_KEY, currentPath);
 
@@ -78,7 +79,7 @@ export default function AnalyticsTracker() {
         referrer: document.referrer || "",
       });
     }
-  }, [pathname, searchParams, user?.role]);
+  }, [pathname, user?.role]); // We also re-run on pathname change to catch search-only updates if needed
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -130,5 +131,5 @@ export default function AnalyticsTracker() {
     };
   }, [pathname, user?.role]);
 
-  return <span style={{ display: "none" }} aria-hidden="true" />;
+  return null;
 }

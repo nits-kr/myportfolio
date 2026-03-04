@@ -1,64 +1,90 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import db from "@/lib/db";
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+// ─── Base query with auth headers ────────────────────────────────────────────
 const baseQuery = fetchBaseQuery({
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
+  baseUrl: BASE_URL,
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.token || localStorage.getItem("token");
-    const user =
-      getState().auth.user || JSON.parse(localStorage.getItem("user"));
+    const user = (() => {
+      try {
+        return getState().auth.user || JSON.parse(localStorage.getItem("user"));
+      } catch {
+        return null;
+      }
+    })();
 
     if (token && user) {
-      if (user.role === "admin") {
-        headers.set("x-auth-token-admin", token);
-      } else {
-        headers.set("x-auth-token-user", token);
-      }
+      headers.set(
+        user.role === "admin" ? "x-auth-token-admin" : "x-auth-token-user",
+        token,
+      );
     }
     return headers;
   },
 });
 
+// ─── Derive a stable cache key from RTK Query args ───────────────────────────
+const getCacheKey = (args) => {
+  if (typeof args === "string") return args;
+  const { url, method = "GET", body } = args;
+  return `${method}:${url}:${JSON.stringify(body ?? {})}`;
+};
+
+// ─── Offline-aware base query ─────────────────────────────────────────────────
 const offlineBaseQuery = async (args, api, extraOptions) => {
   const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
-  const {
-    endpoint,
-    method = "GET",
-    body,
-  } = typeof args === "string" ? { endpoint: args } : args;
-  const cacheKey = typeof args === "string" ? args : JSON.stringify(args);
 
-  // Handle Queries (GET)
+  // Normalize args into a consistent shape
+  const normalized =
+    typeof args === "string"
+      ? { url: args, method: "GET" }
+      : { method: "GET", ...args };
+
+  const { url, method, body } = normalized;
+  const cacheKey = getCacheKey(args);
+
+  // ── GET Requests: Offline-first with background revalidation ─────────────
   if (method === "GET") {
     try {
-      // 1. Try to get from Dexie first (Offline-First)
       const cached = await db.content.get(cacheKey);
 
       if (isOnline) {
-        // 2. If online, fetch from network in background
-        const result = await baseQuery(args, api, extraOptions);
+        try {
+          const result = await baseQuery(args, api, extraOptions);
 
-        if (!result.error) {
-          // 3. Update Dexie with fresh data
-          await db.content.put({
-            key: cacheKey,
-            data: result.data,
-            timestamp: Date.now(),
-          });
+          if (!result.error) {
+            await db.content.put({
+              key: cacheKey,
+              data: result.data,
+              timestamp: Date.now(),
+            });
+            return result;
+          }
+
+          // Network returned an error but we have cache — return cache
+          if (cached) return { data: cached.data };
           return result;
+        } catch {
+          // In-flight error (connection dropped mid-request)
+          if (cached) return { data: cached.data };
+          return {
+            error: {
+              status: "FETCH_ERROR",
+              error: "Network error — using cached data",
+            },
+          };
         }
-
-        // If network fails but we have cache, return cache
-        if (cached) return { data: cached.data };
-        return result;
       }
 
-      // 3. If offline, return cached if available
+      // Offline — serve from cache
       if (cached) return { data: cached.data };
       return {
         error: {
           status: "FETCH_ERROR",
-          error: "Offline and no cached data available",
+          error: "You are offline and this page has no cached data.",
         },
       };
     } catch (err) {
@@ -66,28 +92,46 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
     }
   }
 
-  // Handle Mutations (POST, PATCH, DELETE, etc.)
+  // ── Mutation Requests (POST/PUT/PATCH/DELETE) ─────────────────────────────
   if (!isOnline) {
-    // Stage mutation in WAL (Write-Ahead Log)
-    const mutation = {
-      endpoint: args.url || args,
+    // Stage in WAL (Write-Ahead Log) for later sync
+    await db.mutations.add({
+      endpoint: url, // ✅ Fixed: was using args.url || args — now always uses normalized url
       method,
-      body,
+      body: body ?? null,
       status: "pending",
+      retryCount: 0,
       timestamp: Date.now(),
-    };
-    await db.mutations.add(mutation);
+    });
 
-    // Return optimistic success (assuming the sync will work later)
-    return { data: { ...body, _offlineStaged: true } };
+    // Return optimistic success so UI doesn't freeze
+    return {
+      data: { ...(body ?? {}), _offlineStaged: true, _stagedAt: Date.now() },
+    };
   }
 
-  return baseQuery(args, api, extraOptions);
+  // Online: execute mutation normally, with in-flight error handling
+  try {
+    return await baseQuery(args, api, extraOptions);
+  } catch {
+    // Connection dropped mid-flight — stage for retry
+    await db.mutations.add({
+      endpoint: url,
+      method,
+      body: body ?? null,
+      status: "pending",
+      retryCount: 0,
+      timestamp: Date.now(),
+    });
+    return {
+      data: { ...(body ?? {}), _offlineStaged: true, _stagedAt: Date.now() },
+    };
+  }
 };
 
 export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: offlineBaseQuery,
-  tagTypes: ["Project", "Blog", "Comment"],
-  endpoints: (builder) => ({}),
+  tagTypes: ["Project", "Blog", "Comment", "SubUser"],
+  endpoints: () => ({}),
 });

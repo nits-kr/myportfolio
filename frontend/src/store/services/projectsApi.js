@@ -1,6 +1,7 @@
 import { apiSlice } from "./apiSlice";
 
 export const projectsApi = apiSlice.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     getProjects: builder.query({
       query: () => "/projects",

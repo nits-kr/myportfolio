@@ -1,6 +1,7 @@
 import { apiSlice } from "./apiSlice";
 
 export const blogsApi = apiSlice.injectEndpoints({
+  overrideExisting: true,
   endpoints: (builder) => ({
     getBlogs: builder.query({
       query: (params) => {

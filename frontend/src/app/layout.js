@@ -15,6 +15,7 @@ import GlobalLoader from "@/components/common/GlobalLoader";
 import LogoLoader from "@/components/common/LogoLoader";
 import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 import GlobalPullToRefresh from "@/components/common/GlobalPullToRefresh";
+import OfflineSyncIndicator from "@/components/common/OfflineSyncIndicator";
 import { Toaster } from "react-hot-toast";
 
 export const metadata = {
@@ -50,18 +51,22 @@ export default function RootLayout({ children }) {
       </head>
       <body suppressHydrationWarning={true} className={inter.className}>
         <Providers>
-          {/* <LogoLoader /> */}
           <GlobalLoader />
           <ServiceWorkerRegistration />
           <OnlineStatus />
-          <Suspense fallback={null}>
-            <AnalyticsTracker />
-          </Suspense>
           <BootstrapClient />
+
+          <AnalyticsTracker />
           <Navbar />
           <GlobalPullToRefresh>
-            <main className="main-content">{children}</main>
+            <main className="main-content">
+              <Suspense fallback={null}>{children}</Suspense>
+            </main>
           </GlobalPullToRefresh>
+          <Footer />
+          <MobileBottomNav />
+          <OfflineSyncIndicator />
+
           <Toaster
             position="top-right"
             containerStyle={{
@@ -73,8 +78,6 @@ export default function RootLayout({ children }) {
               duration: 4000,
             }}
           />
-          <Footer />
-          <MobileBottomNav />
         </Providers>
       </body>
     </html>

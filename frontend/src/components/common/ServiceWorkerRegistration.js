@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import toast from "react-hot-toast";
+import { syncOfflineMutations } from "@/services/syncService";
 
 const CHECK_INTERVAL_MS = 60_000; // Check for SW updates every 60 seconds
 
@@ -121,6 +122,18 @@ const ServiceWorkerRegistration = () => {
     } else {
       window.addEventListener("load", registerSW, { once: true });
     }
+
+    // ── Sync pending offline mutations on boot ──────────────────────────────
+    // Boot sync immediately (covers the case where app loaded while offline and then reconnected)
+    syncOfflineMutations(toast);
+
+    // Re-sync every time the connection is restored
+    const handleOnline = () => syncOfflineMutations(toast);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+    };
   }, []);
 
   return null;
