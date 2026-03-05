@@ -64,23 +64,59 @@ const sendTokenResponse = (user, statusCode, res, sendOptions = {}) => {
     });
 };
 
-const generateOtp = () => crypto.randomInt(0, 1000000).toString().padStart(6, "0");
+const generateOtp = () =>
+  crypto.randomInt(0, 1000000).toString().padStart(6, "0");
 
 const otpEmailTemplate = ({ otp, purpose }) => {
   const title =
-    purpose === "password_reset" ? "Password Reset Code" : "Email Verification Code";
+    purpose === "password_reset"
+      ? "Password Reset Code"
+      : "Email Verification Code";
+
+  // Use the FRONTEND_URL environment variable if present, else fallback
+  const logoUrl = `${process.env.FRONTEND_URL || "https://nitish-portfolio.com"}/icons/icon-192x192.png`;
 
   return {
     subject: `${title} (valid for 5 minutes)`,
     text: `Your ${title.toLowerCase()} is: ${otp}. It expires in 5 minutes.`,
     html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.4;">
-        <h2 style="margin: 0 0 12px 0;">${title}</h2>
-        <p style="margin: 0 0 12px 0;">Use the code below to continue. It expires in 5 minutes.</p>
-        <div style="font-size: 28px; letter-spacing: 6px; font-weight: 700; padding: 12px 16px; background: #f5f5f5; display: inline-block; border-radius: 8px;">
-          ${otp}
+      <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #f9fafb;">
+        <div style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb;">
+          
+          <!-- Header -->
+          <div style="padding: 30px; text-align: center; border-bottom: 1px solid #f3f4f6;">
+            <img src="${logoUrl}" alt="Logo" style="width: 64px; height: 64px; border-radius: 16px; margin-bottom: 20px; display: inline-block; box-shadow: 0 4px 10px rgba(124, 58, 237, 0.2);">
+            <h2 style="margin: 0; color: #111827; font-size: 24px; font-weight: 700;">${title}</h2>
+          </div>
+
+          <!-- Body -->
+          <div style="padding: 40px 30px; text-align: center;">
+            <p style="margin: 0 0 24px; color: #4b5563; font-size: 16px; line-height: 1.6;">
+              You've requested an action that requires a security code. Please use the following One-Time Password to proceed. It is valid for exactly <strong>5 minutes</strong>.
+            </p>
+
+            <div style="margin: 32px 0; padding: 24px; background-color: #f3f4f6; border-radius: 8px; border: 1px dashed #d1d5db;">
+              <div style="font-family: monospace; font-size: 40px; letter-spacing: 14px; font-weight: 800; color: #7c3aed; margin-left: 14px;">
+                ${otp}
+              </div>
+            </div>
+
+            <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
+              For your protection, please do not share this code with anyone. If you didn't request this code, no further action is required and you can safely ignore this email.
+            </p>
+          </div>
+
+          <!-- Footer -->
+          <div style="background-color: #f9fafb; padding: 24px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+            <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+              &copy; ${new Date().getFullYear()} Nitish Portfolio. All rights reserved.
+            </p>
+            <p style="margin: 8px 0 0; color: #9ca3af; font-size: 12px;">
+              This is an automated message, please do not reply.
+            </p>
+          </div>
+
         </div>
-        <p style="margin: 16px 0 0 0; color: #666;">If you did not request this, you can ignore this email.</p>
       </div>
     `,
   };
@@ -132,7 +168,9 @@ export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    const existing = await User.findOne({ email }).select("_id isEmailVerified");
+    const existing = await User.findOne({ email }).select(
+      "_id isEmailVerified",
+    );
     if (existing) {
       return res.status(409).json({
         success: false,
@@ -152,7 +190,10 @@ export const register = async (req, res) => {
     });
 
     const otp = generateOtp();
-    await user.setOTP(otp, { purpose: "email_verification", ttlMs: OTP_TTL_MS });
+    await user.setOTP(otp, {
+      purpose: "email_verification",
+      ttlMs: OTP_TTL_MS,
+    });
     await user.save();
 
     const tpl = otpEmailTemplate({ otp, purpose: "email_verification" });
@@ -219,7 +260,10 @@ export const sendEmailVerificationOTP = async (req, res) => {
     }
 
     const otp = generateOtp();
-    await user.setOTP(otp, { purpose: "email_verification", ttlMs: OTP_TTL_MS });
+    await user.setOTP(otp, {
+      purpose: "email_verification",
+      ttlMs: OTP_TTL_MS,
+    });
     await user.save();
 
     const tpl = otpEmailTemplate({ otp, purpose: "email_verification" });
@@ -265,7 +309,9 @@ export const verifyEmailVerificationOTP = async (req, res) => {
 
     const usable = ensureOtpUsable(user, "email_verification");
     if (!usable.ok) {
-      return res.status(usable.status).json({ success: false, message: usable.message });
+      return res
+        .status(usable.status)
+        .json({ success: false, message: usable.message });
     }
 
     const isMatch = await user.matchOTP(otp);
@@ -317,7 +363,9 @@ export const login = async (req, res) => {
 
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: "Invalid password" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid password" });
     }
 
     if (isSubUser && user.status === false) {
@@ -402,7 +450,9 @@ export const sendPasswordResetOTP = async (req, res) => {
       html: tpl.html,
     });
 
-    return res.status(200).json({ success: true, message: "OTP sent successfully" });
+    return res
+      .status(200)
+      .json({ success: true, message: "OTP sent successfully" });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("sendPasswordResetOTP error:", err);
@@ -423,7 +473,9 @@ export const verifyPasswordResetOTP = async (req, res) => {
 
     const usable = ensureOtpUsable(user, "password_reset");
     if (!usable.ok) {
-      return res.status(usable.status).json({ success: false, message: usable.message });
+      return res
+        .status(usable.status)
+        .json({ success: false, message: usable.message });
     }
 
     if (user.isEmailVerified === false) {
@@ -444,10 +496,15 @@ export const verifyPasswordResetOTP = async (req, res) => {
     user.otpLockUntil = undefined;
     await user.save();
 
-    const resetSecret = process.env.JWT_PASSWORD_RESET_SECRET || process.env.JWT_SECRET;
-    const resetToken = jwt.sign({ id: user._id, type: "password_reset" }, resetSecret, {
-      expiresIn: "15m",
-    });
+    const resetSecret =
+      process.env.JWT_PASSWORD_RESET_SECRET || process.env.JWT_SECRET;
+    const resetToken = jwt.sign(
+      { id: user._id, type: "password_reset" },
+      resetSecret,
+      {
+        expiresIn: "15m",
+      },
+    );
 
     return res.status(200).json({
       success: true,
@@ -467,22 +524,29 @@ export const verifyPasswordResetOTP = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { resetToken, password } = req.body;
-    const resetSecret = process.env.JWT_PASSWORD_RESET_SECRET || process.env.JWT_SECRET;
+    const resetSecret =
+      process.env.JWT_PASSWORD_RESET_SECRET || process.env.JWT_SECRET;
 
     let decoded;
     try {
       decoded = jwt.verify(resetToken, resetSecret);
     } catch {
-      return res.status(401).json({ success: false, message: "Invalid or expired reset token" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid or expired reset token" });
     }
 
     if (!decoded || decoded.type !== "password_reset" || !decoded.id) {
-      return res.status(401).json({ success: false, message: "Invalid or expired reset token" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid or expired reset token" });
     }
 
     const user = await User.findById(decoded.id).select("+password");
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     user.password = password;
@@ -508,7 +572,9 @@ export const getMe = async (req, res) => {
     if (!user) user = await SubUser.findById(req.user.id);
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     return res.status(200).json({
