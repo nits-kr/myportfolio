@@ -254,7 +254,43 @@
         transform: translateY(-2px);
       }
 
-      /* Connection status indicator */
+      .nav-bar {
+        position: absolute;
+        top: 2rem;
+        left: 2rem;
+        right: 2rem;
+        display: flex;
+        justify-content: flex-start;
+      }
+
+      .btn-back-circle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--primary);
+        border: 1px solid var(--primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+      }
+
+      .btn-back-circle:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px var(--primary-glow);
+      }
+
+      .btn-back-circle svg {
+        width: 20px;
+        height: 20px;
+        fill: currentColor;
+      }
+
       .connection-status {
         margin-top: 2rem;
         display: flex;
@@ -279,6 +315,15 @@
     </style>
   </head>
   <body>
+    <!-- Top Nav -->
+    <div class="nav-bar">
+      <button onclick="goBack()" class="btn-back-circle" title="Go Back">
+        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <path d="M321.94 98L158.82 237.78C152.28 243.28 152.28 253.72 158.82 259.22L321.94 399" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="48"/>
+        </svg>
+      </button>
+    </div>
+
     <div class="container">
       <!-- Icon -->
       <div class="icon-wrapper">
@@ -342,6 +387,14 @@
         } else {
           el.classList.remove("online");
           text.textContent = "No internet connection";
+        }
+      }
+
+      function goBack() {
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          window.location.href = '/';
         }
       }
 
