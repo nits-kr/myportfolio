@@ -73,8 +73,13 @@ const otpEmailTemplate = ({ otp, purpose }) => {
       ? "Password Reset Code"
       : "Email Verification Code";
 
-  // Use the FRONTEND_URL environment variable if present, else fallback
-  const logoUrl = `${process.env.FRONTEND_URL || "https://nitish-portfolio.com"}/icons/icon-192x192.png`;
+  // Use LOGO_URL if defined, otherwise build it from FRONTEND_URL
+  const frontendUrl = (process.env.FRONTEND_URL || "").replace(/\/+$/, "");
+  const logoUrl =
+    process.env.LOGO_URL ||
+    (frontendUrl
+      ? `${frontendUrl}/icons/icon-192x192.png`
+      : "https://nitish-portfolio.com/icons/icon-192x192.png");
 
   return {
     subject: `${title} (valid for 5 minutes)`,
