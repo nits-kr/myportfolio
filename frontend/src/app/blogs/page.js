@@ -419,130 +419,136 @@ const BlogCard = ({
 }) => {
   const canManageBlog =
     role === "admin" ||
-    (role === "sub-admin" && blog?.author && String(blog.author) === String(userId));
+    (role === "sub-admin" &&
+      blog?.author &&
+      String(blog.author) === String(userId));
 
   return (
     <div className="glass-card h-100 p-4 d-flex flex-column group hover-lift border-1 border-white border-opacity-5">
-    {/* Header Actions */}
-    <div className="d-flex justify-content-between align-items-center mb-4">
-      <div className="d-flex align-items-center gap-2 text-muted small">
-        <FiCalendar />
-        {new Date(blog.createdAt).toLocaleDateString(undefined, {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })}
+      {/* Header Actions */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="d-flex align-items-center gap-2 text-muted small">
+          <FiCalendar />
+          {new Date(blog.createdAt).toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </div>
+
+        <div className="d-flex gap-2">
+          {/* View Button */}
+          <button
+            onClick={() => handleView(blog._id)}
+            className="btn btn-glass btn-icon-round"
+            title="Read More"
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={theme}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="d-flex align-items-center justify-content-center w-100 h-100"
+              >
+                <FiEye size={18} />
+              </motion.div>
+            </AnimatePresence>
+          </button>
+          {canManageBlog && (
+            <>
+              <button
+                onClick={() => handleEdit(blog._id)}
+                className="btn btn-glass btn-icon-round text-info"
+                title="Edit"
+              >
+                <FiEdit2 size={16} />
+              </button>
+              <button
+                onClick={() => handleDelete(blog._id)}
+                className="btn btn-glass btn-icon-round text-danger"
+                title="Delete"
+              >
+                <FiTrash2 size={16} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      <div className="d-flex gap-2">
-        {/* View Button */}
-        <button
-          onClick={() => handleView(blog._id)}
-          className="btn btn-glass btn-icon-round"
-          title="Read More"
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={theme}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="d-flex align-items-center justify-content-center w-100 h-100"
-            >
-              <FiEye size={18} />
-            </motion.div>
-          </AnimatePresence>
-        </button>
-        {canManageBlog && (
-          <>
-            <button
-              onClick={() => handleEdit(blog._id)}
-              className="btn btn-glass btn-icon-round text-info"
-              title="Edit"
-            >
-              <FiEdit2 size={16} />
-            </button>
-            <button
-              onClick={() => handleDelete(blog._id)}
-              className="btn btn-glass btn-icon-round text-danger"
-              title="Delete"
-            >
-              <FiTrash2 size={16} />
-            </button>
-          </>
+      <div className="flex-grow-1">
+        <div className="mb-2">
+          <span
+            className={`badge ${blog.status === "Published" ? "bg-success bg-opacity-10 text-success" : "bg-warning bg-opacity-10 text-warning"}`}
+          >
+            {blog.status}
+          </span>
+        </div>
+        {blog.image && (
+          <div
+            className="mb-3"
+            style={{
+              borderRadius: "12px",
+              overflow: "hidden",
+              height: "200px",
+            }}
+          >
+            <ImageWithSpinner src={blog.image} alt={blog.title} />
+          </div>
         )}
+        <h3 className="h4 fw-bold mb-3 project-title-hover">{blog?.title}</h3>
+
+        <p className="small text-muted mb-4 line-clamp-3">
+          {blog?.subheading ||
+            (isMounted
+              ? stripHtml(blog.body).substring(0, 100) + "..."
+              : "Reading...")}
+        </p>
       </div>
-    </div>
 
-    <div className="flex-grow-1">
-      <div className="mb-2">
-        <span
-          className={`badge ${blog.status === "Published" ? "bg-success bg-opacity-10 text-success" : "bg-warning bg-opacity-10 text-warning"}`}
-        >
-          {blog.status}
-        </span>
-      </div>
-      {blog.image && (
-        <div
-          className="mb-3"
-          style={{ borderRadius: "12px", overflow: "hidden", height: "200px" }}
-        >
-          <ImageWithSpinner src={blog.image} alt={blog.title} />
-        </div>
-      )}
-      <h3 className="h4 fw-bold mb-3 project-title-hover">{blog?.title}</h3>
-
-      <p className="small text-muted mb-4 line-clamp-3">
-        {blog?.subheading ||
-          (isMounted
-            ? stripHtml(blog.body).substring(0, 100) + "..."
-            : "Reading...")}
-      </p>
-    </div>
-
-    <div className="mt-auto pt-4 border-top border-white border-opacity-5">
-      <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center gap-4">
-          <div className="position-relative" title="Likes">
-            <FiHeart className="text-secondary" size={18} />
-            <span
-              className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary text-white fw-bold d-flex align-items-center justify-content-center"
-              style={{
-                fontSize: "0.6rem",
-                height: "18px",
-                minWidth: "18px",
-                padding: "0",
-              }}
-            >
-              {blog.likesCount || 0}
-            </span>
+      <div className="mt-auto pt-4 border-top border-white border-opacity-5">
+        <div className="d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center gap-4">
+            <div className="position-relative" title="Likes">
+              <FiHeart className="text-secondary" size={18} />
+              <span
+                className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary text-white fw-bold d-flex align-items-center justify-content-center"
+                style={{
+                  fontSize: "0.6rem",
+                  height: "18px",
+                  minWidth: "18px",
+                  padding: "0",
+                }}
+              >
+                {blog.likesCount || 0}
+              </span>
+            </div>
+            <div className="position-relative" title="Comments">
+              <FiMessageSquare className="text-secondary" size={18} />
+              <span
+                className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary text-white fw-bold d-flex align-items-center justify-content-center"
+                style={{
+                  fontSize: "0.6rem",
+                  height: "18px",
+                  minWidth: "18px",
+                  padding: "0",
+                }}
+              >
+                {blog.commentsCount || 0}
+              </span>
+            </div>
           </div>
-          <div className="position-relative" title="Comments">
-            <FiMessageSquare className="text-secondary" size={18} />
-            <span
-              className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary text-white fw-bold d-flex align-items-center justify-content-center"
-              style={{
-                fontSize: "0.6rem",
-                height: "18px",
-                minWidth: "18px",
-                padding: "0",
-              }}
-            >
-              {blog.commentsCount || 0}
-            </span>
-          </div>
+          <Link
+            href={`/blogs/${blog._id}`}
+            className="btn btn-link btn-sm text-secondary text-decoration-none fw-bold p-0 text-uppercase tracking-wider"
+            style={{ fontSize: "0.75rem" }}
+          >
+            Read Article &rarr;
+          </Link>
         </div>
-        <Link
-          href={`/blogs/${blog._id}`}
-          className="btn btn-link btn-sm text-secondary text-decoration-none fw-bold p-0 text-uppercase tracking-wider"
-          style={{ fontSize: "0.75rem" }}
-        >
-          Read Article &rarr;
-        </Link>
       </div>
     </div>
-  </div>
   );
 };
 
@@ -588,7 +594,6 @@ const BlogCardSkeleton = () => (
   </div>
 );
 
-// High-Fidelity iOS Style SVG Spinner Component
 const IOSSpinner = ({ active = false }) => (
   <svg
     className={`ios-spinner ${active ? "active" : ""}`}
