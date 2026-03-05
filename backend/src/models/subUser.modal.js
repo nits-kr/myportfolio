@@ -29,15 +29,6 @@ const subUserSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-    validate: {
-      validator: function (v) {
-        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
-          v,
-        );
-      },
-      message: (props) =>
-        `${props.value} is not a valid password! Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character.`,
-    },
   },
   role: {
     type: String,
