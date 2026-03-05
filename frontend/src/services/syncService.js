@@ -63,10 +63,21 @@ export const syncOfflineMutations = async (toastFn = null) => {
         process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
       const url = `${baseUrl}${mutation.endpoint}`;
 
+      let bodyToSend = mutation.body ? { ...mutation.body } : undefined;
+
+      // Strip offline temporary IDs before syncing because the backend will reject them with a 500 CastError
+      if (
+        bodyToSend &&
+        bodyToSend._id &&
+        String(bodyToSend._id).startsWith("temp-")
+      ) {
+        delete bodyToSend._id;
+      }
+
       const response = await fetch(url, {
         method: mutation.method,
         headers: getAuthHeaders(),
-        body: mutation.body ? JSON.stringify(mutation.body) : undefined,
+        body: bodyToSend ? JSON.stringify(bodyToSend) : undefined,
       });
 
       if (response.ok) {
