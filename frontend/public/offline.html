@@ -400,7 +400,6 @@
 
       window.addEventListener("online", () => {
         updateStatus();
-        // Auto-reload after 1s when online
         setTimeout(() => window.location.reload(), 1000);
       });
       window.addEventListener("offline", updateStatus);
