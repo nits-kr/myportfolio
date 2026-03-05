@@ -174,6 +174,14 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
 
   // ── Mutation Requests (POST/PUT/PATCH/DELETE) ─────────────────────────────
   if (!isOnline) {
+    // Generate a consistent offline ID now to ensure WAL and Cache share the exact same temp ID
+    let finalBody = body;
+    if (finalBody && typeof finalBody === "object" && !finalBody._id) {
+      if (method === "POST" || method === "PUT" || method === "PATCH") {
+        finalBody = { ...finalBody, _id: `temp-${Date.now()}` };
+      }
+    }
+
     // Prevent duplicate DELETE operations in the offline queue
     const isDeleteEquivalent =
       method === "DELETE" ||
@@ -181,12 +189,34 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
 
     if (isDeleteEquivalent) {
       try {
-        const pendingDeletes = await db.mutations
+        const pendingMutations = await db.mutations
           .where("status")
           .equals("pending")
           .toArray();
 
-        const isAlreadyQueued = pendingDeletes.some(
+        // Check if there is a pending POST mutation for this exact item that hasn't synced yet.
+        // We know it's the exact item if the ID matches the end of the URL.
+        const idToDelete = url.split("/").pop();
+
+        // Find if this item was generated offline (it has a temp ID in the pending POST requests)
+        const pendingPost = pendingMutations.find(
+          (m) =>
+            m.method === "POST" &&
+            (m.body?._id === idToDelete || String(m.id) === idToDelete), // Sometimes the temp ID is not in body
+        );
+
+        if (pendingPost) {
+          // We created this offline, and now we are deleting it offline before it ever synced!
+          // Just delete the POST from the WAL and skip queuing the DELETE. They cancel each other out.
+          console.log(
+            `[Offline] Pruning pending POST for ${idToDelete} as it was deleted before syncing.`,
+          );
+          await db.mutations.delete(pendingPost.id);
+          await handleOptimisticOfflineUpdate(method, url, finalBody);
+          return { data: { success: true, _offlinePruned: true } };
+        }
+
+        const isAlreadyQueued = pendingMutations.some(
           (m) =>
             m.endpoint === url &&
             (m.method === "DELETE" || m.endpoint.includes("/delete-status")),
@@ -194,7 +224,7 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
 
         if (isAlreadyQueued) {
           // Already queued for deletion! Apply optimistic patch again just in case, and short-circuit.
-          await handleOptimisticOfflineUpdate(method, url, body);
+          await handleOptimisticOfflineUpdate(method, url, finalBody);
           return { data: { success: true, _offlineDuplicate: true } };
         }
       } catch (err) {
@@ -206,14 +236,14 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
     await db.mutations.add({
       endpoint: url, // ✅ always uses normalized url
       method,
-      body: body ?? null,
+      body: finalBody ?? null,
       status: "pending",
       retryCount: 0,
       timestamp: Date.now(),
     });
 
     // Apply optimistic update to local cache
-    await handleOptimisticOfflineUpdate(method, url, body);
+    await handleOptimisticOfflineUpdate(method, url, finalBody);
 
     // Return optimistic success so UI doesn't freeze
     const isDeleteEquivalentResponse =
@@ -229,8 +259,8 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
             _stagedAt: Date.now(),
           }
         : {
-            ...(body ?? {}),
-            _id: body?._id || `temp-${Date.now()}`,
+            ...(finalBody ?? {}),
+            _id: finalBody?._id,
             _offlineStaged: true,
             _stagedAt: Date.now(),
           },
@@ -239,8 +269,33 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
 
   // Online: execute mutation normally, with in-flight error handling
   try {
-    return await baseQuery(args, api, extraOptions);
+    const result = await baseQuery(args, api, extraOptions);
+
+    // Fix: If the backend returns data: {} but success is true (like createProject),
+    // inject the request body so Redux doesn't overwrite cache with empty objects
+    if (
+      result.data &&
+      result.data.success &&
+      Object.keys(result.data.data || {}).length === 0
+    ) {
+      if (method === "POST" || method === "PUT" || method === "PATCH") {
+        result.data.data = {
+          ...body,
+          // The backend didn't give us the real ID, so we might still need to rely on a temp one in local cache if we didn't refetch
+          _id: body?._id || `temp-${Date.now()}`,
+        };
+      }
+    }
+    return result;
   } catch {
+    // Generate a consistent offline ID now to ensure WAL and Cache share the exact same temp ID
+    let finalBody = body;
+    if (finalBody && typeof finalBody === "object" && !finalBody._id) {
+      if (method === "POST" || method === "PUT" || method === "PATCH") {
+        finalBody = { ...finalBody, _id: `temp-${Date.now()}` };
+      }
+    }
+
     // Prevent duplicate DELETE operations for dropped flights too!
     const isDeleteEquivalent =
       method === "DELETE" ||
@@ -260,7 +315,7 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
         );
 
         if (isAlreadyQueued) {
-          await handleOptimisticOfflineUpdate(method, url, body);
+          await handleOptimisticOfflineUpdate(method, url, finalBody);
           return {
             data: {
               success: true,
@@ -278,19 +333,19 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
     await db.mutations.add({
       endpoint: url,
       method,
-      body: body ?? null,
+      body: finalBody ?? null,
       status: "pending",
       retryCount: 0,
       timestamp: Date.now(),
     });
 
     // Apply optimistic update to local cache
-    await handleOptimisticOfflineUpdate(method, url, body);
+    await handleOptimisticOfflineUpdate(method, url, finalBody);
 
     return {
       data: {
-        ...(body ?? {}),
-        _id: body?._id || `temp-${Date.now()}`,
+        ...(finalBody ?? {}),
+        _id: finalBody?._id,
         _offlineStaged: true,
         _stagedAt: Date.now(),
       },
