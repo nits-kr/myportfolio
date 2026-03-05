@@ -271,6 +271,12 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
   try {
     const result = await baseQuery(args, api, extraOptions);
 
+    if (result.error) {
+      // If it's a genuine API error returned normally (like 400 Validation Error)
+      // We should just return the error so RTK Query handles it as a failed mutation.
+      return result;
+    }
+
     // Fix: If the backend returns data: {} but success is true (like createProject),
     // inject the request body so Redux doesn't overwrite cache with empty objects
     if (
