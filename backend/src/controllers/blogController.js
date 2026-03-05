@@ -6,9 +6,7 @@ const canManageBlog = (blog, user) => {
   if (!user) return false;
   if (user.role === "admin") return true;
   if (user.role !== "sub-admin") return false;
-  return (
-    Boolean(blog?.author) && blog.author.toString() === user.id.toString()
-  );
+  return Boolean(blog?.author) && blog.author.toString() === user.id.toString();
 };
 
 // @desc    Get all blogs (Public view - only published)
@@ -152,7 +150,7 @@ export const createBlog = async (req, res, next) => {
       data: blog,
     });
   } catch (err) {
-    console.error("Create Blog Error:", err); // Log the actual error
+    console.error("Create Blog Error:", err);
     if (err.name === "ValidationError") {
       const messages = Object.values(err.errors).map((val) => val.message);
       return res.status(400).json({
@@ -160,11 +158,18 @@ export const createBlog = async (req, res, next) => {
         message: "Validation Error",
         error: messages,
       });
+    } else if (err.code === 11000 || err.name === "MongoServerError") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "A blog with this title already exists. Please use a different title.",
+        error: "Duplicate blog title",
+      });
     } else {
       res.status(500).json({
         success: false,
         message: "Server Error",
-        error: err.message, // Send actual error message to client for debugging
+        error: err.message,
       });
     }
   }
@@ -193,10 +198,12 @@ export const updateBlog = async (req, res, next) => {
       });
     }
 
-    blog = await Blog.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    // Explicitly set updatedAt because findByIdAndUpdate bypasses pre-save hooks
+    blog = await Blog.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, updatedAt: Date.now() },
+      { new: true, runValidators: true },
+    );
 
     res.status(200).json({
       success: true,
@@ -210,6 +217,14 @@ export const updateBlog = async (req, res, next) => {
         success: false,
         message: "Validation Error",
         error: messages,
+      });
+    } else if (err.code === 11000 || err.name === "MongoServerError") {
+      // Duplicate slug (or any other unique field collision)
+      return res.status(400).json({
+        success: false,
+        message:
+          "A blog with this title already exists. Please use a different title.",
+        error: "Duplicate blog title",
       });
     } else {
       res.status(500).json({

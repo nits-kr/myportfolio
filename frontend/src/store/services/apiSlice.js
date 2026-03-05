@@ -100,11 +100,18 @@ const offlineBaseQuery = async (args, api, extraOptions) => {
       const isBlog = cleanEndpoint.includes("/blogs");
       if (!isProject && !isBlog) return;
 
+      // Strip binary/non-UI fields so they are never stored in the list cache.
+      // image_base64 can be several MB — it lives only in the WAL (mutations table),
+      // not in the content cache. Also inject createdAt so date columns never
+      // render "Invalid Date" for offline-staged items.
+      const { image_base64, image_name, ...cleanBodyData } = bodyData || {};
       const stagedItem = {
-        ...bodyData,
-        _id: bodyData?._id || `temp-${Date.now()}`,
+        ...cleanBodyData,
+        _id: cleanBodyData?._id || `temp-${Date.now()}`,
         _offlineStaged: true,
         _stagedAt: Date.now(),
+        // Guarantee a valid date so list renderers never display "Invalid Date"
+        createdAt: cleanBodyData?.createdAt || new Date().toISOString(),
       };
 
       const allCaches = await db.content.toArray();

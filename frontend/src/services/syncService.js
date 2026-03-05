@@ -74,6 +74,59 @@ export const syncOfflineMutations = async (toastFn = null) => {
         delete bodyToSend._id;
       }
 
+      // ── Offline-staged image: reconstruct FormData from Base64 and upload first ──
+      // When a blog was submitted offline with an image file, the file was encoded
+      // as a Base64 data URI (plain string) so it could be serialized into Dexie.
+      // Now that we're back online, we decode it, upload to /upload, and replace
+      // the image_base64 field with the real returned URL before saving the blog.
+      if (bodyToSend?.image_base64) {
+        try {
+          // Decode the data URI into a Blob
+          const fetchRes = await fetch(bodyToSend.image_base64);
+          const blob = await fetchRes.blob();
+
+          const imageFormData = new FormData();
+          imageFormData.append(
+            "image",
+            new File([blob], bodyToSend.image_name || "image.jpg", {
+              type: blob.type,
+            }),
+          );
+
+          // Build auth headers but DO NOT set Content-Type — the browser must
+          // set it automatically with the multipart boundary for FormData uploads.
+          const uploadHeaders = { ...getAuthHeaders() };
+          delete uploadHeaders["Content-Type"];
+
+          const uploadRes = await fetch(`${baseUrl}/upload`, {
+            method: "POST",
+            headers: uploadHeaders,
+            body: imageFormData,
+          });
+
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            if (uploadData.success && uploadData.url) {
+              bodyToSend.image = uploadData.url; // ← real CDN/server URL
+            }
+          } else {
+            console.warn(
+              "[SyncService] Image upload failed during sync, blog will be saved without image.",
+            );
+          }
+        } catch (err) {
+          // Image upload failed. Still proceed to save the blog rather than losing it.
+          console.warn(
+            "[SyncService] Failed to reconstruct/upload offline image:",
+            err.message,
+          );
+        } finally {
+          // Always clean up the staging fields — they must never reach the blog API
+          delete bodyToSend.image_base64;
+          delete bodyToSend.image_name;
+        }
+      }
+
       const response = await fetch(url, {
         method: mutation.method,
         headers: getAuthHeaders(),

@@ -157,8 +157,11 @@ function DashboardContent() {
   const editId = searchParams.get("edit");
   const viewId = searchParams.get("view");
 
+  // Show Edit/Delete action column for admin or any sub-admin.
+  // Fine-grained per-row ownership check (blog.author vs user._id) handles
+  // the case where a sub-admin sees another author's blog in the same list.
   const canShowBlogActions =
-    user?.role === "admin" || blogs.some((blog) => blog.author === user?._id);
+    user?.role === "admin" || user?.role === "sub-admin";
   const targetId = editId || viewId;
 
   const { data: projectToEditData } = useGetProjectQuery(targetId, {
@@ -306,11 +309,27 @@ function DashboardContent() {
 
       // Handle image upload if a file is selected
       if (data.image && data.image[0] instanceof File) {
-        const formData = new FormData();
-        formData.append("image", data.image[0]);
-        const uploadResult = await uploadImage(formData).unwrap();
-        if (uploadResult.success) {
-          finalData.image = uploadResult.url;
+        if (!navigator.onLine) {
+          // Offline: FormData cannot be serialized to Dexie WAL.
+          // Convert the file to a Base64 data URI (plain string — fully serializable)
+          // so syncService can reconstruct + upload it on reconnect.
+          const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(data.image[0]);
+          });
+          finalData.image_base64 = base64;
+          finalData.image_name = data.image[0].name;
+          delete finalData.image; // no URL yet — syncService will fill it in
+        } else {
+          // Online: upload immediately and use the returned URL
+          const formData = new FormData();
+          formData.append("image", data.image[0]);
+          const uploadResult = await uploadImage(formData).unwrap();
+          if (uploadResult.success) {
+            finalData.image = uploadResult.url;
+          }
         }
       } else if (editingBlog && editingBlog.image) {
         // Preserve existing image URL if editing and no new image is selected
@@ -1137,20 +1156,23 @@ function DashboardContent() {
                               </span>
                             </td>
                             <td>
-                              {new Date(blog.createdAt).toLocaleDateString(
-                                "en-US",
-                                {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                },
-                              )}
+                              {blog.createdAt
+                                ? new Date(blog.createdAt).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
+                                    },
+                                  )
+                                : "Just now"}
                             </td>
                             {canShowBlogActions && (
                               <td>
                                 {(user?.role === "admin" ||
                                   (blog.author &&
-                                    blog.author === user?._id)) && (
+                                    String(blog.author) ===
+                                      String(user?._id))) && (
                                   <>
                                     <button
                                       onClick={() => handleEditBlogClick(blog)}
@@ -1208,14 +1230,16 @@ function DashboardContent() {
                           <div className="d-flex justify-content-between align-items-center">
                             <div className="d-flex align-items-center gap-3">
                               <small className="text-muted">
-                                {new Date(blog.createdAt).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                  },
-                                )}
+                                {blog.createdAt
+                                  ? new Date(blog.createdAt).toLocaleDateString(
+                                      "en-US",
+                                      {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                      },
+                                    )
+                                  : "Just now"}
                               </small>
                               <small className="text-accent fw-bold d-flex align-items-center gap-1">
                                 <i className="bi bi-eye"></i> {blog.views || 0}
@@ -1223,7 +1247,9 @@ function DashboardContent() {
                             </div>
                             <div className="d-flex gap-2">
                               {(user?.role === "admin" ||
-                                (blog.author && blog.author === user?._id)) && (
+                                (blog.author &&
+                                  String(blog.author) ===
+                                    String(user?._id))) && (
                                 <>
                                   <button
                                     onClick={() => handleEditBlogClick(blog)}
