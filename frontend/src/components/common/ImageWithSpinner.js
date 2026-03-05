@@ -2,13 +2,41 @@
 
 import { useState, useRef, useEffect } from "react";
 
-// High-Fidelity iOS Style Spinner
+// High-Fidelity iOS Style Spinner (Self-contained SVG to prevent missing CSS issues)
 const IOSSpinner = () => (
-  <div className="ios-spinner">
+  <svg
+    viewBox="0 0 24 24"
+    width="28"
+    height="28"
+    stroke="rgba(255, 255, 255, 0.85)"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
+  >
+    <style>
+      {`
+        .img-spinner-blade {
+          animation: img-spinner-fade 1s linear infinite;
+        }
+        @keyframes img-spinner-fade {
+          0% { opacity: 1; }
+          100% { opacity: 0.15; }
+        }
+      `}
+    </style>
     {[...Array(12)].map((_, i) => (
-      <div key={i}></div>
+      <line
+        key={i}
+        x1="12"
+        y1="3"
+        x2="12"
+        y2="7"
+        className="img-spinner-blade"
+        transform={`rotate(${i * 30} 12 12)`}
+        style={{ animationDelay: `${-1 + i * (1 / 12)}s` }}
+      />
     ))}
-  </div>
+  </svg>
 );
 
 /**
