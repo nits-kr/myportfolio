@@ -199,6 +199,8 @@ export const getAnalyticsStats = async (req, res) => {
       AnalyticsSession.countDocuments(),
     ]);
 
+    const isAll = windowParam === "all";
+
     const [
       currentViews,
       prevViews,
@@ -208,19 +210,21 @@ export const getAnalyticsStats = async (req, res) => {
       prevMessages,
       totalProjects,
     ] = await Promise.all([
-      PageView.countDocuments({
-        createdAt: { $gte: currentStart, $lt: now },
-      }),
+      PageView.countDocuments(
+        isAll ? {} : { createdAt: { $gte: currentStart, $lt: now } },
+      ),
       PageView.countDocuments({
         createdAt: { $gte: prevStart, $lt: prevEnd },
       }),
-      Project.countDocuments({ createdAt: { $gte: currentStart, $lt: now } }),
+      Project.countDocuments(
+        isAll ? {} : { createdAt: { $gte: currentStart, $lt: now } },
+      ),
       Project.countDocuments({
         createdAt: { $gte: prevStart, $lt: prevEnd },
       }),
-      InterviewMessage.countDocuments({
-        timestamp: { $gte: currentStart, $lt: now },
-      }),
+      InterviewMessage.countDocuments(
+        isAll ? {} : { timestamp: { $gte: currentStart, $lt: now } },
+      ),
       InterviewMessage.countDocuments({
         timestamp: { $gte: prevStart, $lt: prevEnd },
       }),
