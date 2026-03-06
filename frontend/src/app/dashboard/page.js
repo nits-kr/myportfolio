@@ -450,7 +450,7 @@ function DashboardContent() {
         ? null
         : analyticsStatsData?.data?.messagesChangePct,
   };
-  bitumen;
+
   return (
     <ProtectedRoute>
       <div className="container py-5">
