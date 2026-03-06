@@ -433,12 +433,13 @@ function DashboardContent() {
   };
 
   const stats = {
-    views: analyticsStatsData?.data?.totalViews || 0,
-    projects: projects.length,
-    messages: 45,
+    views: analyticsStatsData?.data?.currentViews || 0,
+    projects: analyticsStatsData?.data?.currentProjects || 0,
+    messages: analyticsStatsData?.data?.currentMessages || 0,
     avgTimeSeconds: analyticsStatsData?.data?.avgTimeSeconds || 0,
     viewsChangePct: analyticsStatsData?.data?.viewsChangePct ?? 0,
     projectsChangePct: analyticsStatsData?.data?.projectsChangePct ?? 0,
+    messagesChangePct: analyticsStatsData?.data?.messagesChangePct ?? 0,
   };
 
   return (
@@ -873,7 +874,7 @@ function DashboardContent() {
                   {stats.viewsChangePct}%
                 </span>
               </div>
-              <h5 className="text-muted fw-medium mb-1">Total Views</h5>
+              <h5 className="text-muted fw-medium mb-1">Views</h5>
               <h2 className="display-6 fw-bold mb-0">
                 {stats.views.toLocaleString()}
               </h2>
@@ -949,8 +950,23 @@ function DashboardContent() {
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
                 </div>
-                <span className="badge bg-success bg-opacity-10 text-success border-0 px-3 py-2 rounded-pill">
-                  +8%
+                <span
+                  className={`badge bg-${
+                    stats.messagesChangePct > 0
+                      ? "success"
+                      : stats.messagesChangePct < 0
+                        ? "danger"
+                        : "secondary"
+                  } bg-opacity-10 text-${
+                    stats.messagesChangePct > 0
+                      ? "success"
+                      : stats.messagesChangePct < 0
+                        ? "danger"
+                        : "secondary"
+                  } border-0 px-3 py-2 rounded-pill`}
+                >
+                  {stats.messagesChangePct > 0 ? "+" : ""}
+                  {stats.messagesChangePct}%
                 </span>
               </div>
               <h5 className="text-muted fw-medium mb-1">Messages</h5>

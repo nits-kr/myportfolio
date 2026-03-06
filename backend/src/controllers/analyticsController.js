@@ -3,6 +3,7 @@ import AnalyticsSession from "../models/AnalyticsSession.js";
 import PageView from "../models/PageView.js";
 import Project from "../models/Project.js";
 import Blog from "../models/Blog.js";
+import InterviewMessage from "../models/InterviewMessage.js";
 
 const ANALYTICS_SALT =
   process.env.ANALYTICS_SALT || "dev_analytics_salt_change_me";
@@ -190,19 +191,31 @@ export const getAnalyticsStats = async (req, res) => {
       AnalyticsSession.countDocuments(),
     ]);
 
-    const [currentViews, prevViews, currentProjects, prevProjects] =
-      await Promise.all([
-        PageView.countDocuments({
-          createdAt: { $gte: currentStart, $lt: now },
-        }),
-        PageView.countDocuments({
-          createdAt: { $gte: prevStart, $lt: prevEnd },
-        }),
-        Project.countDocuments({ createdAt: { $gte: currentStart, $lt: now } }),
-        Project.countDocuments({
-          createdAt: { $gte: prevStart, $lt: prevEnd },
-        }),
-      ]);
+    const [
+      currentViews,
+      prevViews,
+      currentProjects,
+      prevProjects,
+      currentMessages,
+      prevMessages,
+    ] = await Promise.all([
+      PageView.countDocuments({
+        createdAt: { $gte: currentStart, $lt: now },
+      }),
+      PageView.countDocuments({
+        createdAt: { $gte: prevStart, $lt: prevEnd },
+      }),
+      Project.countDocuments({ createdAt: { $gte: currentStart, $lt: now } }),
+      Project.countDocuments({
+        createdAt: { $gte: prevStart, $lt: prevEnd },
+      }),
+      InterviewMessage.countDocuments({
+        timestamp: { $gte: currentStart, $lt: now },
+      }),
+      InterviewMessage.countDocuments({
+        timestamp: { $gte: prevStart, $lt: prevEnd },
+      }),
+    ]);
 
     const timeAgg = await AnalyticsSession.aggregate([
       { $match: { lastSeenAt: { $gte: currentStart, $lt: now } } },
@@ -215,18 +228,15 @@ export const getAnalyticsStats = async (req, res) => {
     ]);
 
     const avgTimeSeconds = timeAgg[0]?.avgTimeSeconds || 0;
-    const viewsChangePct =
-      prevViews === 0
-        ? currentViews > 0
-          ? 100
-          : 0
-        : ((currentViews - prevViews) / prevViews) * 100;
-    const projectsChangePct =
-      prevProjects === 0
-        ? currentProjects > 0
-          ? 100
-          : 0
-        : ((currentProjects - prevProjects) / prevProjects) * 100;
+
+    const calculateChange = (current, prev) => {
+      if (prev === 0) return current > 0 ? 100 : 0;
+      return ((current - prev) / prev) * 100;
+    };
+
+    const viewsChangePct = calculateChange(currentViews, prevViews);
+    const projectsChangePct = calculateChange(currentProjects, prevProjects);
+    const messagesChangePct = calculateChange(currentMessages, prevMessages);
 
     return res.status(200).json({
       success: true,
@@ -240,6 +250,9 @@ export const getAnalyticsStats = async (req, res) => {
         currentProjects,
         prevProjects,
         projectsChangePct: Number(projectsChangePct.toFixed(1)),
+        currentMessages,
+        prevMessages,
+        messagesChangePct: Number(messagesChangePct.toFixed(1)),
         window: windowParam,
       },
     });
