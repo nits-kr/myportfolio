@@ -44,4 +44,8 @@ const commentSchema = new mongoose.Schema({
   },
 });
 
+commentSchema.index({ blogId: 1 });
+commentSchema.index({ createdAt: -1 });
+commentSchema.index({ parentId: 1 });
+
 export default mongoose.model("Comment", commentSchema);

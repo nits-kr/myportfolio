@@ -157,10 +157,16 @@ export const heartbeat = async (req, res) => {
     );
     const cappedSeconds = Math.min(deltaSeconds, 60);
 
-    session.totalTimeSeconds += cappedSeconds;
-    session.lastSeenAt = now;
-    if (path) session.lastPath = path;
-    await session.save();
+    await AnalyticsSession.findOneAndUpdate(
+      { sessionId },
+      {
+        $inc: { totalTimeSeconds: cappedSeconds },
+        $set: {
+          lastSeenAt: now,
+          ...(path ? { lastPath: path } : {}),
+        },
+      },
+    );
 
     return res.status(200).json({ success: true });
   } catch (err) {

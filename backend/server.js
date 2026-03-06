@@ -7,6 +7,7 @@ import hpp from "hpp";
 import rateLimit from "express-rate-limit";
 import morgan from "morgan";
 import connectDB from "./src/config/db.js";
+import compression from "compression";
 import logger from "./src/utils/logger.js";
 
 // Connect to database
@@ -34,6 +35,9 @@ app.set("trust proxy", 1);
 
 // Security Headers
 app.use(helmet());
+
+// Compress all responses
+app.use(compression());
 
 // Prevent Parameter Pollution
 app.use(hpp());
@@ -121,9 +125,7 @@ const corsOptionsDelegate = (req, callback) => {
   return callback(new Error(`Not allowed by CORS: ${normalizedOrigin}`));
 };
 
-app.use(
-  cors(corsOptionsDelegate),
-);
+app.use(cors(corsOptionsDelegate));
 
 // Mount routers
 app.use("/api/auth", authRoutes);

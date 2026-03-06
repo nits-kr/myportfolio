@@ -61,6 +61,11 @@ const blogSchema = new mongoose.Schema({
   },
 });
 
+// Indexes for performance
+blogSchema.index({ author: 1 });
+blogSchema.index({ deleteStatus: 1 });
+blogSchema.index({ createdAt: -1 });
+
 blogSchema.pre("save", async function () {
   if (this.isModified("title") && !this.slug) {
     this.slug = this.title

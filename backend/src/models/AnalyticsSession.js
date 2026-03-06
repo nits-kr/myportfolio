@@ -42,4 +42,8 @@ const analyticsSessionSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+analyticsSessionSchema.index({ lastSeenAt: -1 });
+analyticsSessionSchema.index({ createdAt: -1 });
+analyticsSessionSchema.index({ totalTimeSeconds: -1 });
+
 export default mongoose.model("AnalyticsSession", analyticsSessionSchema);

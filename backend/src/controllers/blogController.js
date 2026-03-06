@@ -29,7 +29,7 @@ export const getBlogs = async (req, res, next) => {
       query._id = { $ne: req.query.excludeId };
     }
 
-    let blogsQuery = Blog.find(query).sort({ createdAt: -1 });
+    let blogsQuery = Blog.find(query).select("-body").sort({ createdAt: -1 });
 
     // Pagination
     const page = parseInt(req.query.page, 10);
