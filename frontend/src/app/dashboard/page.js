@@ -54,6 +54,17 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+
+  const formatDuration = (seconds) => {
+    if (!seconds) return "0s";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.round(seconds % 60);
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
+
   // Local state to track optimistically deleted IDs (works both online & offline)
   const [deletedProjectIds, setDeletedProjectIds] = useState(new Set());
   const [deletedBlogIds, setDeletedBlogIds] = useState(new Set());
@@ -1058,20 +1069,22 @@ function DashboardContent() {
                             </td>
                             {user?.role === "admin" && (
                               <td>
-                                <button
-                                  onClick={() => handleEditClick(project)}
-                                  className="btn btn-outline-info btn-sm py-0 px-2 me-2"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleDeleteProject(project._id)
-                                  }
-                                  className="btn btn-outline-danger btn-sm py-0 px-2"
-                                >
-                                  &times;
-                                </button>
+                                <div className="d-flex align-items-center gap-2">
+                                  <button
+                                    onClick={() => handleEditClick(project)}
+                                    className="btn btn-outline-info btn-sm"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteProject(project._id)
+                                    }
+                                    className="btn btn-outline-danger btn-sm"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
                               </td>
                             )}
                           </tr>
@@ -1226,20 +1239,20 @@ function DashboardContent() {
                                   (blog.author &&
                                     String(blog.author) ===
                                       String(user?._id))) && (
-                                  <>
+                                  <div className="d-flex align-items-center gap-2">
                                     <button
                                       onClick={() => handleEditBlogClick(blog)}
-                                      className="btn btn-outline-info btn-sm py-0 px-2 me-2"
+                                      className="btn btn-outline-info btn-sm"
                                     >
                                       Edit
                                     </button>
                                     <button
                                       onClick={() => handleDeleteBlog(blog._id)}
-                                      className="btn btn-outline-danger btn-sm py-0 px-2"
+                                      className="btn btn-outline-danger btn-sm"
                                     >
                                       &times;
                                     </button>
-                                  </>
+                                  </div>
                                 )}
                               </td>
                             )}
@@ -1333,7 +1346,7 @@ function DashboardContent() {
         {user?.role === "admin" && (
           <div className="mt-5">
             <div className="glass-card p-4 mb-5">
-              <div className="d-flex justify-content-between align-items-center mb-4">
+              <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
                 <div>
                   <h3 className="mb-1">Traffic Overview</h3>
                   <p className="text-muted small mb-0">
@@ -1467,60 +1480,113 @@ function DashboardContent() {
             </div>
 
             <div className="glass-card p-4">
-              <h3 className="mb-4">Viewer Details</h3>
+              <div className="d-flex align-items-center gap-2 mb-4">
+                <div
+                  className="icon-box bg-success bg-opacity-10 p-2 rounded-3"
+                  style={{ color: "#10b981" }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                </div>
+                <h3 className="mb-0">Viewer Details</h3>
+              </div>
               <div className="table-responsive">
                 <table className="table table-hover table-transparent mb-0">
-                  <thead>
+                  <thead className="small text-uppercase opacity-50">
                     <tr>
                       <th>IP Hash</th>
                       <th>Last Path</th>
-                      <th>Total Time</th>
-                      <th>Last Seen</th>
-                      <th>First Seen</th>
+                      <th>Stay Time</th>
+                      <th>Activity</th>
                     </tr>
                   </thead>
                   <tbody>
                     {isSessionsLoading ? (
                       <tr>
-                        <td colSpan="5" className="text-center py-3">
-                          Loading viewers...
+                        <td colSpan="4" className="text-center py-4">
+                          <div className="spinner-border spinner-border-sm text-primary" />
                         </td>
                       </tr>
                     ) : analyticsSessionsData?.data?.length ? (
                       analyticsSessionsData.data.map((session) => (
                         <tr key={session._id}>
-                          <td className="text-muted small">
-                            {session.ipHash?.slice(0, 12)}...
+                          <td className="text-muted small align-middle text-nowrap">
+                            <code>{session.ipHash?.slice(0, 8)}</code>
                           </td>
-                          <td>
-                            <span className="text-muted small">
-                              {session.lastPath || "-"}
+                          <td className="align-middle">
+                            <span className="badge bg-secondary bg-opacity-10 text-secondary border-0 px-2 py-1 small">
+                              {session.lastPath || "/"}
                             </span>
                           </td>
-                          <td>{Math.round(session.totalTimeSeconds || 0)}s</td>
-                          <td>
-                            {mounted && session.lastSeenAt
-                              ? new Date(session.lastSeenAt).toLocaleString(
-                                  "en-US",
-                                )
-                              : session.lastSeenAt
-                                ? "Loading..."
-                                : "-"}
+                          <td className="align-middle fw-medium text-nowrap">
+                            {formatDuration(session.totalTimeSeconds)}
                           </td>
-                          <td>
-                            {mounted && session.firstSeenAt
-                              ? new Date(session.firstSeenAt).toLocaleString(
-                                  "en-US",
-                                )
-                              : session.firstSeenAt
-                                ? "Loading..."
-                                : "-"}
+                          <td className="align-middle">
+                            <div
+                              className="d-flex flex-column text-nowrap"
+                              style={{ minWidth: "150px" }}
+                            >
+                              <small
+                                className="text-muted"
+                                style={{
+                                  fontSize: "0.7rem",
+                                  lineHeight: "1.2",
+                                }}
+                              >
+                                <span className="opacity-50">Last: </span>
+                                {mounted && session.lastSeenAt
+                                  ? new Date(session.lastSeenAt).toLocaleString(
+                                      "en-US",
+                                      {
+                                        month: "short",
+                                        day: "numeric",
+                                        hour: "numeric",
+                                        minute: "2-digit",
+                                        hour12: true,
+                                      },
+                                    )
+                                  : "-"}
+                              </small>
+                              <small
+                                className="text-muted"
+                                style={{
+                                  fontSize: "0.7rem",
+                                  lineHeight: "1.2",
+                                }}
+                              >
+                                <span className="opacity-50">First: </span>
+                                {mounted && session.firstSeenAt
+                                  ? new Date(
+                                      session.firstSeenAt,
+                                    ).toLocaleString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                      hour12: true,
+                                    })
+                                  : "-"}
+                              </small>
+                            </div>
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className="text-center py-3">
+                        <td colSpan="4" className="text-center py-4 text-muted">
                           No viewers yet
                         </td>
                       </tr>
