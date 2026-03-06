@@ -4,6 +4,7 @@ import {
   heartbeat,
   getAnalyticsStats,
   getAnalyticsSessions,
+  getAnalyticsChartData,
 } from "../controllers/analyticsController.js";
 import { authorize, protect } from "../middleware/authMiddleware.js";
 
@@ -15,6 +16,7 @@ router.post("/heartbeat", heartbeat);
 
 // Admin analytics endpoints
 router.get("/stats", protect, authorize("admin"), getAnalyticsStats);
+router.get("/chart", protect, authorize("admin"), getAnalyticsChartData);
 router.get("/sessions", protect, authorize("admin"), getAnalyticsSessions);
 
 export default router;

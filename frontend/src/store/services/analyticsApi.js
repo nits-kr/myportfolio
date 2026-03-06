@@ -9,8 +9,14 @@ export const analyticsApi = apiSlice.injectEndpoints({
       query: ({ page = 1, limit = 20 } = {}) =>
         `/analytics/sessions?page=${page}&limit=${limit}`,
     }),
+    getAnalyticsChartData: builder.query({
+      query: ({ window = "7d" } = {}) => `/analytics/chart?window=${window}`,
+    }),
   }),
 });
 
-export const { useGetAnalyticsStatsQuery, useGetAnalyticsSessionsQuery } =
-  analyticsApi;
+export const {
+  useGetAnalyticsStatsQuery,
+  useGetAnalyticsSessionsQuery,
+  useGetAnalyticsChartDataQuery,
+} = analyticsApi;

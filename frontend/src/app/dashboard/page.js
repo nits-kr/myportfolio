@@ -19,6 +19,7 @@ import {
 import {
   useGetAnalyticsStatsQuery,
   useGetAnalyticsSessionsQuery,
+  useGetAnalyticsChartDataQuery,
 } from "@/store/services/analyticsApi";
 import {
   useGetBlogsQuery,
@@ -35,6 +36,16 @@ import {
 
 import { useSearchParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 
 function DashboardContent() {
   const { user } = useSelector((state) => state.auth);
@@ -66,6 +77,14 @@ function DashboardContent() {
       { page: 1, limit: 20 },
       { skip: user?.role !== "admin" },
     );
+  const { data: chartDataResponse, isLoading: isChartLoading } =
+    useGetAnalyticsChartDataQuery(
+      { window: analyticsWindow },
+      {
+        skip: user?.role !== "admin",
+      },
+    );
+  const chartData = chartDataResponse?.data || [];
   const { data: meData } = useGetMeQuery();
   const [addProject, { isLoading: isAdding }] = useAddProjectMutation();
   const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
@@ -1279,6 +1298,140 @@ function DashboardContent() {
 
         {user?.role === "admin" && (
           <div className="mt-5">
+            <div className="glass-card p-4 mb-5">
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                  <h3 className="mb-1">Traffic Overview</h3>
+                  <p className="text-muted small mb-0">
+                    Daily breakdown of views and unique sessions
+                  </p>
+                </div>
+                <div className="btn-group btn-group-sm">
+                  {["7d", "30d"].map((w) => (
+                    <button
+                      key={w}
+                      className={`btn ${analyticsWindow === w ? "btn-primary" : "btn-outline-secondary"}`}
+                      onClick={() => setAnalyticsWindow(w)}
+                    >
+                      {w === "7d" ? "Last 7 Days" : "Last 30 Days"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ width: "100%", height: 350 }}>
+                {isChartLoading ? (
+                  <div className="h-100 d-flex align-items-center justify-content-center">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                ) : chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={chartData}
+                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="colorViews"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#7c3aed"
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#7c3aed"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                        <linearGradient
+                          id="colorSessions"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#374151"
+                      />
+                      <XAxis
+                        dataKey="label"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#9ca3af", fontSize: 12 }}
+                        dy={10}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#9ca3af", fontSize: 12 }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1f2937",
+                          border: "1px solid #374151",
+                          borderRadius: "8px",
+                          color: "#f3f4f6",
+                        }}
+                        itemStyle={{ fontSize: "14px" }}
+                      />
+                      <Legend
+                        verticalAlign="top"
+                        align="right"
+                        height={36}
+                        iconType="circle"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="views"
+                        name="Page Views"
+                        stroke="#7c3aed"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorViews)"
+                        animationDuration={1500}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="sessions"
+                        name="Sessions"
+                        stroke="#3b82f6"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorSessions)"
+                        animationDuration={1500}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-100 d-flex align-items-center justify-content-center text-muted">
+                    No analytics data available for this period
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="glass-card p-4">
               <h3 className="mb-4">Viewer Details</h3>
               <div className="table-responsive">

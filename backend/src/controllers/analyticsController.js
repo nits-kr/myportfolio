@@ -270,3 +270,67 @@ export const getAnalyticsSessions = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+export const getAnalyticsChartData = async (req, res) => {
+  try {
+    const windowParam = String(req.query.window || "7d");
+    const windowDays =
+      windowParam === "1d" ? 1 : windowParam === "30d" ? 30 : 7;
+    const now = new Date();
+    const start = new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000);
+
+    // Aggregate Views by Day
+    const viewsData = await PageView.aggregate([
+      { $match: { createdAt: { $gte: start } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          views: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    // Aggregate Sessions by Day
+    const sessionsData = await AnalyticsSession.aggregate([
+      { $match: { createdAt: { $gte: start } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          sessions: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    // Map to date-keyed objects for merging
+    const dataMap = {};
+    const dateRange = [];
+    for (let i = windowDays - 1; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const ds = d.toISOString().split("T")[0];
+      dateRange.push(ds);
+      dataMap[ds] = { date: ds, views: 0, sessions: 0 };
+    }
+
+    viewsData.forEach((v) => {
+      if (dataMap[v._id]) dataMap[v._id].views = v.views;
+    });
+    sessionsData.forEach((s) => {
+      if (dataMap[s._id]) dataMap[s._id].sessions = s.sessions;
+    });
+
+    const chartData = dateRange.map((ds) => ({
+      ...dataMap[ds],
+      // Human readable date for the chart
+      label: new Date(ds).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+    }));
+
+    return res.status(200).json({ success: true, data: chartData });
+  } catch (err) {
+    console.error("getAnalyticsChartData error:", err);
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
