@@ -31,7 +31,7 @@ const jsonLimiter = (options) =>
   rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
-    validate: { ip: false },
+    validate: false,
     ...options,
     handler: (req, res) =>
       res.status(options.statusCode || 429).json({
