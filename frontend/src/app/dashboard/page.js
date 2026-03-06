@@ -437,11 +437,20 @@ function DashboardContent() {
     projects: analyticsStatsData?.data?.currentProjects || 0,
     messages: analyticsStatsData?.data?.currentMessages || 0,
     avgTimeSeconds: analyticsStatsData?.data?.avgTimeSeconds || 0,
-    viewsChangePct: analyticsStatsData?.data?.viewsChangePct ?? 0,
-    projectsChangePct: analyticsStatsData?.data?.projectsChangePct ?? 0,
-    messagesChangePct: analyticsStatsData?.data?.messagesChangePct ?? 0,
+    viewsChangePct:
+      analyticsWindow === "all"
+        ? null
+        : analyticsStatsData?.data?.viewsChangePct,
+    projectsChangePct:
+      analyticsWindow === "all"
+        ? null
+        : analyticsStatsData?.data?.projectsChangePct,
+    messagesChangePct:
+      analyticsWindow === "all"
+        ? null
+        : analyticsStatsData?.data?.messagesChangePct,
   };
-
+  bitumen;
   return (
     <ProtectedRoute>
       <div className="container py-5">
@@ -833,6 +842,9 @@ function DashboardContent() {
             <option className="text-dark" value="30d">
               Last 30 days
             </option>
+            <option className="text-dark" value="all">
+              All Time
+            </option>
           </select>
         </div>
         <div className="row g-4 mb-5">
@@ -855,24 +867,26 @@ function DashboardContent() {
                     <circle cx="12" cy="12" r="3" />
                   </svg>
                 </div>
-                <span
-                  className={`badge bg-${
-                    stats.viewsChangePct > 0
-                      ? "success"
-                      : stats.viewsChangePct < 0
-                        ? "danger"
-                        : "secondary"
-                  } bg-opacity-10 text-${
-                    stats.viewsChangePct > 0
-                      ? "success"
-                      : stats.viewsChangePct < 0
-                        ? "danger"
-                        : "secondary"
-                  } border-0 px-3 py-2 rounded-pill`}
-                >
-                  {stats.viewsChangePct > 0 ? "+" : ""}
-                  {stats.viewsChangePct}%
-                </span>
+                {stats.viewsChangePct !== null && (
+                  <span
+                    className={`badge bg-${
+                      stats.viewsChangePct > 0
+                        ? "success"
+                        : stats.viewsChangePct < 0
+                          ? "danger"
+                          : "secondary"
+                    } bg-opacity-10 text-${
+                      stats.viewsChangePct > 0
+                        ? "success"
+                        : stats.viewsChangePct < 0
+                          ? "danger"
+                          : "secondary"
+                    } border-0 px-3 py-2 rounded-pill`}
+                  >
+                    {stats.viewsChangePct > 0 ? "+" : ""}
+                    {stats.viewsChangePct}%
+                  </span>
+                )}
               </div>
               <h5 className="text-muted fw-medium mb-1">Views</h5>
               <h2 className="display-6 fw-bold mb-0">
@@ -908,24 +922,26 @@ function DashboardContent() {
                       <path d="m16 5.25-8 4.5" />
                     </svg>
                   </div>
-                  <span
-                    className={`badge bg-${
-                      stats.projectsChangePct > 0
-                        ? "success"
-                        : stats.projectsChangePct < 0
-                          ? "danger"
-                          : "secondary"
-                    } bg-opacity-10 text-${
-                      stats.projectsChangePct > 0
-                        ? "success"
-                        : stats.projectsChangePct < 0
-                          ? "danger"
-                          : "secondary"
-                    } border-0 px-3 py-2 rounded-pill`}
-                  >
-                    {stats.projectsChangePct > 0 ? "+" : ""}
-                    {stats.projectsChangePct}%
-                  </span>
+                  {stats.projectsChangePct !== null && (
+                    <span
+                      className={`badge bg-${
+                        stats.projectsChangePct > 0
+                          ? "success"
+                          : stats.projectsChangePct < 0
+                            ? "danger"
+                            : "secondary"
+                      } bg-opacity-10 text-${
+                        stats.projectsChangePct > 0
+                          ? "success"
+                          : stats.projectsChangePct < 0
+                            ? "danger"
+                            : "secondary"
+                      } border-0 px-3 py-2 rounded-pill`}
+                    >
+                      {stats.projectsChangePct > 0 ? "+" : ""}
+                      {stats.projectsChangePct}%
+                    </span>
+                  )}
                 </div>
                 <h5 className="text-muted fw-medium mb-1">Projects</h5>
                 <h2 className="display-6 fw-bold mb-0">{stats.projects}</h2>
@@ -950,24 +966,26 @@ function DashboardContent() {
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
                 </div>
-                <span
-                  className={`badge bg-${
-                    stats.messagesChangePct > 0
-                      ? "success"
-                      : stats.messagesChangePct < 0
-                        ? "danger"
-                        : "secondary"
-                  } bg-opacity-10 text-${
-                    stats.messagesChangePct > 0
-                      ? "success"
-                      : stats.messagesChangePct < 0
-                        ? "danger"
-                        : "secondary"
-                  } border-0 px-3 py-2 rounded-pill`}
-                >
-                  {stats.messagesChangePct > 0 ? "+" : ""}
-                  {stats.messagesChangePct}%
-                </span>
+                {stats.messagesChangePct !== null && (
+                  <span
+                    className={`badge bg-${
+                      stats.messagesChangePct > 0
+                        ? "success"
+                        : stats.messagesChangePct < 0
+                          ? "danger"
+                          : "secondary"
+                    } bg-opacity-10 text-${
+                      stats.messagesChangePct > 0
+                        ? "success"
+                        : stats.messagesChangePct < 0
+                          ? "danger"
+                          : "secondary"
+                    } border-0 px-3 py-2 rounded-pill`}
+                  >
+                    {stats.messagesChangePct > 0 ? "+" : ""}
+                    {stats.messagesChangePct}%
+                  </span>
+                )}
               </div>
               <h5 className="text-muted fw-medium mb-1">Messages</h5>
               <h2 className="display-6 fw-bold mb-0">{stats.messages}</h2>

@@ -178,13 +178,21 @@ export const heartbeat = async (req, res) => {
 export const getAnalyticsStats = async (req, res) => {
   try {
     const windowParam = String(req.query.window || "7d");
-    const windowDays =
-      windowParam === "1d" ? 1 : windowParam === "30d" ? 30 : 7;
-    const windowMs = windowDays * 24 * 60 * 60 * 1000;
     const now = new Date();
-    const currentStart = new Date(now.getTime() - windowMs);
-    const prevStart = new Date(now.getTime() - 2 * windowMs);
-    const prevEnd = currentStart;
+    let currentStart, prevStart, prevEnd;
+
+    if (windowParam === "all") {
+      currentStart = new Date(0); // Epoch
+      prevStart = new Date(0);
+      prevEnd = new Date(0);
+    } else {
+      const windowDays =
+        windowParam === "1d" ? 1 : windowParam === "30d" ? 30 : 7;
+      const windowMs = windowDays * 24 * 60 * 60 * 1000;
+      currentStart = new Date(now.getTime() - windowMs);
+      prevStart = new Date(now.getTime() - 2 * windowMs);
+      prevEnd = currentStart;
+    }
 
     const [totalViews, totalSessions] = await Promise.all([
       PageView.countDocuments(),
@@ -198,6 +206,7 @@ export const getAnalyticsStats = async (req, res) => {
       prevProjects,
       currentMessages,
       prevMessages,
+      totalProjects,
     ] = await Promise.all([
       PageView.countDocuments({
         createdAt: { $gte: currentStart, $lt: now },
@@ -215,6 +224,7 @@ export const getAnalyticsStats = async (req, res) => {
       InterviewMessage.countDocuments({
         timestamp: { $gte: prevStart, $lt: prevEnd },
       }),
+      Project.countDocuments(),
     ]);
 
     const timeAgg = await AnalyticsSession.aggregate([
@@ -250,6 +260,7 @@ export const getAnalyticsStats = async (req, res) => {
         currentProjects,
         prevProjects,
         projectsChangePct: Number(projectsChangePct.toFixed(1)),
+        totalProjects,
         currentMessages,
         prevMessages,
         messagesChangePct: Number(messagesChangePct.toFixed(1)),
@@ -283,11 +294,18 @@ export const getAnalyticsSessions = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 export const getAnalyticsChartData = async (req, res) => {
   try {
     const windowParam = String(req.query.window || "7d");
     const windowDays =
-      windowParam === "1d" ? 1 : windowParam === "30d" ? 30 : 7;
+      windowParam === "all"
+        ? 30
+        : windowParam === "1d"
+          ? 1
+          : windowParam === "30d"
+            ? 30
+            : 7;
     const now = new Date();
     const start = new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000);
 
