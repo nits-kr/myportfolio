@@ -31,11 +31,13 @@ const jsonLimiter = (options) =>
   rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { ip: false },
     ...options,
     handler: (req, res) =>
       res.status(options.statusCode || 429).json({
         success: false,
-        message: options.message || "Too many requests, please try again later.",
+        message:
+          options.message || "Too many requests, please try again later.",
       }),
   });
 
@@ -74,7 +76,12 @@ const otpVerifyLimiter = jsonLimiter({
   message: "Too many OTP verification attempts. Please try again later.",
 });
 
-router.post("/register", registerLimiter, validateRequest(registerSchema), register);
+router.post(
+  "/register",
+  registerLimiter,
+  validateRequest(registerSchema),
+  register,
+);
 router.post("/login", loginLimiter, validateRequest(loginSchema), login);
 router.get("/me", protect, getMe);
 router.get("/logout", protect, logout);
