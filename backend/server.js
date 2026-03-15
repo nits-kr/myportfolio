@@ -26,6 +26,7 @@ import toolRoutes from "./src/routes/toolRoutes.js"; // Import Tool routes
 import paymentRoutes from "./src/routes/paymentRoutes.js";
 import { handleWebhook } from "./src/controllers/paymentController.js";
 import { scheduleReminderJob } from "./src/utils/reminderScheduler.js"; // Import Reminder Scheduler
+import { startKeepAlive } from "./src/utils/keepAlive.js"; // Import Keep-Alive Scheduler
 import errorHandler from "./src/middleware/errorMiddleware.js"; // Import Error Handler
 
 const app = express();
@@ -127,6 +128,11 @@ const corsOptionsDelegate = (req, callback) => {
 
 app.use(cors(corsOptionsDelegate));
 
+// Lightweight health check / ping route for keeping server alive
+app.get("/api/ping", (req, res) => {
+  res.status(200).send("pong");
+});
+
 // Mount routers
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
@@ -148,6 +154,9 @@ const server = app.listen(PORT, () => {
 
   // Initialize verification reminder scheduler
   scheduleReminderJob();
+
+  // Initialize keep-alive scheduler
+  startKeepAlive();
 });
 
 // Handle unhandled promise rejections

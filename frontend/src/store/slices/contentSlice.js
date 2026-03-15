@@ -42,7 +42,7 @@ const initialState = {
         "PostgreSQL & MySQL",
         "Redis (Caching)",
         "Firebase (Auth & Firestore)",
-        "Supabase",
+        // "Supabase",
       ],
 
       realtime: [
@@ -54,6 +54,7 @@ const initialState = {
 
       cloud: [
         "AWS (S3, EC2, Lambda)",
+        "Contabo",
         "Vercel / Netlify",
         "GitHub Actions (CI/CD)",
         "Docker & Kubernetes",
