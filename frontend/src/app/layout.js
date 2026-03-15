@@ -20,9 +20,55 @@ import NavigationProgress from "@/components/common/NavigationProgress";
 import { Toaster } from "react-hot-toast";
 
 export const metadata = {
-  title: "Nitish Kumar | Full Stack Developer",
+  title: "Nitish Kumar | Frontend & Full Stack Developer",
   description:
-    "Portfolio of Nitish Kumar - Full Stack Developer (React, Next.js, Node.js, MongoDB).",
+    "Portfolio of Nitish Kumar - Frontend Engineer at TechGropse specializing in React.js, Next.js, and scaling Enterprise Web Applications. Full Stack Web Developer from India.",
+  keywords: [
+    "Nitish Kumar",
+    "Nitish Kumar Portfolio",
+    "Nitish Kumar Software Engineer",
+    "Nitish Kumar Frontend Developer",
+    "Nitish Kumar TechGropse",
+    "React.js Developer Nitish Kumar",
+    "Next.js Developer Portfolio",
+    "MERN Stack Developer Nitish Kumar",
+    "Full Stack Web Developer Portfolio",
+    "PWA Expert Nitish Kumar",
+    "Redux Toolkit Next.js Developer",
+    "Frontend Engineer India",
+    "Software Engineer Portfolio Nitish"
+  ],
+  authors: [{ name: "Nitish Kumar", url: "https://your-domain.com" }],
+  creator: "Nitish Kumar",
+  publisher: "Nitish Kumar",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://your-domain.com", // Recommendation: update with your deployed domain
+    siteName: "Nitish Kumar Portfolio",
+    title: "Nitish Kumar | Frontend & Full Stack Developer",
+    description:
+      "Portfolio of Nitish Kumar - Frontend Engineer at TechGropse. Specialized in Next.js, React, and building highly scalable, performant web applications.",
+    // You can add an image URL here to show when links are shared on social platforms
+    // images: [{ url: "https://your-domain.com/og-image.jpg" }]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Nitish Kumar | Frontend & Full Stack Developer",
+    description: 
+       "Portfolio of Nitish Kumar - Frontend Engineer at TechGropse.",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
