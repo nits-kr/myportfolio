@@ -106,6 +106,43 @@ export const blogsApi = apiSlice.injectEndpoints({
         method: "POST",
         body: { email },
       }),
+      async onQueryStarted({ id, email }, { dispatch, queryFulfilled }) {
+        // Optimistic update for getBlog
+        const patchBlog = dispatch(
+          blogsApi.util.updateQueryData(
+            "getBlog",
+            { id, viewerEmail: email },
+            (draft) => {
+              if (draft?.data) {
+                const alreadyLiked = draft.data.hasLiked;
+                draft.data.hasLiked = !alreadyLiked;
+                draft.data.likesCount += alreadyLiked ? -1 : 1;
+              }
+            },
+          ),
+        );
+
+        // Optimistic update for getBlogs (list view)
+        const patchBlogs = dispatch(
+          blogsApi.util.updateQueryData("getBlogs", undefined, (draft) => {
+            if (draft?.data) {
+              const blog = draft.data.find((b) => b._id === id);
+              if (blog) {
+                // Note: getBlogs normally doesn't have hasLiked in the list,
+                // but we update the count for consistency if it exists.
+                blog.likesCount = (blog.likesCount || 0) + 1; // Assuming we can't toggle from list easily without email context
+              }
+            }
+          }),
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          patchBlog.undo();
+          patchBlogs.undo();
+        }
+      },
       invalidatesTags: (result, error, { id }) => [{ type: "Blog", id }],
     }),
     getComments: builder.query({
@@ -140,6 +177,32 @@ export const blogsApi = apiSlice.injectEndpoints({
         method: "POST",
         body: { email },
       }),
+      async onQueryStarted(
+        { commentId, email, blogId },
+        { dispatch, queryFulfilled },
+      ) {
+        const patchResult = dispatch(
+          blogsApi.util.updateQueryData(
+            "getComments",
+            { id: blogId, viewerEmail: email },
+            (draft) => {
+              if (draft?.data) {
+                const comment = draft.data.find((c) => c._id === commentId);
+                if (comment) {
+                  const alreadyLiked = comment.hasLiked;
+                  comment.hasLiked = !alreadyLiked;
+                  comment.likesCount += alreadyLiked ? -1 : 1;
+                }
+              }
+            },
+          ),
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
       invalidatesTags: (result, error, { blogId }) => [
         { type: "Comment", id: blogId },
       ],

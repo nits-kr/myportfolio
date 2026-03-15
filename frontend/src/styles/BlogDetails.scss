@@ -116,7 +116,20 @@
 
 .interact-btn-modern.is-liked {
   color: #ef4444;
-  background: rgba(239, 68, 68, 0.08);
+  background: rgba(239, 68, 68, 0.12);
+  
+  .icon-wrapper {
+    color: #ef4444;
+  }
+  
+  .count {
+    color: #ef4444;
+    font-weight: 700;
+  }
+  
+  svg {
+    fill: currentColor;
+  }
 }
 
 .comment-count-pill {
@@ -304,6 +317,14 @@
 
 .action-pill.is-liked {
   color: #ef4444;
+  
+  .icon-wrapper {
+    color: #ef4444;
+  }
+  
+  svg {
+    fill: currentColor;
+  }
 }
 
 .comment-thread-node.is-nested {

@@ -284,26 +284,37 @@ export default function BlogDetailsClient({
   const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
 
+  const [shouldFetch, setShouldFetch] = useState(false);
+
   useEffect(() => {
     const email = localStorage.getItem("blogSubscriberEmail");
     if (email) setSubscriberEmail(email);
   }, []);
 
-  const [shouldFetch, setShouldFetch] = useState(!initialBlog);
+  // Trigger re-fetch when adminUser or subscriberEmail becomes available to get proper isLiked status
+  useEffect(() => {
+    if (adminUser?.email || subscriberEmail) {
+      setShouldFetch(true);
+    } else if (!initialBlog) {
+      setShouldFetch(true);
+    }
+  }, [adminUser?.email, subscriberEmail, initialBlog]);
   const {
     data: blogData,
     error,
     isLoading,
+    isFetching,
   } = useGetBlogQuery(
     { id, viewerEmail: subscriberEmail || adminUser?.email },
     {
       skip: !shouldFetch,
     },
   );
-  const { data: commentsData } = useGetCommentsQuery({
-    id,
-    viewerEmail: subscriberEmail || adminUser?.email,
-  });
+  const { data: commentsData, isFetching: isCommentsFetching } =
+    useGetCommentsQuery({
+      id,
+      viewerEmail: subscriberEmail || adminUser?.email,
+    });
   const [likeBlog, { isLoading: isLikingBlog }] = useLikeBlogMutation();
   const [addComment] = useAddCommentMutation();
   const [likeComment] = useLikeCommentMutation();
@@ -325,7 +336,11 @@ export default function BlogDetailsClient({
       excludeId: id,
     });
 
-  const blog = initialBlog || blogData?.data;
+  const blog = blogData?.data || initialBlog;
+  
+  const isIdentifying = shouldFetch && !blogData;
+  const isLiked = blog?.hasLiked;
+
   const comments = useMemo(
     () => commentsData?.data || initialComments,
     [commentsData, initialComments],
@@ -467,16 +482,13 @@ export default function BlogDetailsClient({
     if (blog?.body) {
       const initPrism = async () => {
         try {
-          // Dynamic Import Prism and CSS
           const Prism = (await import("prismjs/components/prism-core")).default;
           await import("prismjs/themes/prism-tomorrow.css");
 
-          // Ensure window.Prism is set for nested components if needed
           if (typeof window !== "undefined") {
             window.Prism = Prism;
           }
 
-          // Dynamic Import Languages as needed
           await import("prismjs/components/prism-markup");
           await import("prismjs/components/prism-clike");
           await import("prismjs/components/prism-markup-templating");
@@ -533,7 +545,6 @@ export default function BlogDetailsClient({
   );
 
   const filteredSidebarBlogs = useMemo(() => {
-    // Include Draft blogs if user is admin
     return allBlogs.filter((b) => isAdmin || b.status === "Published");
   }, [allBlogs, isAdmin]);
 
@@ -559,8 +570,6 @@ export default function BlogDetailsClient({
       </div>
     );
   }
-
-  const isLiked = blog?.hasLiked;
 
   // Reusable Sidebar Content (Search + List + Pagination)
   const renderSidebarContent = () => (
@@ -740,13 +749,13 @@ export default function BlogDetailsClient({
                 <div className="interaction-group">
                   <motion.button
                     whileTap={{ scale: 0.9 }}
-                    className={`interact-btn-modern ${isLiked ? "is-liked" : ""} ${isLikingBlog ? "is-loading" : ""}`}
-                    onClick={() => !isLikingBlog && handleLike()}
-                    disabled={isLikingBlog}
+                    className={`interact-btn-modern ${isLiked ? "is-liked" : ""} ${isLikingBlog || isIdentifying ? "is-loading" : ""}`}
+                    onClick={() => !isLikingBlog && !isIdentifying && handleLike()}
+                    disabled={isLikingBlog || isIdentifying}
                     aria-label={isLiked ? "Unlike blog post" : "Like blog post"}
                   >
                     <span className="icon-wrapper">
-                      {isLikingBlog ? (
+                      {isLikingBlog || isIdentifying ? (
                         <IOSSpinner />
                       ) : isLiked ? (
                         <IoHeart size={24} />

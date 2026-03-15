@@ -181,7 +181,20 @@ code {
 
 .interact-btn-modern.is-liked {
   color: #ef4444;
-  background: rgba(239, 68, 68, 0.08);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.interact-btn-modern.is-liked .icon-wrapper {
+  color: #ef4444;
+}
+
+.interact-btn-modern.is-liked svg {
+  fill: currentColor;
+}
+
+.interact-btn-modern.is-liked .count {
+  color: #ef4444;
+  font-weight: 700;
 }
 
 .comment-count-pill {
@@ -285,6 +298,18 @@ code {
   color: var(--text-secondary);
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+.action-pill.is-liked {
+  color: #ef4444;
+}
+
+.action-pill.is-liked .icon-wrapper {
+  color: #ef4444;
+}
+
+.action-pill.is-liked svg {
+  fill: currentColor;
 }
 
 .comment-thread-node.is-nested {
